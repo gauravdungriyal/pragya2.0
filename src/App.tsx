@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { DailyQuoteBanner } from './components/DailyQuoteBanner';
@@ -23,6 +23,7 @@ import { TeacherDetailPage } from './components/TeacherDetailPage';
 import { MembershipPage } from './components/MembershipPage';
 import { EventsPage } from './components/EventsPage';
 import { EventDetailPage } from './components/EventDetailPage';
+import { ScrollProgressBar, BackToTopButton } from './components/ScrollUI';
 import { Instructor, UpcomingEvent } from './types';
 
 export const App: React.FC = () => {
@@ -36,9 +37,22 @@ export const App: React.FC = () => {
   const [selectedTeacher, setSelectedTeacher] = useState<Instructor | null>(null);
   const [selectedTeacherForPage, setSelectedTeacherForPage] = useState<Instructor | null>(null);
   const [selectedEventForPage, setSelectedEventForPage] = useState<UpcomingEvent | null>(null);
+  const [pageVisible, setPageVisible] = useState(true);
+  const mainRef = useRef<HTMLDivElement>(null);
 
-  // Global Scroll Reveal Observer effect for necessary elements only
+  // ── Global Scroll-Reveal Observer ──────────────────────────────────────────
+  // Supports 6 reveal variants: reveal-on-scroll, reveal-fade, reveal-left,
+  // reveal-right, reveal-zoom, reveal-blur. All share the .is-revealed trigger.
   useEffect(() => {
+    const REVEAL_SELECTORS = [
+      '.reveal-on-scroll',
+      '.reveal-fade',
+      '.reveal-left',
+      '.reveal-right',
+      '.reveal-zoom',
+      '.reveal-blur',
+    ].join(', ');
+
     const observerCallback: IntersectionObserverCallback = (entries, observer) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -50,37 +64,73 @@ export const App: React.FC = () => {
 
     const observerOptions: IntersectionObserverInit = {
       root: null,
-      rootMargin: '0px 0px -30px 0px',
-      threshold: 0.05
+      rootMargin: '0px 0px -40px 0px',
+      threshold: 0.06,
     };
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
 
+    const STAGGER_DELAYS = ['delay-1','delay-2','delay-3','delay-4','delay-5','delay-6'];
+
     const attachObservers = () => {
-      // Only target explicitly designated reveal elements
-      const elements = document.querySelectorAll('.reveal-on-scroll');
-      elements.forEach((el, idx) => {
-        // Skip header nav items, top hero section, and fixed modal overlays
-        if (el.closest('header') || el.closest('#hero') || el.closest('.modal-backdrop') || el.closest('.modal-content')) {
+      const elements = document.querySelectorAll(REVEAL_SELECTORS);
+      let staggerIdx = 0;
+      elements.forEach((el) => {
+        // Skip elements already visible or inside hero/header/modal
+        if (
+          el.closest('header') ||
+          el.closest('#hero') ||
+          el.closest('.modal-backdrop') ||
+          el.closest('.modal-content')
+        ) {
           el.classList.add('is-revealed');
           return;
         }
+
         if (!el.classList.contains('is-revealed')) {
-          const delayClass = `delay-${((idx % 3) + 1) * 100}`;
-          el.classList.add(delayClass);
+          // Only add stagger if no explicit delay class already set
+          const hasDelay = STAGGER_DELAYS.some((d) => el.classList.contains(d)) ||
+            el.classList.contains('delay-100') ||
+            el.classList.contains('delay-200') ||
+            el.classList.contains('delay-300') ||
+            el.classList.contains('delay-400') ||
+            el.classList.contains('delay-500');
+
+          if (!hasDelay) {
+            el.classList.add(STAGGER_DELAYS[staggerIdx % STAGGER_DELAYS.length]);
+            staggerIdx++;
+          }
           observer.observe(el);
         }
       });
     };
 
     attachObservers();
-    const timer = setTimeout(attachObservers, 300);
+    const timer = setTimeout(attachObservers, 350);
 
     return () => {
       clearTimeout(timer);
       observer.disconnect();
     };
-  }, [currentView, selectedTeacherForPage]);
+  }, [currentView, selectedTeacherForPage, selectedEventForPage]);
+
+  // ── Parallax depth effect on scroll ───────────────────────────────────────
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      // Update CSS custom prop for parallax layers
+      document.documentElement.style.setProperty('--scroll-y', `${y}px`);
+
+      // Subtle parallax on hero background
+      const heroBg = document.querySelector('.hero-bg-desktop') as HTMLElement;
+      if (heroBg) {
+        heroBg.style.transform = `translate3d(0, ${y * 0.28}px, 0)`;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleOpenBooking = (type: string = 'class', title: string = 'Book a Class', details: any = null) => {
     setBookingType(type);
@@ -99,6 +149,16 @@ export const App: React.FC = () => {
     setSelectedEventForPage(event);
     setCurrentView('event-detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // ── Page view change with fade transition ─────────────────────────────────
+  const handleViewChange = (view: typeof currentView) => {
+    setPageVisible(false);
+    setTimeout(() => {
+      setCurrentView(view);
+      setPageVisible(true);
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    }, 220);
   };
 
   const handleNavigateSection = (sectionId: string) => {
@@ -131,17 +191,31 @@ export const App: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F5EFE5' }}>
+      {/* Scroll progress bar — fixed at very top */}
+      <ScrollProgressBar />
+
+      {/* Back-to-top floating button */}
+      <BackToTopButton />
+
       {/* Sticky Navigation Header */}
       <Header
         onOpenBooking={handleOpenBooking}
         onOpenSearch={() => setSearchModalOpen(true)}
         onNavigateSection={handleNavigateSection}
         currentView={currentView}
-        onViewChange={(view) => setCurrentView(view)}
+        onViewChange={(view) => handleViewChange(view as typeof currentView)}
       />
 
-      {/* Main Content Sections */}
-      <main style={{ flexGrow: 1 }}>
+      {/* Main Content Sections — page-level fade transition */}
+      <main
+        ref={mainRef}
+        style={{
+          flexGrow: 1,
+          opacity: pageVisible ? 1 : 0,
+          transform: pageVisible ? 'translate3d(0,0,0)' : 'translate3d(0,18px,0)',
+          transition: 'opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
         {currentView === 'about' ? (
           <AboutPage
             onOpenBooking={handleOpenBooking}

@@ -46,7 +46,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
   return (
     <section
       id="faq"
-      className="faq-section reveal-on-scroll"
+      className="faq-section"
       style={{
         backgroundColor: '#FFFFFF',
         padding: '84px 0 96px 0',
@@ -63,7 +63,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
         }}
       >
         {/* Header Tag & Title */}
-        <div className="faq-header" style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <div className="faq-header reveal-blur" style={{ textAlign: 'center', marginBottom: '48px' }}>
           <span
             className="faq-sub-tag"
             style={{
@@ -110,7 +110,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
               return (
                 <div
                   key={faq.question}
-                  className="faq-item"
+                  className={`faq-item reveal-on-scroll delay-${Math.min(idx + 1, 6)}`}
                   style={{
                     borderBottom: '1px solid #DFD9CF',
                     paddingBottom: '20px',

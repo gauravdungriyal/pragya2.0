@@ -25,12 +25,12 @@ export const DailyQuoteBanner: React.FC = () => {
       }}
     >
       <div className="container" style={{ maxWidth: '960px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#D9AE29', fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 600 }}>
+        <div className="reveal-blur" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#D9AE29', fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 600 }}>
           <Sparkles size={14} />
           <span>Daily Mindful Inspiration</span>
         </div>
         
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', justifyContent: 'center' }}>
+        <div className="reveal-fade" style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', justifyContent: 'center' }}>
           <Quote size={28} color="#D9AE29" style={{ opacity: 0.6, flexShrink: 0, marginTop: '4px' }} />
           <div>
             <blockquote

@@ -46,7 +46,7 @@ export const WhyChooseUs: React.FC = () => {
       >
         {/* Top Header */}
         <div className="why-us-header">
-          <div className="why-us-title-group">
+          <div className="why-us-title-group reveal-left">
             <span className="why-us-subtitle">
               — VALUE —
             </span>
@@ -55,15 +55,15 @@ export const WhyChooseUs: React.FC = () => {
             </h2>
           </div>
 
-          <p className="why-us-description">
-            Discover the transformative benefits of yog & pilates for body, mind, and lifestyle.
+          <p className="why-us-description reveal-right">
+            Discover the transformative benefits of yog &amp; pilates for body, mind, and lifestyle.
           </p>
         </div>
 
         {/* Content Container (Desktop: 2 Columns | Mobile: Stacked matching reference) */}
-        <div className="why-us-content-grid reveal-on-scroll">
+        <div className="why-us-content-grid">
           {/* Main Image */}
-          <div className="why-us-image-wrapper">
+          <div className="why-us-image-wrapper reveal-zoom">
             <img
               src="/about.png"
               alt="Pragya Yog School About Us Practitioner Image"
@@ -78,10 +78,10 @@ export const WhyChooseUs: React.FC = () => {
 
           {/* Feature List Cards */}
           <div className="why-us-feature-list">
-            {features.map((item) => {
+            {features.map((item, i) => {
               const Icon = item.icon;
               return (
-                <div key={item.title} className="why-us-card">
+                <div key={item.title} className={`why-us-card reveal-on-scroll delay-${i + 1}`}>
                   <div className="icon-badge">
                     <Icon size={18} />
                   </div>

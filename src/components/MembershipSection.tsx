@@ -217,7 +217,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
               }}
               className="membership-grid"
             >
-              {displayPlans.map((plan) => {
+              {displayPlans.map((plan, i) => {
                 const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
 
                 return (
@@ -234,7 +234,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
                       justifyContent: 'space-between',
                       position: 'relative'
                     }}
-                    className="plan-card-item"
+                    className={`plan-card-item reveal-on-scroll delay-${i + 1}`}
                   >
                     <div>
                       {/* Title Header Row */}

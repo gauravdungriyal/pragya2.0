@@ -87,7 +87,7 @@ export const TestimonialsCarousel: React.FC = () => {
         {/* 2-Column Main Layout */}
         <div className="testimonials-main-grid reveal-on-scroll">
           {/* Left Column: Tag, Heading & Giant Member Stat */}
-          <div className="testimonials-left-col">
+          <div className="testimonials-left-col reveal-left">
             <div>
               <div className="testimonials-tag-row">
                 <span className="testimonials-sub-tag">
@@ -112,7 +112,7 @@ export const TestimonialsCarousel: React.FC = () => {
           </div>
 
           {/* Right Column: Vertical List of 3 Testimonials */}
-          <div className="testimonials-right-col">
+          <div className="testimonials-right-col reveal-right">
             <div className="testimonials-list">
               {currentSet.map((item) => (
                 <div key={item.id} className="testimonial-item-row">

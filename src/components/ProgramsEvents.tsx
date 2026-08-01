@@ -587,16 +587,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
             color: #FFFFFF !important;
           }
           .mobile-card-desc {
-            font-family: 'Neue Montreal', sans-serif !important;
-            font-size: 14.5px !important;
-            line-height: 1.55 !important;
-            margin: 0 !important;
-          }
-          .light-card .mobile-card-desc {
-            color: #757069 !important;
-          }
-          .dark-card .mobile-card-desc {
-            color: rgba(255, 255, 255, 0.75) !important;
+            display: none !important;
           }
         }
       `}</style>
