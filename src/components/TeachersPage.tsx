@@ -85,6 +85,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
     <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E' }}>
       {/* Top Banner */}
       <section
+        className="teachers-top-banner"
         style={{
           backgroundColor: '#F5EFE5',
           color: '#21201E',
@@ -94,6 +95,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
       >
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           <h1
+            className="teachers-top-title"
             style={{
               fontFamily: "'Neue Montreal', -apple-system, sans-serif",
               fontSize: 'clamp(44px, 6.5vw, 76px)',
@@ -117,6 +119,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
             </span>
           </h1>
           <p
+            className="teachers-top-subtitle"
             style={{
               fontFamily: "'Neue Montreal', -apple-system, sans-serif",
               fontSize: '16.5px',
@@ -132,6 +135,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
 
       {/* Main Content: Teachers Card Grid */}
       <section
+        className="teachers-grid-section"
         style={{
           maxWidth: '1280px',
           margin: '0 auto',
@@ -360,6 +364,27 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
         .teacher-guide-card:hover .teacher-floating-label {
           transform: translateY(-2px);
           box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12) !important;
+        }
+        @media (max-width: 768px) {
+          .teachers-top-banner {
+            padding: 104px 20px 24px 20px !important;
+          }
+          .teachers-top-title {
+            font-size: 38px !important;
+            margin-bottom: 12px !important;
+          }
+          .teachers-top-subtitle {
+            font-size: 14.5px !important;
+            line-height: 1.55 !important;
+          }
+          .teachers-grid-section {
+            padding: 32px 20px 60px 20px !important;
+          }
+          .teacher-floating-label {
+            margin: -36px 14px 14px 14px !important;
+            padding: 18px 20px !important;
+            border-radius: 16px !important;
+          }
         }
       `}</style>
     </div>

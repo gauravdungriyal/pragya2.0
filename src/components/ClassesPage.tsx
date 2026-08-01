@@ -477,13 +477,14 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               style={{
                 backgroundColor: '#FFFFFF',
                 borderRadius: '999px',
-                padding: '8px 20px',
-                display: 'flex',
+                padding: '10px 22px',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '16px',
+                gap: '14px',
                 boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
                 border: '1px solid rgba(148, 68, 38, 0.15)',
-                position: 'relative'
+                position: 'relative',
+                whiteSpace: 'nowrap'
               }}
             >
               {/* Left Arrow Button */}
@@ -518,14 +519,15 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                   fontWeight: 700,
                   color: '#21201E',
                   cursor: 'pointer',
-                  position: 'relative'
+                  position: 'relative',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 <Calendar size={18} color="#944426" />
-                <span>
+                <span style={{ whiteSpace: 'nowrap' }}>
                   {selectedDate.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
+                    weekday: 'short',
+                    month: 'short',
                     day: 'numeric',
                     year: 'numeric'
                   })}
