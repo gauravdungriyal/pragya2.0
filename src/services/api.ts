@@ -301,6 +301,18 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
         imageUrl = rawImg.url.startsWith('http') ? rawImg.url : `https://pragya-yog.com/${rawImg.url.replace(/^\//, '')}`;
       }
 
+      // Map to local compressed WebP image for instant sub-50ms local loading
+      let localImage = imageUrl;
+      if (imageUrl) {
+        const lower = imageUrl.toLowerCase();
+        if (lower.includes('1783740951')) localImage = '/gallery/upcomingevents/event_8_event_8_1783740951_jpg.webp';
+        else if (lower.includes('1784376938')) localImage = '/gallery/upcomingevents/event_15_event_15_1784376938_jpg.webp';
+        else if (lower.includes('1785134240')) localImage = '/gallery/upcomingevents/event_18_event_18_1785134240_jpg.webp';
+        else if (lower.includes('1785133717')) localImage = '/gallery/upcomingevents/event_19_event_19_1785133717_jpg.webp';
+        else if (lower.includes('1783772088')) localImage = '/gallery/upcomingevents/event_16_event_1783772088_jpg.webp';
+        else if (lower.includes('1783756915')) localImage = '/gallery/upcomingevents/event_14_event_1783756915_jpg.webp';
+      }
+
       return {
         id: String(item.id || item.event_id || idx + 1),
         title: item.title || item.name || item.event_title || 'Pragya Wellness Event',
@@ -311,7 +323,7 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
         price: formattedPrice,
         amount: !isNaN(amountVal) ? amountVal : undefined,
         category: (item.difficulty_tags && item.difficulty_tags.length > 0 ? item.difficulty_tags[0] : item.category) || 'Retreat',
-        image: imageUrl,
+        image: localImage || `/gallery/upcomingevents/default_${(idx % 4) + 1}.webp`,
         banner_image: item.banner_image,
         starts_at: item.starts_at,
         ends_at: item.ends_at,

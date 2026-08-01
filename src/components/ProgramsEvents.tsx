@@ -22,14 +22,6 @@ const cleanText = (str: string) => {
 };
 
 export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, onOpenEventDetail }) => {
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  // Touch handlers for mobile swipe
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
   const defaultEvents = [
     {
       id: '1',
@@ -39,7 +31,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
       duration: '45 min',
       focus: 'Core Strength & Breathing',
       description: 'Gentle mat exercises focused on core activation and controlled breathing.',
-      image: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop'
+      image: '/gallery/upcomingevents/default_1.webp'
     },
     {
       id: '2',
@@ -49,7 +41,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
       duration: '60 min',
       focus: 'Strength & Posture',
       description: 'Equipment-based training designed to tone muscles and improve posture.',
-      image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop'
+      image: '/gallery/upcomingevents/default_2.webp'
     },
     {
       id: '3',
@@ -59,7 +51,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
       duration: '60 min',
       focus: 'Peak Performance',
       description: 'Performance-driven sessions targeting strength, balance, and endurance.',
-      image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop'
+      image: '/gallery/upcomingevents/default_3.webp'
     },
     {
       id: '4',
@@ -69,37 +61,63 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
       duration: '90 min',
       focus: 'Nerve Science & Sound',
       description: 'Ancient Pranayama techniques to reset the nervous system coupled with live acoustic singing bowls.',
-      image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop'
+      image: '/gallery/upcomingevents/default_4.webp'
     }
   ];
 
+  // Render default events instantly (0ms delay), sync live API silently in background
+  const [events, setEvents] = useState<any[]>(defaultEvents);
+  const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Touch handlers for mobile swipe
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
   useEffect(() => {
-    getUpcomingEvents().then((data) => {
-      if (data && data.length > 0) {
-        const mapped = data.map((item: any, idx: number) => {
-          const realImage = item.image || item.banner_image?.url || item.square_image?.url;
-          return {
-            ...item,
-            id: String(item.id || idx + 1),
-            title: cleanText(item.title || item.name || defaultEvents[idx % defaultEvents.length].title),
-            name: cleanText(item.name || item.title || defaultEvents[idx % defaultEvents.length].title),
-            level: item.level || (idx === 0 ? 'Beginner' : idx === 1 ? 'Intermediate' : idx === 2 ? 'Advanced' : 'All Levels'),
-            duration: item.duration || (idx === 0 ? '45 min' : idx === 1 ? '60 min' : '90 min'),
-            focus: item.focus || item.category || (idx === 0 ? 'Core Strength & Breathing' : idx === 1 ? 'Strength & Posture' : 'Peak Performance'),
-            description: cleanText(item.description || defaultEvents[idx % defaultEvents.length].description),
-            image: realImage && realImage.trim() !== '' ? realImage : defaultEvents[idx % defaultEvents.length].image
-          };
-        });
-        setEvents(mapped);
-      } else {
-        setEvents(defaultEvents);
-      }
-      setLoading(false);
-    });
+    let isMounted = true;
+    getUpcomingEvents()
+      .then((data) => {
+        if (!isMounted) return;
+        if (data && data.length > 0) {
+          const mapped = data.map((item: any, idx: number) => {
+            const realImage = item.image || item.banner_image?.url || item.square_image?.url;
+            return {
+              ...item,
+              id: String(item.id || idx + 1),
+              title: cleanText(item.title || item.name || defaultEvents[idx % defaultEvents.length].title),
+              name: cleanText(item.name || item.title || defaultEvents[idx % defaultEvents.length].title),
+              level: item.level || (idx === 0 ? 'Beginner' : idx === 1 ? 'Intermediate' : idx === 2 ? 'Advanced' : 'All Levels'),
+              duration: item.duration || (idx === 0 ? '45 min' : idx === 1 ? '60 min' : '90 min'),
+              focus: item.focus || item.category || (idx === 0 ? 'Core Strength & Breathing' : idx === 1 ? 'Strength & Posture' : 'Peak Performance'),
+              description: cleanText(item.description || defaultEvents[idx % defaultEvents.length].description),
+              image: realImage && realImage.trim() !== '' ? realImage : defaultEvents[idx % defaultEvents.length].image
+            };
+          });
+          setEvents(mapped);
+        }
+      })
+      .catch(() => {
+        // keep defaultEvents
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const displayList = events.length > 0 ? events : defaultEvents;
   const total = displayList.length;
+
+  // Auto-scroll loop (slides smoothly every 4.5s, pauses when hovered or touched)
+  useEffect(() => {
+    if (isHovered || total <= 1) return;
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % total);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isHovered, total]);
 
   const [lastClickedBtn, setLastClickedBtn] = useState<'prev' | 'next'>('next');
 
@@ -114,6 +132,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    setIsHovered(true);
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
@@ -123,6 +142,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
   };
 
   const handleTouchEnd = () => {
+    setIsHovered(false);
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
     if (distance > 50) {
@@ -179,6 +199,8 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
             {/* Carousel Container */}
             <div
               className="programs-carousel-wrapper"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}

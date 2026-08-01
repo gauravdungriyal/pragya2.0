@@ -62,8 +62,8 @@ export const App: React.FC = () => {
 
     const observerOptions: IntersectionObserverInit = {
       root: null,
-      rootMargin: '0px 0px -40px 0px',
-      threshold: 0.06,
+      rootMargin: '0px 0px 100px 0px',
+      threshold: 0.01,
     };
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
@@ -86,7 +86,8 @@ export const App: React.FC = () => {
         }
 
         if (!el.classList.contains('is-revealed')) {
-          // Only add stagger if no explicit delay class already set
+          // Do not add artificial stagger delay to top-level section containers
+          const isSection = el.tagName === 'SECTION' || el.id === 'programs' || el.classList.contains('programs-section');
           const hasDelay = STAGGER_DELAYS.some((d) => el.classList.contains(d)) ||
             el.classList.contains('delay-100') ||
             el.classList.contains('delay-200') ||
@@ -94,7 +95,7 @@ export const App: React.FC = () => {
             el.classList.contains('delay-400') ||
             el.classList.contains('delay-500');
 
-          if (!hasDelay) {
+          if (!hasDelay && !isSection) {
             el.classList.add(STAGGER_DELAYS[staggerIdx % STAGGER_DELAYS.length]);
             staggerIdx++;
           }
