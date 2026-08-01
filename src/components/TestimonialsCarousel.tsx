@@ -212,7 +212,7 @@ export const TestimonialsCarousel: React.FC = () => {
           display: inline-block;
           width: 24px;
           height: 2px;
-          background-color: #E05297;
+          background-color: #944426;
           border-radius: 2px;
         }
         .testimonials-heading {

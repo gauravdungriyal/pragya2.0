@@ -275,7 +275,7 @@ export const WhyChooseUs: React.FC = () => {
             top: -1px !important;
             width: 32px !important;
             height: 3px !important;
-            background-color: #E05297 !important;
+            background-color: #944426 !important;
             border-radius: 2px !important;
           }
           .why-us-feature-list {

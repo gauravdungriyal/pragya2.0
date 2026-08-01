@@ -209,17 +209,6 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
             Questions? We're Here to Help.
           </p>
 
-          {/* Pink Accent Circle */}
-          <div
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              border: '2px solid #E05297',
-              margin: '0 auto 16px auto'
-            }}
-          />
-
           <button
             onClick={() => onOpenBooking && onOpenBooking('inquiry', 'General Inquiry')}
             style={{

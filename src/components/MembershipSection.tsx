@@ -144,17 +144,6 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
       >
         {/* Header Tag & Title */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          {/* Pink Accent Circle */}
-          <div
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              border: '2px solid #E879F9',
-              margin: '0 auto 8px auto'
-            }}
-          />
-
           <span
             style={{
               fontSize: '11.5px',
