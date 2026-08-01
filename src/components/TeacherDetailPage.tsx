@@ -15,6 +15,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
   const [loadingSchedule, setLoadingSchedule] = useState<boolean>(true);
   const [selectedClassFilter, setSelectedClassFilter] = useState<string>('All');
   const [classDropdownOpen, setClassDropdownOpen] = useState<boolean>(false);
+  const [isBioExpanded, setIsBioExpanded] = useState<boolean>(false);
 
   // Helper to format date for display and API
   const generateUpcomingDays = () => {
@@ -96,8 +97,19 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
     )
   );
 
-  // Clean description
-  const cleanDescription = (teacher.description || '').replace(/<[^>]*>?/gm, '').trim();
+  // Clean description and decode HTML entities
+  const cleanDescription = (teacher.description || '')
+    .replace(/&rsquo;/g, "'")
+    .replace(/&lsquo;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<[^>]*>?/gm, '')
+    .trim();
+
+  const fullBio = cleanDescription || `${teacher.name} believes that yoga is the ultimate medicine for the human body and mind. Helping practitioners cultivate present-moment awareness, build physical resilience, and rediscover inner stillness is their life's primary mission.`;
+  const shouldTruncateBio = fullBio.length > 220;
+  const displayBio = shouldTruncateBio && !isBioExpanded ? `${fullBio.slice(0, 220)}...` : fullBio;
 
   // Qualifications list
   const qualifications = [
@@ -114,6 +126,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
     <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E' }}>
       {/* Top Header & Breadcrumb Bar */}
       <section
+        className="teacher-top-section"
         style={{
           padding: '130px 32px 48px 32px',
           maxWidth: '1280px',
@@ -123,6 +136,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
         {/* Back Link */}
         <button
           onClick={onBack}
+          className="teacher-back-btn"
           style={{
             background: 'none',
             border: 'none',
@@ -153,8 +167,9 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
 
         {/* Large Display Name in Brand Sans Font */}
         <h1
+          className="teacher-detail-name"
           style={{
-            fontFamily: "var(--font-sans)",
+            fontFamily: "'Neue Montreal', -apple-system, sans-serif",
             fontSize: 'clamp(44px, 6vw, 76px)',
             fontWeight: 700,
             color: '#21201E',
@@ -168,6 +183,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
 
         {/* Language & Studios Metadata Row */}
         <div
+          className="teacher-meta-wrapper"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -179,7 +195,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
             <span style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: '#21201E', minWidth: '90px' }}>
               Language
             </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {languageBadges.map((lang) => (
                 <span
                   key={lang}
@@ -229,7 +245,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
       </section>
 
       {/* Full Width Hero Photo Banner */}
-      <section style={{ width: '100%', height: '540px', overflow: 'hidden', backgroundColor: '#354336', position: 'relative' }}>
+      <section className="teacher-hero-banner" style={{ width: '100%', height: '540px', overflow: 'hidden', backgroundColor: '#354336', position: 'relative' }}>
         <img
           src={bgImage}
           alt={teacher.name}
@@ -252,6 +268,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
 
       {/* Quote & Biography Section */}
       <section
+        className="teacher-bio-section"
         style={{
           maxWidth: '1000px',
           margin: '0 auto',
@@ -261,9 +278,9 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
         {/* About Instructor Heading */}
         <h2
           style={{
-            fontFamily: "var(--font-sans)",
+            fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
             fontSize: 'clamp(28px, 3.5vw, 42px)',
-            fontWeight: 700,
+            fontWeight: 400,
             color: '#21201E',
             margin: '0 0 20px 0',
             letterSpacing: '-0.01em'
@@ -272,18 +289,45 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
           About {teacher.name}
         </h2>
 
-        {/* Bio Text in Neue Montreal Font */}
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: '16.5px',
-            color: '#5A554F',
-            lineHeight: 1.75,
-            margin: '0 0 48px 0'
-          }}
-        >
-          {cleanDescription || `${teacher.name} believes that yoga is the ultimate medicine for the human body and mind. Helping practitioners cultivate present-moment awareness, build physical resilience, and rediscover inner stillness is their life's primary mission.`}
-        </p>
+        {/* Bio Text in Neue Montreal Font with Read More / Read Less Toggle */}
+        <div style={{ marginBottom: '48px' }}>
+          <p
+            className="teacher-bio-desc"
+            style={{
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+              fontSize: '16px',
+              color: '#5A554F',
+              lineHeight: 1.75,
+              margin: '0 0 12px 0'
+            }}
+          >
+            {displayBio}
+          </p>
+
+          {shouldTruncateBio && (
+            <button
+              onClick={() => setIsBioExpanded(!isBioExpanded)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#944426',
+                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                fontSize: '14px',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                cursor: 'pointer',
+                padding: '4px 0',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                textDecoration: 'underline'
+              }}
+            >
+              <span>{isBioExpanded ? 'Read Less' : 'Read More'}</span>
+              <span style={{ fontSize: '11px' }}>{isBioExpanded ? '▲' : '▼'}</span>
+            </button>
+          )}
+        </div>
 
         {/* Qualifications Collapsible Accordion Box */}
         <div
@@ -309,7 +353,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
               textAlign: 'left'
             }}
           >
-            <h3 style={{ fontFamily: "var(--font-sans)", fontSize: '24px', fontWeight: 700, color: '#21201E', margin: 0 }}>
+            <h3 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '24px', fontWeight: 700, color: '#21201E', margin: 0 }}>
               Qualifications
             </h3>
             {qualificationsOpen ? <Minus size={22} color="#944426" /> : <Plus size={22} color="#944426" />}
@@ -319,7 +363,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
             <div style={{ padding: '0 32px 28px 32px', borderTop: '1px solid rgba(148, 68, 38, 0.12)' }}>
               <ul style={{ margin: '16px 0 0 0', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {qualifications.map((q, i) => (
-                  <li key={i} style={{ fontFamily: "var(--font-sans)", fontSize: '15px', color: '#5A554F', lineHeight: 1.6 }}>
+                  <li key={i} style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', color: '#5A554F', lineHeight: 1.6 }}>
                     {q}
                   </li>
                 ))}
@@ -331,6 +375,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
 
       {/* Classes Timetable Section */}
       <section
+        className="teacher-timetable-section"
         style={{
           backgroundColor: '#EAE1D3',
           padding: '80px 32px',
@@ -609,11 +654,44 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
         </div>
       </section>
 
-      {/* Hover CSS */}
+      {/* Hover & Mobile Responsive CSS */}
       <style>{`
         .teacher-day-card:hover {
           transform: translateY(-4px);
           box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08) !important;
+        }
+        @media (max-width: 768px) {
+          .teacher-top-section {
+            padding: 104px 20px 24px 20px !important;
+          }
+          .teacher-back-btn {
+            margin-bottom: 20px !important;
+          }
+          .teacher-detail-name {
+            font-size: 36px !important;
+            margin-bottom: 20px !important;
+            line-height: 1.1 !important;
+          }
+          .teacher-meta-wrapper {
+            gap: 12px !important;
+          }
+          .teacher-hero-banner {
+            height: 320px !important;
+            border-radius: 16px !important;
+            margin: 0 20px !important;
+            width: calc(100% - 40px) !important;
+          }
+          .teacher-bio-section {
+            padding: 40px 20px !important;
+          }
+          .teacher-bio-desc {
+            font-size: 15px !important;
+            line-height: 1.65 !important;
+            margin-bottom: 32px !important;
+          }
+          .teacher-timetable-section {
+            padding: 48px 20px !important;
+          }
         }
       `}</style>
     </div>

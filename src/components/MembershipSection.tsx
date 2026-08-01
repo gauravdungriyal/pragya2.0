@@ -130,6 +130,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
   return (
     <section
       id="membership"
+      className="reveal-on-scroll"
       style={{
         backgroundColor: '#FFFFFF',
         padding: '84px 0',
@@ -199,7 +200,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
             padding: '48px 36px',
             boxShadow: '0 12px 36px rgba(0,0,0,0.03)'
           }}
-          className="membership-cards-container reveal-on-scroll"
+          className="membership-cards-container"
         >
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#944426' }}>

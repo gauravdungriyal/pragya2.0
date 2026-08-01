@@ -30,12 +30,12 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
 
   const coaches = [
     {
-      name: 'Master Aarya',
-      role: 'Head of School',
+      name: 'Daniel Lee',
+      role: 'Master Instructor',
       avatar: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=200&auto=format&fit=crop'
     },
     {
-      name: 'Dr. Yatendra',
+      name: 'Harper James',
       role: 'Mindfulness Specialist',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop'
     },
@@ -60,43 +60,55 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
       color: '#9D9D48'
     },
     {
-      title: 'Awareness',
-      description: 'Cultivating mindfulness, self-awareness, and a deeper understanding of oneself.',
+      title: 'Self-Discovery',
+      description: 'Encouraging self-exploration and mindfulness to awaken your true potential.',
       icon: Eye,
-      color: '#620513'
-    },
-    {
-      title: 'Education',
-      description: 'Providing authentic, traditional, and scientifically-backed teachings to empower individuals.',
-      icon: BookOpen,
-      color: '#00381F'
-    },
-    {
-      title: 'Scientific',
-      description: 'Integrating modern research and knowledge to enhance the effectiveness of yog practices.',
-      icon: Microscope,
       color: '#944426'
     },
     {
-      title: 'Spirituality',
-      description: 'Focus on personal growth, understanding of oneself and building deeper connections with others.',
-      icon: Flame,
-      color: '#D9AE29'
+      title: 'Continuous Growth',
+      description: 'Fostering continuous learning and personal development through yogic practices.',
+      icon: BookOpen,
+      color: '#9D9D48'
     }
   ];
 
   const pillars = [
     {
-      tag: 'LIFE & HARMONY',
-      title: 'Our Mission',
-      description: 'To empower you to cultivate awareness, support you grow and progress to reach a greater level of harmony of the mind, body and soul.',
-      icon: HeartPulse,
+      tag: 'BODY & MIND ACCURACY',
+      title: 'Biomechanical Precision',
+      description: 'Every posture is taught with deep anatomical awareness and alignment to ensure maximum safety, physical longevity, and joint protection.',
+      icon: Microscope,
       badgeColor: '#944426',
       bgColor: '#FFFFFF'
     },
     {
-      tag: 'CONSCIOUS LIVING',
-      title: 'Our Vision',
+      tag: 'ANCIENT LINEAGE',
+      title: 'Traditional Roots',
+      description: 'We preserve the sacred integrity of traditional Hatha & Ashtanga Vinyasa yoga while adapting practices to modern lifestyle needs.',
+      icon: Flame,
+      badgeColor: '#00381F',
+      bgColor: '#FFFFFF'
+    },
+    {
+      tag: 'AUTONOMIC HEALING',
+      title: 'Nervous System Regulation',
+      description: 'Integrating targeted pranayama breathwork and restorative sound baths to lower cortisol, calm autonomic arousal, and restore deep sleep.',
+      icon: HeartPulse,
+      badgeColor: '#D9AE29',
+      bgColor: '#FFFFFF'
+    },
+    {
+      tag: 'COMMUNITY & GUIDANCE',
+      title: 'Personalized Mentorship',
+      description: 'Small class sizes ensure every practitioner receives individualized feedback, hands-on adjustments, and continuous guidance.',
+      icon: Activity,
+      badgeColor: '#944426',
+      bgColor: '#FFFFFF'
+    },
+    {
+      tag: 'PURPOSE & PASSION',
+      title: 'Our Mission',
       description: 'To guide you to embrace conscious living through the transformative power of yog by igniting your passion and curiosity for yog and let you experience the wisdom of yog and harness the transformative energy of yog for vitality.',
       icon: Sun,
       badgeColor: '#00381F',
@@ -113,191 +125,55 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
   ];
 
   return (
-    <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E', paddingBottom: 0 }}>
-      {/* Top Banner Header */}
-      <section
-        style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          padding: '140px 32px 32px 32px'
-        }}
-      >
-        <div
-          className="about-header-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '40px',
-            alignItems: 'center'
-          }}
-        >
-          {/* Main Display Title */}
-          <div>
-            <h1
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontSize: 'clamp(40px, 5.8vw, 72px)',
-                fontWeight: 400,
-                color: '#21201E',
-                lineHeight: 1.08,
-                letterSpacing: '-0.02em',
-                margin: 0
-              }}
-            >
-              Pragya{' '}
-              <span
-                style={{
-                  fontFamily: "'Canela', serif",
-                  fontStyle: 'italic',
-                  fontWeight: 400,
-                  color: '#21201E'
-                }}
-              >
-                Yog School
-              </span>
-            </h1>
-          </div>
+    <div className="about-page-wrapper" style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E', paddingBottom: 0 }}>
+      
+      {/* Top Section Header: Title & Subtitle */}
+      <section className="about-top-section">
+        <div className="about-top-container">
+          {/* Title: Brand Name with Bold Sans + Italic Serif Brand Fonts */}
+          <h1 className="about-hero-title">
+            Pragya <span className="title-serif-italic">Yog School</span>
+          </h1>
 
-          {/* Top Description */}
-          <div>
-            <p
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: '16px',
-                color: '#6B655F',
-                lineHeight: 1.6,
-                margin: 0,
-                maxWidth: '480px'
-              }}
-            >
-              A premier wellness sanctuary combining traditional Hatha & Ashtanga lineage with modern science, dedicated to nurturing holistic well-being, harmony, and inner transformation.
-            </p>
+          {/* Subtitle */}
+          <p className="about-hero-subtitle">
+            A meditative practice of stillness and deep stretches designed to release tension, restore balance, and calm the mind.
+          </p>
+
+          {/* Full-Width Featured Image */}
+          <div className="about-hero-img-box">
+            <img
+              src="/about.png"
+              alt="Yin Yoga practitioner in serene pose at Pragya Yog School"
+              className="about-hero-img"
+            />
           </div>
         </div>
       </section>
 
-      {/* Main Full-Width Hero Image Banner */}
-      <section
-        style={{
-          maxWidth: '1280px',
-          margin: '0 auto 64px auto',
-          padding: '0 32px'
-        }}
-      >
-        <div
-          style={{
-            width: '100%',
-            height: 'clamp(320px, 45vw, 540px)',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            boxShadow: '0 12px 36px rgba(33, 32, 30, 0.08)'
-          }}
-        >
-          <img
-            src="/about.png"
-            alt="Pragya Yog School Sanctuary practitioner in serene pose"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center 35%',
-              display: 'block'
-            }}
-          />
-        </div>
-      </section>
-
-      {/* 2-Column Content Section: About & Benefits + Card Box */}
-      <section
-        style={{
-          maxWidth: '1280px',
-          margin: '0 auto 96px auto',
-          padding: '0 32px'
-        }}
-      >
-        <div
-          className="about-content-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 380px',
-            gap: '64px',
-            alignItems: 'start'
-          }}
-        >
-          {/* Left Column: Narrative & Benefits */}
-          <div>
-            {/* About the School Section */}
-            <div style={{ marginBottom: '48px' }}>
-              <h2
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: '26px',
-                  fontWeight: 700,
-                  color: '#21201E',
-                  marginBottom: '16px',
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                About Pragya Yog School
-              </h2>
-              <p
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: '15.5px',
-                  color: '#5A554F',
-                  lineHeight: 1.7,
-                  margin: 0,
-                  maxWidth: '720px'
-                }}
-              >
+      {/* 2-Column Main Layout Section */}
+      <section className="about-main-section">
+        <div className="about-content-grid">
+          
+          {/* Left Column: About the Class & Benefit */}
+          <div className="about-left-col">
+            {/* About Pragya Yog School */}
+            <div className="about-block">
+              <h2 className="block-title">About Pragya Yog School</h2>
+              <p className="block-desc">
                 Pragya Yog School is a holistic sanctuary dedicated to traditional Hatha, Ashtanga, Yin Yoga, and therapeutic sound healing. Guided by ancient lineage and modern physiological science, our sanctuary empowers students to cultivate awareness, deepen their practice, and experience true mind-body harmony.
               </p>
             </div>
 
-            {/* Benefits Section */}
-            <div>
-              <h2
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: '26px',
-                  fontWeight: 700,
-                  color: '#21201E',
-                  marginBottom: '24px',
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                Benefit
-              </h2>
+            {/* Benefit List */}
+            <div className="benefit-block">
+              <h2 className="block-title">Benefit</h2>
 
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <ul className="benefit-list">
                 {benefits.map((item, idx) => (
-                  <li
-                    key={idx}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '14px',
-                      fontFamily: "var(--font-sans)",
-                      fontSize: '15px',
-                      color: '#4A4540',
-                      lineHeight: 1.4
-                    }}
-                  >
-                    {/* Rounded Circular Check Icon */}
-                    <div
-                      style={{
-                        width: '22px',
-                        height: '22px',
-                        borderRadius: '50%',
-                        backgroundColor: '#EAE1D3',
-                        border: '1px solid rgba(33, 32, 30, 0.12)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}
-                    >
-                      <Check size={12} color="#21201E" strokeWidth={2.5} />
+                  <li key={idx} className="benefit-item">
+                    <div className="check-badge">
+                      <Check size={13} color="#21201E" strokeWidth={2.5} />
                     </div>
                     <span>{item}</span>
                   </li>
@@ -306,141 +182,48 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
             </div>
           </div>
 
-          {/* Right Column: Key Details Card Box */}
-          <div
-            style={{
-              backgroundColor: '#EAE1D3',
-              borderRadius: '20px',
-              padding: '36px 32px',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.03)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '24px'
-            }}
-          >
-            {/* Level */}
-            <div>
-              <div style={{ fontSize: '12px', color: '#7A756F', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Level
-              </div>
-              <div style={{ fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
-                Beginner
-              </div>
-            </div>
+          {/* Right Column: Spec Key Details Card Box */}
+          <div className="about-spec-card">
+            <div className="spec-table-grid">
+              <div className="spec-label">Level</div>
+              <div className="spec-value">Beginner</div>
 
-            {/* Schedule */}
-            <div>
-              <div style={{ fontSize: '12px', color: '#7A756F', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Schedule
-              </div>
-              <div style={{ fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
-                Mon, Wed, Fri
-              </div>
-            </div>
+              <div className="spec-label">Schedule</div>
+              <div className="spec-value">Mon, Wed, Fri</div>
 
-            {/* Duration */}
-            <div>
-              <div style={{ fontSize: '12px', color: '#7A756F', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Duration
-              </div>
-              <div style={{ fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
-                60 minutes
-              </div>
-            </div>
+              <div className="spec-label">Duration</div>
+              <div className="spec-value">60 minutes</div>
 
-            {/* Type */}
-            <div>
-              <div style={{ fontSize: '12px', color: '#7A756F', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Type
-              </div>
-              <div style={{ fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
-                Restorative & Meditative
-              </div>
-            </div>
+              <div className="spec-label">Type</div>
+              <div className="spec-value">Restorative & Meditative</div>
 
-            {/* Coaches */}
-            <div>
-              <div style={{ fontSize: '12px', color: '#7A756F', fontWeight: 500, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Coaches
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div className="spec-label label-coaches">Coaches</div>
+              <div className="coaches-pills-list">
                 {coaches.map((coach, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '999px',
-                      padding: '4px 14px 4px 4px',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
-                    }}
-                  >
-                    <img
-                      src={coach.avatar}
-                      alt={coach.name}
-                      style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#21201E' }}>
-                      {coach.name}
-                    </span>
+                  <div key={idx} className="coach-pill">
+                    <img src={coach.avatar} alt={coach.name} className="coach-avatar" />
+                    <span className="coach-name">{coach.name}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Book Now Action Button */}
+            {/* CTA Button */}
             <button
               onClick={() => onOpenBooking('class', 'Yin Yoga Session')}
-              style={{
-                marginTop: '12px',
-                width: '100%',
-                backgroundColor: '#21201E',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '14px 24px',
-                fontSize: '14px',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#944426';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#21201E';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
+              className="about-book-btn"
             >
               <span>BOOK THIS CLASS</span>
               <ArrowRight size={16} />
             </button>
           </div>
+
         </div>
       </section>
 
-      {/* NEW SECTION 1: Our Elements */}
-      <section
-        style={{
-          maxWidth: '1280px',
-          margin: '0 auto 96px auto',
-          padding: '0 32px'
-        }}
-      >
-        <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 56px auto' }}>
+      {/* SECTION 2: Our Elements */}
+      <section className="about-elements-section">
+        <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 48px auto' }}>
           <span
             style={{
               fontSize: '12px',
@@ -452,103 +235,57 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
               marginBottom: '10px'
             }}
           >
-            — CORE PILLARS —
+            — CORE VALUES —
           </span>
           <h2
             style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: 'clamp(32px, 4vw, 48px)',
+              fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+              fontSize: 'clamp(28px, 3.8vw, 42px)',
               fontWeight: 400,
               color: '#21201E',
-              margin: '0 0 14px 0',
+              margin: 0,
               lineHeight: 1.15
             }}
           >
-            Our Elements
+            Guided by Wisdom & Purpose
           </h2>
-          <p style={{ fontFamily: "var(--font-sans)", fontSize: '15px', color: '#6B655F', lineHeight: 1.6, margin: 0 }}>
-            Rooted in ancient yogic philosophy and refined through modern research to support your transformational journey.
-          </p>
         </div>
 
-        {/* 6 Grid Cards */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-            gap: '24px'
-          }}
-        >
+        <div className="elements-grid">
           {elements.map((item, idx) => {
-            const IconComp = item.icon;
+            const IconComponent = item.icon;
             return (
-              <div
-                key={idx}
-                className="element-card"
-                style={{
-                  backgroundColor: '#EAE1D3',
-                  borderRadius: '20px',
-                  padding: '32px',
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '16px'
-                }}
-              >
+              <div key={idx} className="element-card">
                 <div
                   style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '14px',
-                    backgroundColor: '#FFFFFF',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    backgroundColor: '#EAE1D3',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
+                    marginBottom: '20px',
+                    color: item.color
                   }}
                 >
-                  <IconComp size={22} color={item.color} />
+                  <IconComponent size={22} />
                 </div>
-
-                <div>
-                  <h3
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: '20px',
-                      fontWeight: 700,
-                      color: '#21201E',
-                      margin: '0 0 8px 0'
-                    }}
-                  >
-                    {item.title}
-                  </h3>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: '14.5px',
-                      color: '#5A554F',
-                      lineHeight: 1.65,
-                      margin: 0
-                    }}
-                  >
-                    {item.description}
-                  </p>
-                </div>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#21201E', marginBottom: '10px' }}>
+                  {item.title}
+                </h3>
+                <p style={{ fontSize: '14px', color: '#6B655F', lineHeight: 1.6, margin: 0 }}>
+                  {item.description}
+                </p>
               </div>
             );
           })}
         </div>
       </section>
 
-      {/* NEW SECTION 2: Our Mission, Vision and Goal */}
-      <section
-        style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          padding: '0 32px'
-        }}
-      >
-        <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 56px auto' }}>
+      {/* SECTION 3: Pillars & Philosophy Grid */}
+      <section className="about-pillars-section">
+        <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 48px auto' }}>
           <span
             style={{
               fontSize: '12px',
@@ -560,256 +297,466 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
               marginBottom: '10px'
             }}
           >
-            — PURPOSE & DIRECTION —
+            — OUR FOUNDATION —
           </span>
           <h2
             style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: 'clamp(32px, 4vw, 48px)',
+              fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+              fontSize: 'clamp(28px, 3.8vw, 42px)',
               fontWeight: 400,
               color: '#21201E',
               margin: 0,
               lineHeight: 1.15
             }}
           >
-            Our Mission, Vision and Goal
+            Pillars of Pragya Sanctuary
           </h2>
         </div>
 
-        {/* 3 Featured Columns */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-            gap: '32px'
-          }}
-        >
-          {pillars.map((pillar, idx) => {
-            const IconComp = pillar.icon;
+        <div className="pillars-grid">
+          {pillars.map((item, idx) => {
+            const IconComponent = item.icon;
             return (
-              <div
-                key={idx}
-                className="pillar-card"
-                style={{
-                  backgroundColor: pillar.bgColor,
-                  borderRadius: '24px',
-                  padding: '40px 36px',
-                  boxShadow: '0 10px 30px rgba(33, 32, 30, 0.05)',
-                  border: '1px solid rgba(39, 39, 39, 0.08)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '24px',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <div>
-                  {/* Top Tag & Icon Row */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                    <span
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        letterSpacing: '0.1em',
-                        color: pillar.badgeColor,
-                        backgroundColor: '#F5EFE5',
-                        padding: '6px 14px',
-                        borderRadius: '999px',
-                        textTransform: 'uppercase'
-                      }}
-                    >
-                      {pillar.tag}
-                    </span>
-
-                    <div
-                      style={{
-                        width: '42px',
-                        height: '42px',
-                        borderRadius: '50%',
-                        backgroundColor: '#F5EFE5',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <IconComp size={20} color={pillar.badgeColor} />
-                    </div>
+              <div key={idx} className="pillar-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                  <span
+                    style={{
+                      fontSize: '10.5px',
+                      fontWeight: 700,
+                      letterSpacing: '0.12em',
+                      color: item.badgeColor,
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {item.tag}
+                  </span>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      backgroundColor: '#F5EFE5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: item.badgeColor
+                    }}
+                  >
+                    <IconComponent size={18} />
                   </div>
-
-                  {/* Title */}
-                  <h3
-                    style={{
-                      fontFamily: "var(--font-serif)",
-                      fontSize: '32px',
-                      fontWeight: 400,
-                      color: '#21201E',
-                      margin: '0 0 16px 0'
-                    }}
-                  >
-                    {pillar.title}
-                  </h3>
-
-                  {/* Description */}
-                  <p
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: '15px',
-                      color: '#5A554F',
-                      lineHeight: 1.7,
-                      margin: 0
-                    }}
-                  >
-                    {pillar.description}
-                  </p>
                 </div>
 
-                <div style={{ height: '3px', width: '48px', backgroundColor: pillar.badgeColor, borderRadius: '2px' }} />
+                <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#21201E', marginBottom: '12px' }}>
+                  {item.title}
+                </h3>
+                <p style={{ fontSize: '14.5px', color: '#5A554F', lineHeight: 1.6, margin: 0 }}>
+                  {item.description}
+                </p>
               </div>
             );
           })}
         </div>
       </section>
 
-      {/* NEW SECTION 3: Pre-Footer Call to Action Banner */}
-      <section
-        style={{
-          width: '100%',
-          marginTop: '96px',
-          marginBottom: 0,
-          position: 'relative',
-          minHeight: '440px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Background Image */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `url('https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=2000&auto=format&fit=crop')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 35%',
-            zIndex: 0
-          }}
-        />
-
-        {/* Dark Gradient Overlay */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, rgba(25, 23, 20, 0.45) 0%, rgba(20, 18, 15, 0.65) 100%)',
-            zIndex: 1
-          }}
-        />
-
-        {/* Content Container */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 2,
-            maxWidth: '820px',
-            textAlign: 'center',
-            padding: '64px 24px',
-            color: '#FFFFFF'
-          }}
-        >
-          <h2
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 'clamp(36px, 5.5vw, 64px)',
-              fontWeight: 700,
-              color: '#FFFFFF',
-              margin: '0 0 16px 0',
-              lineHeight: 1.15,
-              letterSpacing: '-0.02em'
-            }}
-          >
-            Ready to{' '}
-            <span
-              style={{
-                fontFamily: "'Canela', serif",
-                fontStyle: 'italic',
-                fontWeight: 400
-              }}
-            >
-              Embrace
-            </span>{' '}
-            Stillness?
+      {/* Bottom CTA Banner with Rich Serene Background Image */}
+      <section className="about-bottom-cta">
+        <div className="about-bottom-cta-overlay" />
+        <div className="about-bottom-cta-content">
+          <h2 className="cta-heading">
+            Ready to <span className="cta-italic">Embrace</span><br />Stillness?
           </h2>
-
-          <p
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 'clamp(14.5px, 1.8vw, 17px)',
-              fontWeight: 400,
-              color: 'rgba(255, 255, 255, 0.88)',
-              maxWidth: '560px',
-              margin: '0 auto 36px auto',
-              lineHeight: 1.6
-            }}
-          >
-            Join our Yin Yoga class and experience the deep release, calm, and balance your body and mind deserve.
+          <p className="cta-subtext">
+            Join Pragya Yog School and experience the deep release, calm, and balance your body and mind deserve.
           </p>
 
           <button
-            onClick={() => onOpenBooking('class', 'Book Your Spot - Yin Yoga')}
-            style={{
-              backgroundColor: '#FFFFFF',
-              color: '#21201E',
-              border: 'none',
-              borderRadius: '999px',
-              padding: '16px 36px',
-              fontSize: '15px',
-              fontWeight: 700,
-              letterSpacing: '0.02em',
-              cursor: 'pointer',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
-              transition: 'all 0.25s ease',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#F5EFE5';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#FFFFFF';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2)';
-            }}
+            onClick={() => onOpenBooking('class', 'Book Your Spot - Pragya Yog School')}
+            className="cta-book-btn"
           >
             <span>Book Your Spot</span>
           </button>
         </div>
       </section>
 
-      {/* Responsive Layout & Hover CSS */}
+      {/* Component Styles & Mobile Responsive Specs Matching Reference Screenshot */}
       <style>{`
-        .element-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
-          background-color: #E6DDD0 !important;
+        .about-top-section {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 130px 32px 32px 32px;
         }
-        .pillar-card:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
-          border-color: rgba(148, 68, 38, 0.2) !important;
+        .about-hero-title {
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+          font-size: clamp(38px, 5.5vw, 64px);
+          font-weight: 700;
+          color: #21201E;
+          line-height: 1.08;
+          margin: 0 0 16px 0;
+          letter-spacing: -0.02em;
         }
-        @media (max-width: 900px) {
-          .about-header-grid {
-            grid-template-columns: 1fr !important;
-            gap: 16px !important;
+        .title-serif-italic {
+          font-family: 'BNCringeSerif', 'Canela', Georgia, serif;
+          font-style: italic;
+          font-weight: 400;
+        }
+        .about-hero-subtitle {
+          font-family: var(--font-sans);
+          font-size: 16px;
+          color: #6B655F;
+          line-height: 1.6;
+          margin: 0 0 32px 0;
+          max-width: 620px;
+        }
+        .about-hero-img-box {
+          width: 100%;
+          height: clamp(260px, 42vw, 500px);
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 12px 36px rgba(33, 32, 30, 0.08);
+          margin-bottom: 48px;
+        }
+        .about-hero-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 35%;
+          display: block;
+        }
+        .about-main-section {
+          max-width: 1280px;
+          margin: 0 auto 84px auto;
+          padding: 0 32px;
+        }
+        .about-content-grid {
+          display: grid;
+          gridTemplateColumns: 1fr 380px;
+          gap: 64px;
+          align-items: start;
+        }
+        .block-title {
+          font-family: 'BNCringeSerif', 'Canela', Georgia, serif;
+          font-size: 28px;
+          font-weight: 400;
+          color: #21201E;
+          margin: 0 0 16px 0;
+          letter-spacing: -0.01em;
+        }
+        .block-desc {
+          font-family: var(--font-sans);
+          font-size: 15.5px;
+          color: #5A554F;
+          line-height: 1.7;
+          margin: 0 0 40px 0;
+          max-width: 720px;
+        }
+        .benefit-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .benefit-item {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          font-family: var(--font-sans);
+          font-size: 15px;
+          color: #4A4540;
+          line-height: 1.4;
+        }
+        .check-badge {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background-color: #EAE1D3;
+          border: 1px solid rgba(33, 32, 30, 0.12);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .about-spec-card {
+          background-color: #EAE1D3;
+          border-radius: 20px;
+          padding: 36px 32px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+        .spec-table-grid {
+          display: grid;
+          grid-template-columns: 100px 1fr;
+          row-gap: 20px;
+          align-items: center;
+        }
+        .spec-label {
+          font-size: 14px;
+          color: #7A756F;
+          font-weight: 500;
+        }
+        .label-coaches {
+          align-self: start;
+          padding-top: 6px;
+        }
+        .spec-value {
+          font-size: 15px;
+          font-weight: 700;
+          color: #21201E;
+        }
+        .coaches-pills-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          align-items: flex-start;
+        }
+        .coach-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background-color: #FFFFFF;
+          border-radius: 999px;
+          padding: 4px 14px 4px 4px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+        .coach-avatar {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+        .coach-name {
+          font-size: 13.5px;
+          font-weight: 600;
+          color: #21201E;
+        }
+        .about-book-btn {
+          margin-top: 12px;
+          width: 100%;
+          background-color: #21201E;
+          color: #FFFFFF;
+          border: none;
+          border-radius: 999px;
+          padding: 14px 24px;
+          font-size: 13.5px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        .about-book-btn:hover {
+          background-color: #944426;
+          transform: translateY(-1px);
+        }
+        .about-elements-section {
+          max-width: 1280px;
+          margin: 0 auto 96px auto;
+          padding: 0 32px;
+        }
+        .elements-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 24px;
+        }
+        .element-card {
+          background-color: #EAE1D3;
+          border-radius: 20px;
+          padding: 32px 24px;
+          transition: all 0.3s ease;
+        }
+        .about-pillars-section {
+          max-width: 1280px;
+          margin: 0 auto 96px auto;
+          padding: 0 32px;
+        }
+        .pillars-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
+        }
+        .pillar-card {
+          background-color: #FFFFFF;
+          border-radius: 20px;
+          padding: 36px 28px;
+          border: 1px solid rgba(33, 32, 30, 0.08);
+          transition: all 0.3s ease;
+        }
+        .about-bottom-cta {
+          position: relative;
+          background-image: url('https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=1600&auto=format&fit=crop');
+          background-size: cover;
+          background-position: center center;
+          background-repeat: no-repeat;
+          padding: 120px 32px;
+          margin-top: 64px;
+          overflow: hidden;
+        }
+        .about-bottom-cta-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(20, 18, 16, 0.42) 0%, rgba(255, 255, 255, 0.22) 42%, rgba(255, 255, 255, 0.82) 78%, #FFFFFF 100%);
+          z-index: 1;
+        }
+        .about-bottom-cta-content {
+          position: relative;
+          z-index: 2;
+          text-align: center;
+          max-width: 720px;
+          margin: 0 auto;
+        }
+        .cta-heading {
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+          font-size: clamp(38px, 5.2vw, 62px);
+          font-weight: 700;
+          color: #FFFFFF;
+          margin-bottom: 20px;
+          line-height: 1.15;
+          letter-spacing: -0.01em;
+          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .cta-italic {
+          font-family: 'BNCringeSerif', 'Canela', Georgia, serif;
+          font-style: italic;
+          font-weight: 400;
+        }
+        .cta-subtext {
+          font-size: 16px;
+          color: #21201E;
+          font-weight: 500;
+          max-width: 580px;
+          margin: 0 auto 36px auto;
+          line-height: 1.6;
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+        }
+        .cta-book-btn {
+          background-color: #21201E;
+          color: #FFFFFF;
+          border: none;
+          border-radius: 999px;
+          padding: 16px 42px;
+          font-size: 14.5px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          cursor: pointer;
+          box-shadow: 0 8px 24px rgba(33, 32, 30, 0.2);
+          transition: all 0.25s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .cta-book-btn:hover {
+          background-color: #000000;
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Mobile View - Premium Responsive Layout matching Yog Sanctuary aesthetics */
+        @media (max-width: 768px) {
+          .about-top-section {
+            padding: 104px 20px 20px 20px !important;
+          }
+          .about-hero-title {
+            font-size: 40px !important;
+            margin-bottom: 14px !important;
+          }
+          .about-hero-subtitle {
+            font-size: 14.5px !important;
+            margin-bottom: 24px !important;
+            line-height: 1.55 !important;
+            color: #6B655F !important;
+          }
+          .about-hero-img-box {
+            height: 230px !important;
+            border-radius: 12px !important;
+            margin-bottom: 32px !important;
+          }
+          .about-main-section {
+            padding: 0 20px !important;
+            margin-bottom: 56px !important;
           }
           .about-content-grid {
             grid-template-columns: 1fr !important;
-            gap: 40px !important;
+            gap: 36px !important;
+          }
+          .block-title {
+            font-size: 22px !important;
+            margin-bottom: 12px !important;
+          }
+          .block-desc {
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+            margin-bottom: 32px !important;
+          }
+          .benefit-list {
+            gap: 14px !important;
+          }
+          .benefit-item {
+            font-size: 13.5px !important;
+          }
+          .about-spec-card {
+            padding: 24px 20px !important;
+            border-radius: 18px !important;
+            background-color: #EAE4D9 !important;
+            margin-top: 12px !important;
+          }
+          .spec-table-grid {
+            grid-template-columns: 90px 1fr !important;
+            row-gap: 18px !important;
+          }
+          .spec-label {
+            font-size: 13.5px !important;
+          }
+          .spec-value {
+            font-size: 14px !important;
+          }
+          .about-elements-section, .about-pillars-section {
+            padding: 0 20px !important;
+            margin-bottom: 56px !important;
+          }
+          .elements-grid, .pillars-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .element-card {
+            padding: 24px 20px !important;
+            border-radius: 18px !important;
+          }
+          .pillar-card {
+            padding: 24px 20px !important;
+            border-radius: 18px !important;
+          }
+          .pillar-card h3 {
+            font-size: 18px !important;
+            margin-bottom: 8px !important;
+          }
+          .pillar-card p {
+            font-size: 13.5px !important;
+            line-height: 1.55 !important;
+          }
+          .about-bottom-cta {
+            padding: 56px 20px !important;
+            margin-top: 48px !important;
+          }
+          .about-bottom-cta h2 {
+            font-size: 32px !important;
+            line-height: 1.15 !important;
+            margin-bottom: 16px !important;
+          }
+          .about-bottom-cta p {
+            font-size: 14px !important;
+            line-height: 1.55 !important;
+            margin-bottom: 28px !important;
+          }
+          .cta-book-btn {
+            width: 100% !important;
+            padding: 16px 24px !important;
+            font-size: 14px !important;
           }
         }
       `}</style>

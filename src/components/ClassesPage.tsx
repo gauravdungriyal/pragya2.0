@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Signal, Clock, Calendar, Zap, Sparkles, Heart, Users, MapPin, User, ChevronRight, ChevronLeft, RefreshCw, SlidersHorizontal, Check } from 'lucide-react';
+import { Signal, Clock, Calendar, Zap, Sparkles, Heart, Users, MapPin, User, ChevronRight, ChevronLeft, RefreshCw, SlidersHorizontal, Check, ArrowUpRight } from 'lucide-react';
 import { getScheduleByDate } from '../services/api';
 import { ClassScheduleItem } from '../types';
 
@@ -154,12 +154,13 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
 
   return (
     <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E' }}>
-      {/* Dark Forest Green Top Banner */}
+      {/* Top Hero Banner */}
       <section
+        className="classes-top-banner"
         style={{
-          backgroundColor: '#354336',
-          color: '#FFFFFF',
-          padding: '140px 32px 72px 32px'
+          backgroundColor: '#F5EFE5',
+          color: '#21201E',
+          padding: '140px 32px 64px 32px'
         }}
       >
         <div
@@ -176,11 +177,12 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
           {/* Title in Brand Serif & Canela Italic */}
           <div>
             <h1
+              className="classes-top-title"
               style={{
                 fontFamily: "var(--font-serif)",
                 fontSize: 'clamp(44px, 6.5vw, 76px)',
                 fontWeight: 400,
-                color: '#FFFFFF',
+                color: '#21201E',
                 lineHeight: 1.08,
                 letterSpacing: '-0.02em',
                 margin: 0
@@ -188,11 +190,12 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             >
               Explore{' '}
               <span
+                className="classes-title-span"
                 style={{
-                  fontFamily: "'Canela', Georgia, serif",
+                  fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
                   fontStyle: 'italic',
                   fontWeight: 400,
-                  color: '#FFFFFF'
+                  color: '#21201E'
                 }}
               >
                 Our Classes
@@ -203,10 +206,11 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
           {/* Subtitle Description in Neue Montreal */}
           <div>
             <p
+              className="classes-top-subtitle"
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: '16px',
-                color: 'rgba(255, 255, 255, 0.85)',
+                color: '#6B655F',
                 lineHeight: 1.6,
                 margin: 0,
                 maxWidth: '480px'
@@ -246,8 +250,9 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
           </p>
         </div>
 
-        {/* 3-Column Grid Cards */}
+        {/* Desktop 3-Column Grid Cards */}
         <div
+          className="classes-desktop-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
@@ -368,6 +373,45 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                     Join Class
                   </button>
                 </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Mobile Vertical Stacked Cards (Matching Reference Screenshot Exactly) */}
+        <div className="classes-mobile-list">
+          {displayClasses.map((item) => (
+            <div
+              key={item.id}
+              className="classes-ref-card"
+              onClick={() => onOpenBooking('class', item.title, item)}
+            >
+              {/* Top Header Row: Level Tag + White Circle Arrow Button */}
+              <div className="card-top-row">
+                <span className="card-level">{item.level || 'Beginner'}</span>
+                <div className="card-arrow-circle">
+                  <ArrowUpRight size={18} color="#21201E" />
+                </div>
+              </div>
+
+              {/* Class Title */}
+              <h3 className="card-title">{item.title}</h3>
+
+              {/* Meta Details Row */}
+              <div className="card-meta-row">
+                <div className="meta-item">
+                  <Clock size={14} color="#7A756F" />
+                  <span>{item.duration || '60 minutes'}</span>
+                </div>
+                <div className="meta-item">
+                  <Calendar size={14} color="#7A756F" />
+                  <span>{item.schedule || 'Mon, Wed, Fri'}</span>
+                </div>
+              </div>
+
+              {/* Bottom Featured Image */}
+              <div className="card-img-box">
+                <img src={item.image} alt={item.title} className="card-img" />
               </div>
             </div>
           ))}
@@ -1004,7 +1048,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
         </div>
       </section>
 
-      {/* Hover & Responsive CSS */}
+      {/* Hover & Responsive CSS Matching Reference UI */}
       <style>{`
         .ideal-class-card:hover {
           transform: translateY(-4px);
@@ -1017,10 +1061,105 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
         }
+        .classes-mobile-list {
+          display: none;
+        }
         @media (max-width: 992px) {
           .classes-header-grid {
             grid-template-columns: 1fr !important;
             gap: 16px !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .classes-top-banner {
+            background-color: #F5EFE5 !important;
+            color: #21201E !important;
+            padding: 104px 20px 32px 20px !important;
+          }
+          .classes-top-title {
+            font-size: 38px !important;
+            color: #21201E !important;
+            margin-bottom: 12px !important;
+          }
+          .classes-title-span {
+            color: #21201E !important;
+          }
+          .classes-top-subtitle {
+            font-size: 14.5px !important;
+            color: #6B655F !important;
+            line-height: 1.55 !important;
+          }
+          .classes-desktop-grid {
+            display: none !important;
+          }
+          .classes-mobile-list {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 20px !important;
+          }
+          .classes-ref-card {
+            background-color: #EAE1D3 !important;
+            border-radius: 20px !important;
+            padding: 24px 20px 20px 20px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03) !important;
+            transition: transform 0.25s ease !important;
+          }
+          .classes-ref-card:active {
+            transform: scale(0.99) !important;
+          }
+          .card-top-row {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            margin-bottom: 6px !important;
+          }
+          .card-level {
+            font-size: 13.5px !important;
+            color: #7A756F !important;
+            font-weight: 500 !important;
+          }
+          .card-arrow-circle {
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 50% !important;
+            background-color: #FFFFFF !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+          }
+          .card-title {
+            font-size: 22px !important;
+            font-weight: 700 !important;
+            color: #21201E !important;
+            margin: 0 0 12px 0 !important;
+          }
+          .card-meta-row {
+            display: flex !important;
+            align-items: center !important;
+            gap: 18px !important;
+            margin-bottom: 16px !important;
+          }
+          .meta-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            font-size: 13.5px !important;
+            color: #6B655F !important;
+          }
+          .card-img-box {
+            width: 100% !important;
+            height: 200px !important;
+            border-radius: 14px !important;
+            overflow: hidden !important;
+          }
+          .card-img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
           }
         }
       `}</style>

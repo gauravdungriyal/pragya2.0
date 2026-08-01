@@ -86,19 +86,19 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
       {/* Top Banner */}
       <section
         style={{
-          backgroundColor: '#354336',
-          color: '#FFFFFF',
-          padding: '140px 32px 72px 32px',
+          backgroundColor: '#F5EFE5',
+          color: '#21201E',
+          padding: '140px 32px 64px 32px',
           textAlign: 'center'
         }}
       >
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           <h1
             style={{
-              fontFamily: "var(--font-serif)",
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
               fontSize: 'clamp(44px, 6.5vw, 76px)',
-              fontWeight: 400,
-              color: '#FFFFFF',
+              fontWeight: 700,
+              color: '#21201E',
               lineHeight: 1.08,
               letterSpacing: '-0.02em',
               margin: '0 0 16px 0'
@@ -107,10 +107,10 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
             Your Yoga{' '}
             <span
               style={{
-                fontFamily: "'Canela', serif",
+                fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
                 fontStyle: 'italic',
                 fontWeight: 400,
-                color: '#FFFFFF'
+                color: '#21201E'
               }}
             >
               Guides
@@ -118,9 +118,9 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
           </h1>
           <p
             style={{
-              fontFamily: "var(--font-sans)",
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
               fontSize: '16.5px',
-              color: 'rgba(255, 255, 255, 0.85)',
+              color: '#6B655F',
               lineHeight: 1.6,
               margin: 0
             }}

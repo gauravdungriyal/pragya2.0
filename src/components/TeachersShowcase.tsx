@@ -39,6 +39,7 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
   return (
     <section
       id="teachers"
+      className="reveal-on-scroll"
       style={{
         position: 'relative',
         backgroundColor: '#FFFFFF',
@@ -169,7 +170,7 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
 
             {/* Stacked Card Deck */}
             <div
-              className="teachers-card-deck reveal-on-scroll"
+              className="teachers-card-deck"
               style={{
                 position: 'relative',
                 width: '320px',
