@@ -286,7 +286,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
               </div>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <a
-                  href="https://facebook.com"
+                  href="https://www.facebook.com/pragyahk"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Facebook"
@@ -306,7 +306,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                   <Facebook size={17} />
                 </a>
                 <a
-                  href="https://twitter.com"
+                  href="https://www.x.com/pragyahk"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Twitter (X)"
@@ -326,7 +326,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                   <Twitter size={17} />
                 </a>
                 <a
-                  href="https://youtube.com"
+                  href="https://www.youtube.com/@pys_hk"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="YouTube"
@@ -346,7 +346,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                   <Youtube size={17} />
                 </a>
                 <a
-                  href="https://linkedin.com"
+                  href="https://www.linkedin.com/company/pyshk"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="LinkedIn"
@@ -366,7 +366,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                   <Linkedin size={17} />
                 </a>
                 <a
-                  href="https://instagram.com"
+                  href="https://www.instagram.com/pragyahk"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Instagram"
