@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Check, 
   ArrowRight, 
@@ -13,6 +13,7 @@ import {
   Sun,
   HeartPulse
 } from 'lucide-react';
+import { getTeachers } from '../services/api';
 
 interface AboutPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
@@ -21,30 +22,50 @@ interface AboutPageProps {
 
 export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
   const benefits = [
-    'Enhances flexibility and joint mobility',
-    'Improves circulation and energy flow',
-    'Promotes relaxation and stress relief',
-    'Increases mindfulness and self-awareness',
+    'Enhances flexibility, strength, and joint mobility',
+    'Improves circulation and subtle energy flow',
+    'Promotes deep cellular relaxation and stress relief',
+    'Increases mindfulness and bodily self-awareness',
     'Balances the nervous system for better sleep and calmness'
   ];
 
-  const coaches = [
+  const defaultCoaches = [
     {
-      name: 'Daniel Lee',
-      role: 'Master Instructor',
-      avatar: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=200&auto=format&fit=crop'
+      name: 'Master Aarya Kuldeep',
+      role: 'Founder & PhD Research Scholar',
+      avatar: 'https://pragya-yog.com/uploads/teachers/1744359416.webp'
     },
     {
-      name: 'Harper James',
-      role: 'Mindfulness Specialist',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop'
+      name: 'Angela Lee',
+      role: 'Senior Vinyasa & Pilates Master',
+      avatar: 'https://pragya-yog.com/uploads/teachers/1744359563.webp'
     },
     {
-      name: 'Chloe Bennett',
-      role: 'Yin & Restorative Guide',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop'
+      name: 'Master Shoaib M',
+      role: 'Master Yoga Therapist & Neuropathy',
+      avatar: '/shoaib.webp'
+    },
+    {
+      name: 'Charlotte Chiu',
+      role: 'Sound Healing & Yin Yoga Guide',
+      avatar: 'https://pragya-yog.com/uploads/teachers/1744359589.webp'
     }
   ];
+
+  const [coaches, setCoaches] = useState(defaultCoaches);
+
+  useEffect(() => {
+    getTeachers().then((data) => {
+      if (data && data.length > 0) {
+        const mapped = data.slice(0, 4).map((t) => ({
+          name: t.name,
+          role: t.designation || 'Yog Instructor',
+          avatar: t.image || defaultCoaches[0].avatar
+        }));
+        setCoaches(mapped);
+      }
+    });
+  }, []);
 
   const elements = [
     {
@@ -186,16 +207,16 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           <div className="about-spec-card">
             <div className="spec-table-grid">
               <div className="spec-label">Level</div>
-              <div className="spec-value">Beginner</div>
+              <div className="spec-value">All Levels</div>
 
               <div className="spec-label">Schedule</div>
-              <div className="spec-value">Mon, Wed, Fri</div>
+              <div className="spec-value">Mon – Sun • Daily Sessions</div>
 
               <div className="spec-label">Duration</div>
-              <div className="spec-value">60 minutes</div>
+              <div className="spec-value">60 – 90 minutes</div>
 
               <div className="spec-label">Type</div>
-              <div className="spec-value">Restorative & Meditative</div>
+              <div className="spec-value">Classical Hatha, Vinyasa, Yin & Sound</div>
 
               <div className="spec-label label-coaches">Coaches</div>
               <div className="coaches-pills-list">
@@ -210,7 +231,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
 
             {/* CTA Button */}
             <button
-              onClick={() => onOpenBooking('class', 'Yin Yoga Session')}
+              onClick={() => onOpenBooking('class', 'Pragya Yog Session')}
               className="about-book-btn"
             >
               <span>BOOK THIS CLASS</span>
