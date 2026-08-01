@@ -91,11 +91,11 @@ export const BackToTopButton: React.FC = () => {
       aria-label="Back to top"
       style={{
         position: 'fixed',
-        bottom: '36px',
-        right: '28px',
+        bottom: '16px',
+        right: '20px',
         zIndex: 1000,
-        width: '48px',
-        height: '48px',
+        width: '44px',
+        height: '44px',
         borderRadius: '50%',
         border: 'none',
         cursor: 'pointer',

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, BarChart2, Clock, Target, ArrowUpRight, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart2, Clock, Target, RefreshCw } from 'lucide-react';
 import { getUpcomingEvents } from '../services/api';
 
 interface ProgramsEventsProps {
@@ -23,6 +23,10 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+
+  // Touch handlers for mobile swipe
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const defaultEvents = [
     {
@@ -66,15 +70,18 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
   useEffect(() => {
     getUpcomingEvents().then((data) => {
       if (data && data.length > 0) {
-        const mapped = data.map((item, idx) => ({
-          id: String(item.id || idx + 1),
-          title: cleanText(item.title || defaultEvents[idx % defaultEvents.length].title),
-          level: idx === 0 ? 'Beginner' : idx === 1 ? 'Intermediate' : idx === 2 ? 'Advanced' : 'All Levels',
-          duration: idx === 0 ? '45 min' : idx === 1 ? '60 min' : '90 min',
-          focus: idx === 0 ? 'Core Strength & Breathing' : idx === 1 ? 'Strength & Posture' : 'Peak Performance',
-          description: cleanText(item.description || defaultEvents[idx % defaultEvents.length].description),
-          image: defaultEvents[idx % defaultEvents.length].image
-        }));
+        const mapped = data.map((item: any, idx: number) => {
+          const realImage = item.image || item.banner_image?.url || item.square_image?.url;
+          return {
+            id: String(item.id || idx + 1),
+            title: cleanText(item.title || item.name || defaultEvents[idx % defaultEvents.length].title),
+            level: item.level || (idx === 0 ? 'Beginner' : idx === 1 ? 'Intermediate' : idx === 2 ? 'Advanced' : 'All Levels'),
+            duration: item.duration || (idx === 0 ? '45 min' : idx === 1 ? '60 min' : '90 min'),
+            focus: item.focus || item.category || (idx === 0 ? 'Core Strength & Breathing' : idx === 1 ? 'Strength & Posture' : 'Peak Performance'),
+            description: cleanText(item.description || defaultEvents[idx % defaultEvents.length].description),
+            image: realImage && realImage.trim() !== '' ? realImage : defaultEvents[idx % defaultEvents.length].image
+          };
+        });
         setEvents(mapped);
       } else {
         setEvents(defaultEvents);
@@ -94,13 +101,32 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
     setActiveIndex((prev) => (prev - 1 + total) % total);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 50) {
+      handleNext();
+    } else if (distance < -50) {
+      handlePrev();
+    }
+  };
+
   return (
     <section
       id="programs"
       className="programs-section reveal-on-scroll"
       style={{
         backgroundColor: '#FFFFFF',
-        padding: '84px 0',
+        padding: '52px 0',
         color: '#21201E',
         position: 'relative',
         overflow: 'hidden'
@@ -132,268 +158,88 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
 
         {/* Loading State */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#944426' }}>
-            <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px auto', display: 'block' }} />
-            <p style={{ color: '#8A8580' }}>Loading upcoming events...</p>
+          <div style={{ textAlign: 'center', padding: '40px', color: '#944426' }}>
+            <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 8px auto', display: 'block' }} />
+            <p style={{ color: '#8A8580', fontSize: '14px' }}>Loading upcoming events...</p>
           </div>
         ) : (
           <>
-            {/* Desktop Track View */}
-            <div className="programs-desktop-track-wrapper">
+            {/* Carousel Container */}
+            <div
+              className="programs-carousel-wrapper"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               <div
-                className="programs-desktop-track"
+                className="programs-carousel-track"
                 style={{
-                  transform: `translateX(calc(-${activeIndex} * (33.333% + 9.33px)))`
+                  transform: `var(--track-transform)`
                 }}
               >
-                {displayList.map((item, idx) => {
-                  const isActive = idx === activeIndex;
-
-                  return (
-                    <div
-                      key={item.id || idx}
-                      onClick={() => {
-                        setActiveIndex(idx);
-                        onOpenBooking('event', item.title);
-                      }}
-                      style={{
-                        width: 'calc(33.333% - 18.66px)',
-                        flexShrink: 0,
-                        marginRight: '28px',
-                        backgroundColor: isActive ? '#21201E' : '#FFFFFF',
-                        color: isActive ? '#FFFFFF' : '#21201E',
-                        borderRadius: '24px',
-                        padding: isActive ? '18px' : '0px',
-                        boxShadow: isActive ? '0 20px 40px rgba(33, 32, 30, 0.22)' : 'none',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        cursor: 'pointer',
-                        transition: 'all 0.55s cubic-bezier(0.25, 1, 0.5, 1)',
-                        boxSizing: 'border-box'
-                      }}
-                      className="event-card-item"
-                    >
-                      <div>
-                        <div
-                          style={{
-                            position: 'relative',
-                            width: '100%',
-                            height: '240px',
-                            borderRadius: '20px',
-                            overflow: 'hidden',
-                            marginBottom: '20px'
-                          }}
-                        >
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              display: 'block',
-                              transition: 'transform 0.4s ease'
-                            }}
-                          />
-
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '50%',
-                              left: '50%',
-                              transform: 'translate(-50%, -50%)',
-                              width: '52px',
-                              height: '52px',
-                              borderRadius: '50%',
-                              backgroundColor: '#FFFFFF',
-                              color: '#21201E',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-                              opacity: isActive ? 1 : 0,
-                              visibility: isActive ? 'visible' : 'hidden',
-                              transition: 'all 0.35s ease'
-                            }}
-                          >
-                            <ArrowUpRight size={22} />
-                          </div>
-                        </div>
-
-                        {/* Metadata Row */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '14px',
-                            fontSize: '12px',
-                            color: isActive ? 'rgba(255, 255, 255, 0.75)' : '#757069',
-                            marginBottom: '16px',
-                            flexWrap: 'wrap'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <BarChart2 size={14} />
-                            <span>{item.level}</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <Clock size={14} />
-                            <span>{item.duration}</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <Target size={14} />
-                            <span>{item.focus}</span>
-                          </div>
-                        </div>
-
-                        <h3
-                          style={{
-                            fontFamily: "var(--font-sans)",
-                            fontSize: '20px',
-                            fontWeight: 700,
-                            color: isActive ? '#FFFFFF' : '#21201E',
-                            marginBottom: '10px',
-                            lineHeight: 1.25
-                          }}
-                        >
-                          {item.title}
-                        </h3>
-
-                        <p
-                          style={{
-                            fontSize: '14px',
-                            color: isActive ? 'rgba(255, 255, 255, 0.75)' : '#757069',
-                            lineHeight: 1.55,
-                            margin: 0,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden'
-                          }}
-                        >
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Mobile Stacked Vertical Cards (Matching Reference Screenshot) */}
-            <div className="programs-mobile-list">
-              {displayList.map((item, idx) => {
-                const isDarkCard = idx % 2 === 1; // Alternate cards (e.g. Reformer Pilates) as dark featured
-
-                return (
+                {displayList.map((item, idx) => (
                   <div
                     key={item.id || idx}
                     onClick={() => onOpenBooking('event', item.title)}
-                    className={`mobile-class-card ${isDarkCard ? 'dark-card' : 'light-card'}`}
+                    className="programs-event-card"
                   >
                     {/* Top Image Box */}
-                    <div className="mobile-card-img-box">
-                      <img src={item.image} alt={item.title} className="mobile-card-img" />
-
-                      {/* Hotspot Ring & Arrow Button for Dark Cards */}
-                      {isDarkCard && (
-                        <>
-                          <div className="hotspot-pink-ring" />
-                          <div className="mobile-center-arrow">
-                            <ArrowUpRight size={22} color="#21201E" />
-                          </div>
-                        </>
-                      )}
+                    <div className="programs-card-img-box">
+                      <img src={item.image} alt={item.title} className="programs-card-img" />
                     </div>
 
                     {/* Metadata Row */}
-                    <div className="mobile-meta-row">
+                    <div className="programs-card-meta">
                       <div className="meta-item">
-                        <BarChart2 size={14} />
+                        <BarChart2 size={13} />
                         <span>{item.level}</span>
                       </div>
                       <div className="meta-item">
-                        <Clock size={14} />
+                        <Clock size={13} />
                         <span>{item.duration}</span>
                       </div>
                       <div className="meta-item">
-                        <Target size={14} />
+                        <Target size={13} />
                         <span>{item.focus}</span>
                       </div>
                     </div>
 
                     {/* Title */}
-                    <h3 className="mobile-card-title">{item.title}</h3>
+                    <h3 className="programs-card-title">{item.title}</h3>
 
                     {/* Description */}
-                    <p className="mobile-card-desc">{item.description}</p>
+                    <p className="programs-card-desc">{item.description}</p>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
 
-            {/* Bottom Progress Bar & Navigation Controls (Desktop) */}
-            <div className="programs-desktop-controls">
-              <div
-                style={{
-                  flexGrow: 1,
-                  height: '2px',
-                  backgroundColor: '#EAE5DC',
-                  borderRadius: '2px',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-              >
+            {/* Bottom Progress Bar & Navigation Controls (Desktop & Mobile) */}
+            <div className="programs-controls-row">
+              <div className="programs-progress-track">
                 <div
+                  className="programs-progress-fill"
                   style={{
-                    height: '100%',
-                    backgroundColor: '#21201E',
-                    width: `${((activeIndex + 1) / total) * 100}%`,
-                    transition: 'width 0.55s cubic-bezier(0.25, 1, 0.5, 1)'
+                    width: `${((activeIndex + 1) / total) * 100}%`
                   }}
                 />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+              <div className="programs-nav-buttons">
                 <button
                   onClick={handlePrev}
-                  aria-label="Previous class"
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '50%',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #21201E',
-                    color: '#21201E',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s ease'
-                  }}
+                  aria-label="Previous event"
+                  className="programs-nav-btn prev-btn"
                 >
-                  <ChevronLeft size={20} />
+                  <ChevronLeft size={18} />
                 </button>
 
                 <button
                   onClick={handleNext}
-                  aria-label="Next class"
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '50%',
-                    backgroundColor: '#21201E',
-                    border: '1px solid #21201E',
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s ease'
-                  }}
+                  aria-label="Next event"
+                  className="programs-nav-btn next-btn"
                 >
-                  <ChevronRight size={20} />
+                  <ChevronRight size={18} />
                 </button>
               </div>
             </div>
@@ -402,29 +248,33 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
       </div>
 
       <style>{`
+        :root {
+          --track-transform: translateX(calc(-${activeIndex} * (33.333% + 6.66px)));
+        }
+
         .programs-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          gap: 32px;
-          margin-bottom: 52px;
+          gap: 24px;
+          margin-bottom: 28px;
           flex-wrap: wrap;
         }
         .programs-header-left {
-          max-width: 600px;
+          max-width: 550px;
         }
         .programs-sub-tag {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
-          letter-spacing: 0.14em;
+          letter-spacing: 0.12em;
           color: #944426;
           text-transform: uppercase;
           display: block;
-          margin-bottom: 12px;
+          margin-bottom: 6px;
         }
         .programs-heading {
           font-family: var(--font-serif);
-          font-size: clamp(32px, 4vw, 54px);
+          font-size: clamp(28px, 3.2vw, 42px);
           font-weight: 400;
           color: #21201E;
           line-height: 1.15;
@@ -432,162 +282,209 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
         }
         .programs-subtitle {
           font-family: 'Neue Montreal', sans-serif;
-          max-width: 380px;
-          font-size: 15px;
+          max-width: 360px;
+          font-size: 14px;
           color: #757069;
-          line-height: 1.6;
-          margin: 8px 0 0 0;
+          line-height: 1.5;
+          margin: 4px 0 0 0;
         }
-        .programs-desktop-track-wrapper {
+
+        /* Carousel Track Desktop */
+        .programs-carousel-wrapper {
           width: 100%;
           overflow: hidden;
-          margin-bottom: 56px;
-          padding: 10px 0;
+          padding: 4px 0 8px 0;
         }
-        .programs-desktop-track {
+        .programs-carousel-track {
           display: flex;
           transition: transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        .event-card-item:hover img {
+
+        /* Dark Event Cards */
+        .programs-event-card {
+          width: calc(33.333% - 13.33px);
+          flex-shrink: 0;
+          margin-right: 20px;
+          background-color: #21201E;
+          color: #FFFFFF;
+          border-radius: 24px;
+          padding: 16px;
+          box-shadow: 0 10px 28px rgba(33, 32, 30, 0.16);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          cursor: pointer;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          box-sizing: border-box;
+        }
+        .programs-event-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 16px 36px rgba(33, 32, 30, 0.25);
+        }
+
+        .programs-card-img-box {
+          position: relative;
+          width: 100%;
+          height: 220px;
+          border-radius: 16px;
+          overflow: hidden;
+          margin-bottom: 14px;
+        }
+        .programs-card-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center top;
+          display: block;
+          transition: transform 0.4s ease;
+        }
+        .programs-event-card:hover .programs-card-img {
           transform: scale(1.03);
         }
-        .programs-mobile-list {
-          display: none;
+
+        /* Card Details */
+        .programs-card-meta {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          font-size: 12.5px;
+          color: rgba(255, 255, 255, 0.85);
+          margin-bottom: 10px;
+          flex-wrap: wrap;
         }
-        .programs-desktop-controls {
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
+        .programs-card-title {
+          font-family: var(--font-sans);
+          font-size: 19px;
+          font-weight: 700;
+          color: #FFFFFF;
+          margin: 0 0 8px 0;
+          line-height: 1.25;
+        }
+        .programs-card-desc {
+          font-size: 13.5px;
+          color: rgba(255, 255, 255, 0.75);
+          line-height: 1.5;
+          margin: 0;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        /* Bottom Controls Row */
+        .programs-controls-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 24px;
+          gap: 20px;
+          margin-top: 24px;
+        }
+        .programs-progress-track {
+          flex-grow: 1;
+          height: 2px;
+          background-color: #EAE5DC;
+          border-radius: 2px;
+          position: relative;
+          overflow: hidden;
+        }
+        .programs-progress-fill {
+          height: 100%;
+          background-color: #21201E;
+          transition: width 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .programs-nav-buttons {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+        }
+        .programs-nav-btn {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.25s ease;
+        }
+        .prev-btn {
+          background-color: #FFFFFF;
+          border: 1px solid #21201E;
+          color: #21201E;
+        }
+        .prev-btn:hover {
+          background-color: #F5F3EF;
+          transform: scale(1.05);
+        }
+        .next-btn {
+          background-color: #21201E;
+          border: 1px solid #21201E;
+          color: #FFFFFF;
+        }
+        .next-btn:hover {
+          background-color: #383633;
+          transform: scale(1.05);
         }
 
-        /* Mobile Layout - Matching User Reference Screenshot */
+        /* Mobile Responsive View */
         @media (max-width: 768px) {
+          :root {
+            --track-transform: translateX(calc(-${activeIndex} * (100% + 14px)));
+          }
           .programs-section {
-            padding: 40px 0 52px 0 !important;
+            padding: 32px 0 40px 0 !important;
           }
           .programs-container {
-            padding: 0 20px !important;
+            padding: 0 16px !important;
           }
           .programs-header {
             flex-direction: column !important;
             align-items: flex-start !important;
-            gap: 12px !important;
-            margin-bottom: 28px !important;
+            gap: 8px !important;
+            margin-bottom: 20px !important;
           }
           .programs-sub-tag {
-            font-size: 11.5px !important;
-            margin-bottom: 8px !important;
+            font-size: 10.5px !important;
+            margin-bottom: 4px !important;
           }
           .programs-heading {
-            font-size: 32px !important;
+            font-size: 26px !important;
             line-height: 1.15 !important;
           }
           .programs-subtitle {
-            font-size: 14.5px !important;
-            line-height: 1.55 !important;
+            font-size: 13.5px !important;
+            line-height: 1.45 !important;
             max-width: 100% !important;
             margin-top: 0 !important;
           }
-          .programs-desktop-track-wrapper, .programs-desktop-controls {
-            display: none !important;
-          }
-          .programs-mobile-list {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 36px !important;
-          }
-          .mobile-class-card {
+
+          .programs-event-card {
             width: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            cursor: pointer !important;
+            margin-right: 14px !important;
+            padding: 14px !important;
+            border-radius: 22px !important;
           }
-          .mobile-class-card.light-card {
-            background-color: transparent !important;
-            color: #21201E !important;
-          }
-          .mobile-class-card.dark-card {
-            background-color: #21201E !important;
-            color: #FFFFFF !important;
-            border-radius: 24px !important;
-            padding: 16px !important;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12) !important;
-          }
-          .mobile-card-img-box {
-            position: relative !important;
-            width: 100% !important;
-            height: 240px !important;
-            border-radius: 18px !important;
-            overflow: hidden !important;
-            margin-bottom: 16px !important;
-          }
-          .mobile-card-img {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover !important;
-            display: block !important;
-            border-radius: 18px !important;
-          }
-          .hotspot-pink-ring {
-            position: absolute !important;
-            top: 36% !important;
-            left: 52% !important;
-            width: 20px !important;
-            height: 20px !important;
-            border-radius: 50% !important;
-            border: 2px solid #E05297 !important;
-            background: rgba(224, 82, 151, 0.25) !important;
-            box-shadow: 0 0 10px rgba(224, 82, 151, 0.5) !important;
-          }
-          .mobile-center-arrow {
-            position: absolute !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            width: 48px !important;
-            height: 48px !important;
-            border-radius: 50% !important;
-            background-color: #FFFFFF !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.2) !important;
-          }
-          .mobile-meta-row {
-            display: flex !important;
-            align-items: center !important;
-            gap: 16px !important;
-            font-size: 13px !important;
+          .programs-card-img-box {
+            height: 210px !important;
+            border-radius: 16px !important;
             margin-bottom: 12px !important;
-            flex-wrap: wrap !important;
           }
-          .light-card .mobile-meta-row {
-            color: #757069 !important;
+          .programs-card-title {
+            font-size: 19px !important;
           }
-          .dark-card .mobile-meta-row {
-            color: rgba(255, 255, 255, 0.8) !important;
+          .programs-controls-row {
+            margin-top: 20px !important;
+            gap: 14px !important;
           }
-          .meta-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-          }
-          .mobile-card-title {
-            font-family: var(--font-sans) !important;
-            font-size: 22px !important;
-            font-weight: 700 !important;
-            margin-bottom: 8px !important;
-            line-height: 1.25 !important;
-          }
-          .light-card .mobile-card-title {
-            color: #21201E !important;
-          }
-          .dark-card .mobile-card-title {
-            color: #FFFFFF !important;
-          }
-          .mobile-card-desc {
-            display: none !important;
+          .programs-nav-btn {
+            width: 38px !important;
+            height: 38px !important;
           }
         }
       `}</style>

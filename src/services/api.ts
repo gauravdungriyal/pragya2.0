@@ -293,6 +293,14 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
       const amountVal = typeof item.amount === 'number' ? item.amount : parseFloat(item.amount);
       const formattedPrice = !isNaN(amountVal) ? `HK$ ${amountVal.toLocaleString()}` : item.price || '$45';
 
+      const rawImg = item.image || item.image_url || item.banner_image?.url || item.square_image?.url || item.cover_image || item.photo || item.featured_image || item.poster || item.img;
+      let imageUrl: string | undefined = undefined;
+      if (typeof rawImg === 'string' && rawImg.trim() !== '') {
+        imageUrl = rawImg.startsWith('http') ? rawImg : `https://pragya-yog.com/${rawImg.replace(/^\//, '')}`;
+      } else if (rawImg && typeof rawImg.url === 'string' && rawImg.url.trim() !== '') {
+        imageUrl = rawImg.url.startsWith('http') ? rawImg.url : `https://pragya-yog.com/${rawImg.url.replace(/^\//, '')}`;
+      }
+
       return {
         id: String(item.id || item.event_id || idx + 1),
         title: item.title || item.name || item.event_title || 'Pragya Wellness Event',
@@ -303,7 +311,7 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
         price: formattedPrice,
         amount: !isNaN(amountVal) ? amountVal : undefined,
         category: (item.difficulty_tags && item.difficulty_tags.length > 0 ? item.difficulty_tags[0] : item.category) || 'Retreat',
-        image: item.image || item.banner_image?.url || item.square_image?.url,
+        image: imageUrl,
         banner_image: item.banner_image,
         starts_at: item.starts_at,
         ends_at: item.ends_at,
