@@ -271,7 +271,10 @@ export const App: React.FC = () => {
 
             <TeachersShowcase onOpenTeacherModal={handleOpenTeacherDetail} />
 
-            <ProgramsEvents onOpenBooking={handleOpenBooking} />
+            <ProgramsEvents
+              onOpenBooking={handleOpenBooking}
+              onOpenEventDetail={handleOpenEventDetail}
+            />
 
             <InteractiveSchedule onOpenBooking={handleOpenBooking} />
 

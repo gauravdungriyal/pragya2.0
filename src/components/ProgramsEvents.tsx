@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, BarChart2, Clock, Target, RefreshCw } from 'lucide-react';
 import { getUpcomingEvents } from '../services/api';
+import { UpcomingEvent } from '../types';
 
 interface ProgramsEventsProps {
   onOpenBooking: (type?: string, title?: string) => void;
+  onOpenEventDetail?: (event: UpcomingEvent) => void;
 }
 
 const cleanText = (str: string) => {
@@ -19,7 +21,7 @@ const cleanText = (str: string) => {
     .trim();
 };
 
-export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking }) => {
+export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, onOpenEventDetail }) => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -32,6 +34,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
     {
       id: '1',
       title: 'Mat Pilates',
+      name: 'Mat Pilates',
       level: 'Beginner',
       duration: '45 min',
       focus: 'Core Strength & Breathing',
@@ -41,6 +44,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
     {
       id: '2',
       title: 'Reformer Pilates',
+      name: 'Reformer Pilates',
       level: 'Intermediate',
       duration: '60 min',
       focus: 'Strength & Posture',
@@ -50,6 +54,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
     {
       id: '3',
       title: 'Pilates for Athletes',
+      name: 'Pilates for Athletes',
       level: 'Advanced',
       duration: '60 min',
       focus: 'Peak Performance',
@@ -59,6 +64,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
     {
       id: '4',
       title: 'Himalayan Breathwork & Sound',
+      name: 'Himalayan Breathwork & Sound',
       level: 'All Levels',
       duration: '90 min',
       focus: 'Nerve Science & Sound',
@@ -73,8 +79,10 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
         const mapped = data.map((item: any, idx: number) => {
           const realImage = item.image || item.banner_image?.url || item.square_image?.url;
           return {
+            ...item,
             id: String(item.id || idx + 1),
             title: cleanText(item.title || item.name || defaultEvents[idx % defaultEvents.length].title),
+            name: cleanText(item.name || item.title || defaultEvents[idx % defaultEvents.length].title),
             level: item.level || (idx === 0 ? 'Beginner' : idx === 1 ? 'Intermediate' : idx === 2 ? 'Advanced' : 'All Levels'),
             duration: item.duration || (idx === 0 ? '45 min' : idx === 1 ? '60 min' : '90 min'),
             focus: item.focus || item.category || (idx === 0 ? 'Core Strength & Breathing' : idx === 1 ? 'Strength & Posture' : 'Peak Performance'),
@@ -184,7 +192,13 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
                 {displayList.map((item, idx) => (
                   <div
                     key={item.id || idx}
-                    onClick={() => onOpenBooking('event', item.title)}
+                    onClick={() => {
+                      if (onOpenEventDetail) {
+                        onOpenEventDetail(item as UpcomingEvent);
+                      } else {
+                        onOpenBooking('event', item.title);
+                      }
+                    }}
                     className="programs-event-card"
                   >
                     {/* Top Image Box */}
