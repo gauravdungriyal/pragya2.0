@@ -586,6 +586,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
 
             {/* TODAY Pill Button */}
             <button
+              className="classes-today-btn"
               onClick={() => setSelectedDate(new Date('2026-08-01'))}
               style={{
                 fontFamily: "var(--font-sans)",
@@ -613,7 +614,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             </button>
 
             {/* FILTERS Pill Button */}
-            <div style={{ position: 'relative' }}>
+            <div className="classes-filter-wrapper" style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowFilterModal(!showFilterModal)}
                 style={{
@@ -712,7 +713,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               No sessions scheduled matching filter. Please try another date or clear filters.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="classes-live-sch-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {filteredClasses.map((cls, idx) => (
                 <div
                   key={idx}
@@ -731,7 +732,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                   className="schedule-row-hover"
                 >
                   {/* Time & Room */}
-                  <div style={{ minWidth: '180px' }}>
+                  <div className="cls-sch-time" style={{ minWidth: '180px' }}>
                     <div style={{ fontFamily: "var(--font-sans)", fontSize: '16px', fontWeight: 700, color: '#21201E', marginBottom: '2px' }}>
                       {cls.timing}
                     </div>
@@ -741,7 +742,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                   </div>
 
                   {/* Class Title & Instructor */}
-                  <div style={{ flexGrow: 1, minWidth: '220px' }}>
+                  <div className="cls-sch-main" style={{ flexGrow: 1, minWidth: '220px' }}>
                     <h4 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: '0 0 4px 0' }}>
                       {cls.title}
                     </h4>
@@ -752,7 +753,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                   </div>
 
                   {/* Level Badge */}
-                  <div>
+                  <div className="cls-sch-badge">
                     <span
                       style={{
                         fontFamily: "var(--font-sans)",
@@ -771,6 +772,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
 
                   {/* Book Session Action */}
                   <button
+                    className="cls-sch-btn"
                     onClick={() => onOpenBooking('class', cls.title, cls)}
                     style={{
                       fontFamily: "var(--font-sans)",
@@ -1170,6 +1172,84 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             width: 100% !important;
             height: 100% !important;
             object-fit: cover !important;
+          }
+
+          /* Live Schedule Section Ultra Compact Mobile Rules */
+          .classes-today-btn, .classes-filter-wrapper {
+            display: none !important;
+          }
+          #live-schedule {
+            padding: 36px 14px !important;
+          }
+          .classes-live-sch-list {
+            gap: 8px !important;
+          }
+          .schedule-row-hover {
+            padding: 12px 14px !important;
+            border-radius: 14px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            flex-wrap: nowrap !important;
+          }
+          .cls-sch-time {
+            min-width: unset !important;
+            width: auto !important;
+            flex-shrink: 0 !important;
+          }
+          .cls-sch-time > div:first-child {
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            color: #944426 !important;
+            line-height: 1.2 !important;
+          }
+          .cls-sch-time > div:last-child {
+            font-size: 10.5px !important;
+            color: #8A8580 !important;
+            line-height: 1.2 !important;
+          }
+          .cls-sch-main {
+            min-width: unset !important;
+            flex-grow: 1 !important;
+            overflow: hidden !important;
+          }
+          .cls-sch-main h4 {
+            font-size: 13.5px !important;
+            font-weight: 700 !important;
+            margin: 0 0 2px 0 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            line-height: 1.2 !important;
+          }
+          .cls-sch-main > div {
+            font-size: 11px !important;
+            color: #6B655F !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+          .cls-sch-badge {
+            display: none !important;
+          }
+          .cls-sch-btn {
+            width: auto !important;
+            flex-shrink: 0 !important;
+            padding: 6px 12px !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            border-radius: 999px !important;
+            margin-top: 0 !important;
+          }
+          .cls-sch-btn span {
+            display: none !important;
+          }
+          .cls-sch-btn::after {
+            content: "BOOK";
+            font-size: 11px;
+            font-weight: 800;
           }
         }
       `}</style>

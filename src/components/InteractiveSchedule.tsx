@@ -391,7 +391,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
               No sessions scheduled for this filter. Select another date or clear filter.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="schedule-list-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {filteredItems.map((item, idx) => (
                 <div
                   key={idx}
@@ -411,7 +411,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                   }}
                   className="schedule-row-grid"
                 >
-                  <div style={{ minWidth: '180px' }}>
+                  <div className="sch-row-time" style={{ minWidth: '180px' }}>
                     <div style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '16px', fontWeight: 700, color: '#21201E' }}>
                       {item.timing || item.time}
                     </div>
@@ -420,7 +420,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                     </div>
                   </div>
 
-                  <div style={{ flexGrow: 1, minWidth: '220px' }}>
+                  <div className="sch-row-main" style={{ flexGrow: 1, minWidth: '220px' }}>
                     <h4 style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: '0 0 4px 0' }}>
                       {item.title || item.className}
                     </h4>
@@ -429,7 +429,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                     </div>
                   </div>
 
-                  <div>
+                  <div className="sch-row-badge">
                     <span
                       style={{
                         backgroundColor: '#F5EFE5',
@@ -446,6 +446,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                   </div>
 
                   <button
+                    className="sch-row-btn"
                     style={{
                       border: 'none',
                       backgroundColor: '#21201E',
@@ -476,49 +477,103 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
         }
 
-        /* Mobile View Rules - Removed Filter & Simplified Today View */
+        /* Mobile View Rules - Ultra Compact Daily Schedule View */
         @media (max-width: 768px) {
           #schedule {
-            padding: 40px 0 52px 0 !important;
+            padding: 32px 0 40px 0 !important;
           }
           .schedule-card-container {
-            padding: 32px 18px !important;
-            border-radius: 24px !important;
+            padding: 20px 12px !important;
+            border-radius: 20px !important;
           }
           .schedule-today-btn, .schedule-filter-wrapper {
             display: none !important;
           }
           .schedule-nav-bar {
-            margin-bottom: 24px !important;
+            margin-bottom: 16px !important;
           }
           .schedule-date-pill {
             width: 100% !important;
-            max-width: 340px !important;
+            max-width: 100% !important;
             justify-content: space-between !important;
-            padding: 10px 14px !important;
-            margin: 0 auto !important;
+            padding: 8px 12px !important;
+            margin: 0 !important;
             white-space: nowrap !important;
           }
           .date-pill-text-wrapper {
-            font-size: 13.5px !important;
+            font-size: 13px !important;
             gap: 6px !important;
             white-space: nowrap !important;
           }
+          .schedule-list-wrapper {
+            gap: 8px !important;
+          }
           .schedule-row-grid {
-            padding: 20px !important;
-            border-radius: 20px !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 14px !important;
+            padding: 12px 14px !important;
+            border-radius: 14px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            flex-wrap: nowrap !important;
           }
-          .schedule-row-grid > div {
-            min-width: 100% !important;
-            width: 100% !important;
+          .sch-row-time {
+            min-width: unset !important;
+            width: auto !important;
+            flex-shrink: 0 !important;
           }
-          .schedule-row-grid button {
-            width: 100% !important;
-            justify-content: center !important;
-            margin-top: 4px !important;
+          .sch-row-time > div:first-child {
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            color: #944426 !important;
+            line-height: 1.2 !important;
+          }
+          .sch-row-time > div:last-child {
+            font-size: 10.5px !important;
+            color: #8A8580 !important;
+            line-height: 1.2 !important;
+          }
+          .sch-row-main {
+            min-width: unset !important;
+            flex-grow: 1 !important;
+            overflow: hidden !important;
+          }
+          .sch-row-main h4 {
+            font-size: 13.5px !important;
+            font-weight: 700 !important;
+            margin: 0 0 2px 0 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            line-height: 1.2 !important;
+          }
+          .sch-row-main > div {
+            font-size: 11px !important;
+            color: #6B655F !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+          .sch-row-badge {
+            display: none !important;
+          }
+          .sch-row-btn {
+            width: auto !important;
+            flex-shrink: 0 !important;
+            padding: 6px 12px !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            border-radius: 999px !important;
+            margin-top: 0 !important;
+          }
+          .sch-row-btn span {
+            display: none !important;
+          }
+          .sch-row-btn::after {
+            content: "BOOK";
+            font-size: 11px;
+            font-weight: 800;
           }
         }
       `}</style>
