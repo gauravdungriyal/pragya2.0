@@ -61,7 +61,7 @@ export const WhyChooseUs: React.FC = () => {
         </div>
 
         {/* Content Container (Desktop: 2 Columns | Mobile: Stacked matching reference) */}
-        <div className="why-us-content-grid">
+        <div className="why-us-content-grid reveal-on-scroll">
           {/* Main Image */}
           <div className="why-us-image-wrapper">
             <img

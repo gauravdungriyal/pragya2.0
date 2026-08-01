@@ -85,7 +85,7 @@ export const TestimonialsCarousel: React.FC = () => {
         }}
       >
         {/* 2-Column Main Layout */}
-        <div className="testimonials-main-grid">
+        <div className="testimonials-main-grid reveal-on-scroll">
           {/* Left Column: Tag, Heading & Giant Member Stat */}
           <div className="testimonials-left-col">
             <div>

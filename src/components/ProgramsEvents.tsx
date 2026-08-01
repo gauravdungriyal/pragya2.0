@@ -139,7 +139,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
         ) : (
           <>
             {/* Desktop Track View */}
-            <div className="programs-desktop-track-wrapper">
+            <div className="programs-desktop-track-wrapper reveal-on-scroll">
               <div
                 className="programs-desktop-track"
                 style={{
@@ -282,7 +282,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
             </div>
 
             {/* Mobile Stacked Vertical Cards (Matching Reference Screenshot) */}
-            <div className="programs-mobile-list">
+            <div className="programs-mobile-list reveal-on-scroll">
               {displayList.map((item, idx) => {
                 const isDarkCard = idx % 2 === 1; // Alternate cards (e.g. Reformer Pilates) as dark featured
 

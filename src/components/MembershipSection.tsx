@@ -199,7 +199,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
             padding: '48px 36px',
             boxShadow: '0 12px 36px rgba(0,0,0,0.03)'
           }}
-          className="membership-cards-container"
+          className="membership-cards-container reveal-on-scroll"
         >
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#944426' }}>

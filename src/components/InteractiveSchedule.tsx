@@ -113,7 +113,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
             padding: '56px 48px',
             boxShadow: '0 12px 36px rgba(0,0,0,0.03)'
           }}
-          className="schedule-card-container"
+          className="schedule-card-container reveal-on-scroll"
         >
           {/* Header Tag & Title */}
           <div style={{ textAlign: 'center', marginBottom: '36px' }}>

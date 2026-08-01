@@ -33,7 +33,7 @@ export const App: React.FC = () => {
   const [selectedTeacher, setSelectedTeacher] = useState<Instructor | null>(null);
   const [selectedTeacherForPage, setSelectedTeacherForPage] = useState<Instructor | null>(null);
 
-  // Global Scroll Reveal Observer effect
+  // Global Scroll Reveal Observer effect for necessary elements only
   useEffect(() => {
     const observerCallback: IntersectionObserverCallback = (entries, observer) => {
       entries.forEach((entry) => {
@@ -46,39 +46,23 @@ export const App: React.FC = () => {
 
     const observerOptions: IntersectionObserverInit = {
       root: null,
-      rootMargin: '0px 0px -40px 0px',
-      threshold: 0.08
+      rootMargin: '0px 0px -30px 0px',
+      threshold: 0.05
     };
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
 
     const attachObservers = () => {
-      const selectors = [
-        'section',
-        'h1',
-        'h2',
-        'h3',
-        'h4',
-        'p',
-        'img',
-        'blockquote',
-        'button',
-        '.ideal-class-card',
-        '.teacher-day-card',
-        '.teacher-card',
-        '.class-card-row',
-        '.schedule-row-hover',
-        '.reveal-on-scroll'
-      ];
-      const elements = document.querySelectorAll(selectors.join(', '));
+      // Only target explicitly designated reveal elements
+      const elements = document.querySelectorAll('.reveal-on-scroll');
       elements.forEach((el, idx) => {
-        // Skip header nav items and fixed modal overlays
-        if (el.closest('header') || el.closest('.modal-backdrop') || el.closest('.modal-content')) {
+        // Skip header nav items, top hero section, and fixed modal overlays
+        if (el.closest('header') || el.closest('#hero') || el.closest('.modal-backdrop') || el.closest('.modal-content')) {
+          el.classList.add('is-revealed');
           return;
         }
         if (!el.classList.contains('is-revealed')) {
-          el.classList.add('reveal-on-scroll');
-          const delayClass = `delay-${((idx % 5) + 1) * 100}`;
+          const delayClass = `delay-${((idx % 3) + 1) * 100}`;
           el.classList.add(delayClass);
           observer.observe(el);
         }
@@ -86,7 +70,7 @@ export const App: React.FC = () => {
     };
 
     attachObservers();
-    const timer = setTimeout(attachObservers, 400);
+    const timer = setTimeout(attachObservers, 300);
 
     return () => {
       clearTimeout(timer);

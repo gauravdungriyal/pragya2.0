@@ -169,6 +169,7 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
 
             {/* Stacked Card Deck */}
             <div
+              className="teachers-card-deck reveal-on-scroll"
               style={{
                 position: 'relative',
                 width: '320px',

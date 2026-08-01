@@ -102,7 +102,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
           </div>
         ) : (
           /* Accordion List */
-          <div className="faq-accordion-list" style={{ display: 'flex', flexDirection: 'column', marginBottom: '48px' }}>
+          <div className="faq-accordion-list reveal-on-scroll" style={{ display: 'flex', flexDirection: 'column', marginBottom: '48px' }}>
             {displayList.map((faq, idx) => {
               const isOpen = openIndex === idx;
               const formattedIndex = String(idx + 1).padStart(2, '0');
