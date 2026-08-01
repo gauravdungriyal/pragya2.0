@@ -355,8 +355,8 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                           position: 'absolute',
                           top: '16px',
                           right: '16px',
-                          backgroundColor: '#93C5FD',
-                          color: '#1E40AF',
+                          backgroundColor: 'rgba(200, 109, 81, 0.15)',
+                          color: '#C86D51',
                           borderRadius: '999px',
                           padding: '4px 14px',
                           fontSize: '11px',
@@ -403,7 +403,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                           fontSize: '11px',
                           fontWeight: 800,
                           letterSpacing: '0.08em',
-                          color: '#60A5FA',
+                          color: '#C86D51',
                           textTransform: 'uppercase',
                           marginBottom: '6px'
                         }}
@@ -481,7 +481,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                             fontSize: '11px',
                             fontWeight: 800,
                             letterSpacing: '0.08em',
-                            color: '#60A5FA',
+                            color: '#C86D51',
                             textTransform: 'uppercase',
                             marginBottom: '10px'
                           }}
@@ -491,14 +491,14 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
 
                         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#4A4540', fontWeight: 500 }}>
-                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(96, 165, 250, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <Check size={10} color="#60A5FA" strokeWidth={3} />
+                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(200, 109, 81, 0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <Check size={10} color="#C86D51" strokeWidth={3} />
                             </div>
                             <span>Guided by Internationally Certified Faculty</span>
                           </li>
                           <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#4A4540', fontWeight: 500 }}>
-                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(96, 165, 250, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <Check size={10} color="#60A5FA" strokeWidth={3} />
+                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(200, 109, 81, 0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <Check size={10} color="#C86D51" strokeWidth={3} />
                             </div>
                             <span>Complimentary Eco-Mats & Hydrotherapy Access</span>
                           </li>
@@ -514,8 +514,8 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                       style={{
                         flex: 1,
                         fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                        backgroundColor: '#93C5FD',
-                        color: '#1E40AF',
+                        backgroundColor: 'rgba(200, 109, 81, 0.14)',
+                        color: '#C86D51',
                         border: 'none',
                         borderRadius: '999px',
                         padding: '11px 16px',
@@ -527,12 +527,12 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                         transition: 'all 0.25s ease'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#60A5FA';
+                        e.currentTarget.style.backgroundColor = '#C86D51';
                         e.currentTarget.style.color = '#FFFFFF';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#93C5FD';
-                        e.currentTarget.style.color = '#1E40AF';
+                        e.currentTarget.style.backgroundColor = 'rgba(200, 109, 81, 0.14)';
+                        e.currentTarget.style.color = '#C86D51';
                       }}
                     >
                       READ MORE

@@ -404,8 +404,8 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     position: 'relative',
-                    boxShadow: isPopular ? '0 12px 32px rgba(96, 165, 250, 0.15)' : '0 6px 24px rgba(0, 0, 0, 0.04)',
-                    border: isPopular ? '2px solid #60A5FA' : '1px solid rgba(0, 0, 0, 0.08)',
+                    boxShadow: isPopular ? '0 12px 32px rgba(198, 108, 80, 0.18)' : '0 6px 24px rgba(0, 0, 0, 0.04)',
+                    border: isPopular ? '2px solid #C66C50' : '1px solid rgba(0, 0, 0, 0.08)',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease'
                   }}
                 >
@@ -423,8 +423,8 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
                           position: 'absolute',
                           top: '16px',
                           right: '16px',
-                          backgroundColor: isPopular ? '#93C5FD' : 'rgba(255, 255, 255, 0.92)',
-                          color: isPopular ? '#1E40AF' : '#21201E',
+                          backgroundColor: isPopular ? 'rgba(198, 108, 80, 0.15)' : 'rgba(255, 255, 255, 0.92)',
+                          color: isPopular ? '#C66C50' : '#21201E',
                           borderRadius: '999px',
                           padding: '4px 14px',
                           fontSize: '11px',
@@ -448,7 +448,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
                           fontSize: '11px',
                           fontWeight: 800,
                           letterSpacing: '0.08em',
-                          color: '#60A5FA',
+                          color: '#C66C50',
                           textTransform: 'uppercase',
                           marginBottom: '6px'
                         }}
@@ -510,7 +510,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
                             fontSize: '11px',
                             fontWeight: 800,
                             letterSpacing: '0.08em',
-                            color: '#60A5FA',
+                            color: '#C66C50',
                             textTransform: 'uppercase',
                             marginBottom: '12px'
                           }}
@@ -531,14 +531,14 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
                                   width: '18px',
                                   height: '18px',
                                   borderRadius: '50%',
-                                  backgroundColor: 'rgba(96, 165, 250, 0.12)',
+                                  backgroundColor: 'rgba(198, 108, 80, 0.14)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   flexShrink: 0
                                 }}
                               >
-                                <Check size={11} color="#60A5FA" strokeWidth={3} />
+                                <Check size={11} color="#C66C50" strokeWidth={3} />
                               </div>
                               <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13.5px', color: '#4A4540', fontWeight: 500 }}>
                                 {feat}

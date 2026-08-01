@@ -89,169 +89,97 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
       {/* Main Content Area */}
       <div className="edp-main-content" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 32px' }}>
         
-        {/* Event Hero Banner Section */}
+        {/* Event Hero Banner Section (Clean Poster Image) */}
         <div
           className="edp-hero-banner"
           style={{
             position: 'relative',
             width: '100%',
-            minHeight: '520px',
             borderRadius: '28px',
             overflow: 'hidden',
-            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.12)',
-            marginBottom: '40px',
-            display: 'flex',
-            alignItems: 'flex-end'
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.08)',
+            marginBottom: '28px',
+            backgroundColor: '#21201E'
           }}
         >
-          {/* Hero Background Image */}
+          {/* Hero Clean Background Poster Image */}
           <img
             src={coverImage}
-            alt={event.title}
+            alt={event.title || event.name || 'Event Banner'}
             style={{
-              position: 'absolute',
-              inset: 0,
               width: '100%',
-              height: '100%',
-              objectFit: 'cover',
+              height: 'auto',
+              maxHeight: '620px',
+              objectFit: 'contain',
               objectPosition: 'center',
-              display: 'block'
+              display: 'block',
+              margin: '0 auto'
             }}
           />
+        </div>
 
-          {/* Dark Warm Overlay Gradient */}
-          <div
-            className="edp-hero-overlay"
+        {/* Action Buttons Row */}
+        <div className="edp-hero-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}>
+          <button
+            onClick={() => onOpenBooking('event', event.title || event.name, event)}
             style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(to right, rgba(18, 14, 12, 0.88) 0%, rgba(18, 14, 12, 0.65) 55%, rgba(18, 14, 12, 0.35) 100%)'
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+              backgroundColor: '#C86D51',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '999px',
+              padding: '16px 40px',
+              fontSize: '14px',
+              fontWeight: 800,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              boxShadow: '0 8px 24px rgba(200, 109, 81, 0.35)',
+              transition: 'all 0.25s ease'
             }}
-          />
-
-          {/* Hero Text & Actions Overlay */}
-          <div
-            className="edp-hero-content"
-            style={{
-              position: 'relative',
-              zIndex: 2,
-              padding: '60px 48px',
-              maxWidth: '920px'
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#B25B40';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#C86D51';
             }}
           >
-            {/* Category Upper Tag */}
-            <div
-              style={{
-                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.22em',
-                color: 'rgba(255, 255, 255, 0.78)',
-                textTransform: 'uppercase',
-                marginBottom: '14px'
-              }}
-            >
-              {event.category ? `${event.category.toUpperCase()} WORKSHOP` : 'PRAGYA SANCTUARY IMMERSION'}
-            </div>
+            BOOK SESSION NOW
+          </button>
 
-            {/* Main Title */}
-            <h1
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontSize: 'clamp(36px, 4.5vw, 54px)',
-                fontWeight: 400,
-                color: '#FFFFFF',
-                margin: '0 0 18px 0',
-                lineHeight: 1.14
-              }}
-            >
-              {event.title || event.name}
-            </h1>
-
-            {/* Date & Location Subtitle */}
-            <div
-              style={{
-                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                fontSize: '16px',
-                color: 'rgba(255, 255, 255, 0.85)',
-                fontWeight: 500,
-                marginBottom: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                flexWrap: 'wrap'
-              }}
-            >
-              <span>{event.date || event.starts_at || '29 August – 14 November 2026'}</span>
-              <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>•</span>
-              <span>{event.location || 'Pragya Sanctuary Studio'}</span>
-            </div>
-
-            {/* Action Buttons Row */}
-            <div className="edp-hero-actions" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => onOpenBooking('event', event.title || event.name, event)}
-                style={{
-                  fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                  backgroundColor: '#C86D51',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '999px',
-                  padding: '14px 34px',
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  boxShadow: '0 6px 20px rgba(200, 109, 81, 0.35)',
-                  transition: 'all 0.25s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#B25B40';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#C86D51';
-                }}
-              >
-                BOOK SESSION NOW
-              </button>
-
-              <button
-                onClick={() => {
-                  const footerElem = document.getElementById('contact');
-                  if (footerElem) {
-                    footerElem.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    onOpenBooking('contact', 'Contact Pragya Sanctuary', event);
-                  }
-                }}
-                style={{
-                  fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                  backgroundColor: 'transparent',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(255, 255, 255, 0.5)',
-                  borderRadius: '999px',
-                  padding: '14px 34px',
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.borderColor = '#FFFFFF';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
-                }}
-              >
-                CONTACT US
-              </button>
-            </div>
-          </div>
+          <button
+            onClick={() => {
+              const footerElem = document.getElementById('contact');
+              if (footerElem) {
+                footerElem.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                onOpenBooking('contact', 'Contact Pragya Sanctuary', event);
+              }
+            }}
+            style={{
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+              backgroundColor: '#21201E',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '999px',
+              padding: '16px 40px',
+              fontSize: '14px',
+              fontWeight: 800,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              boxShadow: '0 6px 20px rgba(33, 32, 30, 0.2)',
+              transition: 'all 0.25s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#C86D51';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#21201E';
+            }}
+          >
+            CONTACT US
+          </button>
         </div>
 
         {/* Event Key Details & Description Card */}
@@ -813,8 +741,8 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
                             fontSize: '11px',
                             fontWeight: 800,
                             letterSpacing: '0.06em',
-                            color: '#1E40AF',
-                            backgroundColor: '#EBF5FF',
+                            color: '#C86D51',
+                            backgroundColor: 'rgba(200, 109, 81, 0.14)',
                             padding: '4px 12px',
                             borderRadius: '999px',
                             textTransform: 'uppercase'
@@ -889,8 +817,8 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
                         style={{
                           flex: 1,
                           fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                          backgroundColor: '#93C5FD',
-                          color: '#1E40AF',
+                          backgroundColor: 'rgba(200, 109, 81, 0.14)',
+                          color: '#C86D51',
                           border: 'none',
                           borderRadius: '999px',
                           padding: '10px 14px',
@@ -901,12 +829,12 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
                           transition: 'all 0.25s ease'
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#60A5FA';
+                          e.currentTarget.style.backgroundColor = '#C86D51';
                           e.currentTarget.style.color = '#FFFFFF';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#93C5FD';
-                          e.currentTarget.style.color = '#1E40AF';
+                          e.currentTarget.style.backgroundColor = 'rgba(200, 109, 81, 0.14)';
+                          e.currentTarget.style.color = '#C86D51';
                         }}
                       >
                         READ MORE
