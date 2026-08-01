@@ -132,11 +132,11 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const handleOpenBooking = (type: string = 'class', title: string = 'Book a Class', details: any = null) => {
-    setBookingType(type);
-    setBookingTitle(title);
-    setBookingDetails(details);
-    setBookingModalOpen(true);
+  const handleOpenBooking = () => {
+    if (currentView !== 'home') {
+      setCurrentView('home');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenTeacherDetail = (teacher: Instructor) => {
@@ -293,13 +293,6 @@ export const App: React.FC = () => {
       />
 
       {/* Interactive Modals */}
-      <BookingModal
-        isOpen={bookingModalOpen}
-        onClose={() => setBookingModalOpen(false)}
-        bookingType={bookingType}
-        bookingTitle={bookingTitle}
-        bookingDetails={bookingDetails}
-      />
 
       <QuickSearchModal
         isOpen={searchModalOpen}

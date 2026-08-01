@@ -9,8 +9,7 @@ interface MembershipSectionProps {
 
 export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBooking }) => {
   const [isAnnual, setIsAnnual] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [apiPlans, setApiPlans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const defaultPlans = [
     {
@@ -55,12 +54,13 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
     }
   ];
 
+  const [apiPlans, setApiPlans] = useState<any[]>(defaultPlans);
+
   useEffect(() => {
     let isMounted = true;
     getPackages().then((data) => {
       if (!isMounted) return;
       if (data && typeof data === 'object') {
-        // Extract membership items or flatten categories
         const unlimitedCategory = data['Unlimited Memberships'] || [];
         const allItems: PackageItem[] = Object.values(data).flat();
 
@@ -111,13 +111,10 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
             }
           ];
           setApiPlans(mapped);
-        } else {
-          setApiPlans(defaultPlans);
         }
-      } else {
-        setApiPlans(defaultPlans);
       }
-      setLoading(false);
+    }).catch(() => {
+      // Keep default plans on error
     });
 
     return () => {
@@ -234,7 +231,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
                       justifyContent: 'space-between',
                       position: 'relative'
                     }}
-                    className={`plan-card-item reveal-on-scroll delay-${i + 1}`}
+                    className="plan-card-item"
                   >
                     <div>
                       {/* Title Header Row */}

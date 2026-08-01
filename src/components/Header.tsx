@@ -277,7 +277,7 @@ export const Header: React.FC<HeaderProps> = ({
             position: 'fixed',
             inset: 0,
             top: '96px',
-            backgroundColor: '#DDD8CB',
+            backgroundColor: '#E6D9CF',
             zIndex: 899,
             padding: '32px 48px',
             display: 'flex',
