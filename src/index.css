@@ -1,0 +1,522 @@
+/* ==========================================================================
+   PRAGYA YOG SCHOOL — DESIGN SYSTEM & STYLESHEET
+   Aesthetics: Pure 360 + Ikigai + Aman + Aesop + Soho House Luxury
+   ========================================================================== */
+
+/* Custom Font Declarations */
+@font-face {
+  font-family: 'BNCringeSerif';
+  src: url('/fonts/BNCringeSerif-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BNCringeSerif';
+  src: url('/fonts/BNCringeSerif-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BNCringeSerif';
+  src: url('/fonts/BNCringeSerif-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Montreal';
+  src: url('/fonts/NeueMontreal-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Montreal';
+  src: url('/fonts/NeueMontreal-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Montreal';
+  src: url('/fonts/NeueMontreal-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Montreal';
+  src: url('/fonts/NeueMontreal-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Canela';
+  src: url('/fonts/Canela-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Canela';
+  src: url('/fonts/Canela-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Canela';
+  src: url('/fonts/Canela-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Color Variables & Design Tokens */
+:root {
+  --color-main-bg: #F5EFE5;          /* Warm Cream */
+  --color-primary-text: #272727;     /* Dark Charcoal */
+  --color-primary-accent: #944426;   /* Terracotta */
+  --color-primary-accent-dark: #7a351c;
+  --color-secondary-accent: #620513; /* Deep Burgundy */
+  --color-secondary-accent-dark: #4d030e;
+  --color-section-bg: #9D9D48;       /* Olive Green */
+  --color-section-bg-dark: #828238;
+  --color-dark-bg: #00381F;          /* Forest Green / Footer */
+  --color-dark-bg-light: #004d2b;
+  --color-highlight: #D9AE29;        /* Golden Mustard */
+  --color-highlight-dark: #c29b20;
+  
+  --color-white: #FFFFFF;
+  --color-sand: #EAE1D3;
+  --color-sand-light: #FAF6F0;
+  --color-gray-subtle: #8A8580;
+  --color-border-subtle: rgba(39, 39, 39, 0.12);
+  --color-border-light: rgba(245, 239, 229, 0.2);
+
+  /* Typography Stacks */
+  --font-serif: 'BNCringeSerif', 'Canela', 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Neue Montreal', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-accent: 'Canela', 'BNCringeSerif', serif;
+
+  /* 8px Spacing System */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --space-10: 80px;
+  --space-12: 96px;
+  --space-16: 128px;
+
+  /* Border Radii - Soft Rounded Corners */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 36px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 200ms;
+  --duration-normal: 350ms;
+  --duration-slow: 600ms;
+
+  /* Shadows */
+  --shadow-soft: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+}
+
+/* Reset & Base Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans);
+  background-color: var(--color-main-bg);
+  color: var(--color-primary-text);
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Typography Hierarchy */
+h1, h2, h3, h4, .font-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.heading-display {
+  font-size: clamp(40px, 6vw, 76px);
+  font-family: var(--font-serif);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.heading-1 {
+  font-size: clamp(32px, 4.5vw, 56px);
+  letter-spacing: -0.02em;
+}
+
+.heading-2 {
+  font-size: clamp(24px, 3.2vw, 40px);
+}
+
+.heading-3 {
+  font-size: clamp(20px, 2.4vw, 28px);
+}
+
+.subheadline {
+  font-size: clamp(16px, 1.8vw, 20px);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  color: rgba(39, 39, 39, 0.85);
+  line-height: 1.5;
+}
+
+/* Container & Grid System */
+.container {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .grid-12 {
+    gap: var(--space-4);
+  }
+}
+
+/* Responsive 2-column grid used by WellnessJourney, NewsletterFooter, LocationsSection */
+.grid-md-2 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .grid-md-2 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Section Layouts & Padding */
+.section {
+  padding-top: var(--space-10);
+  padding-bottom: var(--space-10);
+  position: relative;
+}
+
+@media (min-width: 992px) {
+  .section {
+    padding-top: var(--space-16);
+    padding-bottom: var(--space-16);
+  }
+}
+
+.section-olive {
+  background-color: var(--color-section-bg);
+  color: var(--color-white);
+}
+
+.section-terracotta {
+  background-color: var(--color-primary-accent);
+  color: var(--color-white);
+}
+
+.section-burgundy {
+  background-color: var(--color-secondary-accent);
+  color: var(--color-white);
+}
+
+.section-forest {
+  background-color: var(--color-dark-bg);
+  color: var(--color-white);
+}
+
+.section-sand {
+  background-color: var(--color-sand);
+}
+
+/* Button System */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 32px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  border: 1px solid transparent;
+  outline: none;
+  white-space: nowrap;
+}
+
+.btn-primary-hero {
+  background-color: var(--color-highlight);
+  color: var(--color-primary-text);
+  box-shadow: 0 8px 24px -6px rgba(217, 174, 41, 0.4);
+}
+
+.btn-primary-hero:hover {
+  background-color: var(--color-highlight-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -6px rgba(217, 174, 41, 0.5);
+}
+
+.btn-secondary {
+  background-color: var(--color-primary-accent);
+  color: var(--color-white);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-primary-accent-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -6px rgba(148, 68, 38, 0.4);
+}
+
+.btn-outline-dark {
+  background-color: transparent;
+  color: var(--color-primary-text);
+  border-color: var(--color-primary-text);
+}
+
+.btn-outline-dark:hover {
+  background-color: var(--color-primary-text);
+  color: var(--color-main-bg);
+}
+
+.btn-outline-light {
+  background-color: transparent;
+  color: var(--color-white);
+  border-color: var(--color-white);
+}
+
+.btn-outline-light:hover {
+  background-color: var(--color-white);
+  color: var(--color-primary-text);
+}
+
+.btn-gold {
+  background-color: var(--color-highlight);
+  color: var(--color-primary-text);
+}
+
+.btn-gold:hover {
+  background-color: var(--color-highlight-dark);
+}
+
+/* Pill Badges */
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.badge-terracotta {
+  background-color: rgba(148, 68, 38, 0.12);
+  color: var(--color-primary-accent);
+}
+
+.badge-gold {
+  background-color: rgba(217, 174, 41, 0.2);
+  color: #8c6a08;
+}
+
+.badge-light {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--color-white);
+  backdrop-filter: blur(8px);
+}
+
+/* Card Components */
+.card-wellness {
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--color-border-subtle);
+  overflow: hidden;
+}
+
+.card-wellness:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Custom Scrollbars for Horizontal Scrolling Cards */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom Modal Backdrop & Dialog */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-content {
+  background-color: var(--color-main-bg);
+  border-radius: var(--radius-xl);
+  max-width: 680px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+  border: 1px solid var(--color-border-subtle);
+}
+
+/* Input Fields & Forms */
+.input-field {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
+  background-color: var(--color-white);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--color-primary-text);
+  outline: none;
+  transition: border-color var(--duration-fast);
+}
+
+.input-field:focus {
+  border-color: var(--color-primary-accent);
+}
+
+/* Keyframes & Subtle Animations */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-subtle {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+/* Spinner animation for loading states */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Hover transition for footer links */
+.footer-link {
+  transition: color 0.2s;
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  color: #D9AE29 !important;
+}
+
+/* ==========================================================================
+   GLOBAL SNAPPY & SMOOTH BOTTOM-TO-TOP REVEAL
+   ========================================================================== */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Snappy & smooth bottom-to-top motion (24px offset) with 0.85s transition */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* When element enters viewport: settles into exact original place */
+.reveal-on-scroll.is-revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Responsive micro-staggered delays */
+.delay-100 { transition-delay: 0.05s; }
+.delay-200 { transition-delay: 0.10s; }
+.delay-300 { transition-delay: 0.15s; }
+.delay-400 { transition-delay: 0.20s; }
+.delay-500 { transition-delay: 0.25s; }

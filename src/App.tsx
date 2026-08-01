@@ -1,0 +1,230 @@
+import React, { useState, useEffect } from 'react';
+import { Header } from './components/Header';
+import { Hero } from './components/Hero';
+import { DailyQuoteBanner } from './components/DailyQuoteBanner';
+import { ExperiencesGrid } from './components/ExperiencesGrid';
+import { WhyChooseUs } from './components/WhyChooseUs';
+import { WellnessJourney } from './components/WellnessJourney';
+import { ProgramsEvents } from './components/ProgramsEvents';
+import { InteractiveSchedule } from './components/InteractiveSchedule';
+import { TeachersShowcase } from './components/TeachersShowcase';
+import { MembershipSection } from './components/MembershipSection';
+import { LocationsSection } from './components/LocationsSection';
+import { TestimonialsCarousel } from './components/TestimonialsCarousel';
+import { FaqSection } from './components/FaqSection';
+import { NewsletterFooter } from './components/NewsletterFooter';
+import { BookingModal } from './components/BookingModal';
+import { QuickSearchModal } from './components/QuickSearchModal';
+import { TeacherDetailModal } from './components/TeacherDetailModal';
+import { AboutPage } from './components/AboutPage';
+import { ClassesPage } from './components/ClassesPage';
+import { TeachersPage } from './components/TeachersPage';
+import { TeacherDetailPage } from './components/TeacherDetailPage';
+import { Instructor } from './types';
+
+export const App: React.FC = () => {
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail'>('home');
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingType, setBookingType] = useState('class');
+  const [bookingTitle, setBookingTitle] = useState('Book a Class');
+  const [bookingDetails, setBookingDetails] = useState<any>(null);
+
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState<Instructor | null>(null);
+  const [selectedTeacherForPage, setSelectedTeacherForPage] = useState<Instructor | null>(null);
+
+  // Global Scroll Reveal Observer effect
+  useEffect(() => {
+    const observerCallback: IntersectionObserverCallback = (entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    };
+
+    const observerOptions: IntersectionObserverInit = {
+      root: null,
+      rootMargin: '0px 0px -40px 0px',
+      threshold: 0.08
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    const attachObservers = () => {
+      const selectors = [
+        'section',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'p',
+        'img',
+        'blockquote',
+        'button',
+        '.ideal-class-card',
+        '.teacher-day-card',
+        '.teacher-card',
+        '.class-card-row',
+        '.schedule-row-hover',
+        '.reveal-on-scroll'
+      ];
+      const elements = document.querySelectorAll(selectors.join(', '));
+      elements.forEach((el, idx) => {
+        // Skip header nav items and fixed modal overlays
+        if (el.closest('header') || el.closest('.modal-backdrop') || el.closest('.modal-content')) {
+          return;
+        }
+        if (!el.classList.contains('is-revealed')) {
+          el.classList.add('reveal-on-scroll');
+          const delayClass = `delay-${((idx % 5) + 1) * 100}`;
+          el.classList.add(delayClass);
+          observer.observe(el);
+        }
+      });
+    };
+
+    attachObservers();
+    const timer = setTimeout(attachObservers, 400);
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [currentView, selectedTeacherForPage]);
+
+  const handleOpenBooking = (type: string = 'class', title: string = 'Book a Class', details: any = null) => {
+    setBookingType(type);
+    setBookingTitle(title);
+    setBookingDetails(details);
+    setBookingModalOpen(true);
+  };
+
+  const handleOpenTeacherDetail = (teacher: Instructor) => {
+    setSelectedTeacherForPage(teacher);
+    setCurrentView('teacher-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateSection = (sectionId: string) => {
+    if (currentView !== 'home') {
+      setCurrentView('home');
+      setTimeout(() => {
+        const elem = document.getElementById(sectionId);
+        if (elem) {
+          const headerOffset = 115;
+          const elementPosition = elem.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        }
+      }, 100);
+      return;
+    }
+
+    const elem = document.getElementById(sectionId);
+    if (elem) {
+      const headerOffset = 115;
+      const elementPosition = elem.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F5EFE5' }}>
+      {/* Sticky Navigation Header */}
+      <Header
+        onOpenBooking={handleOpenBooking}
+        onOpenSearch={() => setSearchModalOpen(true)}
+        onNavigateSection={handleNavigateSection}
+        currentView={currentView}
+        onViewChange={(view) => setCurrentView(view)}
+      />
+
+      {/* Main Content Sections */}
+      <main style={{ flexGrow: 1 }}>
+        {currentView === 'about' ? (
+          <AboutPage
+            onOpenBooking={handleOpenBooking}
+            onNavigateSection={handleNavigateSection}
+          />
+        ) : currentView === 'classes' ? (
+          <ClassesPage
+            onOpenBooking={handleOpenBooking}
+            onNavigateSection={handleNavigateSection}
+          />
+        ) : currentView === 'teachers' ? (
+          <TeachersPage
+            onOpenTeacherModal={handleOpenTeacherDetail}
+            onOpenBooking={handleOpenBooking}
+            onNavigateSection={handleNavigateSection}
+          />
+        ) : currentView === 'teacher-detail' && selectedTeacherForPage ? (
+          <TeacherDetailPage
+            teacher={selectedTeacherForPage}
+            onBack={() => {
+              setCurrentView('teachers');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenBooking={handleOpenBooking}
+          />
+        ) : (
+          <>
+            <Hero
+              onOpenBooking={handleOpenBooking}
+              onNavigateSection={handleNavigateSection}
+            />
+
+            <WhyChooseUs />
+
+            <TeachersShowcase onOpenTeacherModal={handleOpenTeacherDetail} />
+
+            <ProgramsEvents onOpenBooking={handleOpenBooking} />
+
+            <InteractiveSchedule onOpenBooking={handleOpenBooking} />
+
+            <TestimonialsCarousel />
+
+            <MembershipSection onOpenBooking={handleOpenBooking} />
+
+            <FaqSection onOpenBooking={handleOpenBooking} />
+          </>
+        )}
+      </main>
+
+      {/* Footer */}
+      <NewsletterFooter
+        onNavigateSection={handleNavigateSection}
+        onOpenBooking={handleOpenBooking}
+      />
+
+      {/* Interactive Modals */}
+      <BookingModal
+        isOpen={bookingModalOpen}
+        onClose={() => setBookingModalOpen(false)}
+        bookingType={bookingType}
+        bookingTitle={bookingTitle}
+        bookingDetails={bookingDetails}
+      />
+
+      <QuickSearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        onNavigateSection={handleNavigateSection}
+      />
+
+      <TeacherDetailModal
+        teacher={selectedTeacher}
+        onClose={() => setSelectedTeacher(null)}
+        onOpenBooking={handleOpenBooking}
+      />
+    </div>
+  );
+};
+
+export default App;

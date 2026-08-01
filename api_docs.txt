@@ -1,0 +1,1773 @@
+=== Page 1 ===
+Introduction
+Reference for Public API.
+Entry point: POST https://pragya-yog.com/api.php — operation selected by body field action.
+Body: JSON (or multipart/form-data where uploads apply).
+Auth: none — no authentication required.
+Uploads base: https://pragya-yog.com/uploads/
+Edit this file directly: each endpoint is a separate <article class="endpoint"> block. No JS rendering.
+Public endpoints
+Classes & Schedule
+POST publicClassByDate PUBLIC
+Public view-only schedule list for a date (optional filters).
+UI PREVIEW
+How this endpoint looks in the app
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 2 ===
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be publicClassByDate
+date string no d/m/Y; defaults to today
+instructor string/int no Filter by instructor ID
+level string/int no Filter by level ID
+pillar string/int no Filter by pillar ID
+room string no Filter by room
+EXAMPLE REQUEST
+{
+  "action": "publicClassByDate",
+  "date": "05/01/2024",
+  "instructor": "12"
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "today": "Wed January, 5",
+  "todaySchedules": [
+    {
+      "id": "101",
+      "title": "Morning Flow",
+      "date": "Fri January, 5",
+      "instructor": "John",
+      "color": "#4CAF50",
+      "timing": "07:00am - 08:30am",
+      "book_limit": "20",
+      "booked": 5,
+      "levels": "Beginner",
+      "completed": "0",
+      "credit": "1",
+      "book_cost": "100",
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 3 ===
+      "is_booked": false,
+      "showButton": "false",
+      "buttonType": "view",
+      "booking_id": "",
+      "description": "...",
+      "video": "",
+      "duration": "90",
+      "schedule_id": "25493"
+    }
+  ]
+}
+Always view-only: is_booked=false, showButton="false", buttonType="view".
+POST get-filters PUBLIC
+Dropdown filter options (instructors, pillars, levels, locations).
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 4 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be get-filters
+EXAMPLE REQUEST
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 5 ===
+{ "action": "get-filters" }
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": {
+    "instructors": [
+      { "id": "", "name": "All Instructors" },
+      { "id": "12", "name": "John Doe" }
+    ],
+    "pillars": [
+      { "id": "", "name": "All Pillars" },
+      { "id": "1", "name": "Strength" }
+    ],
+    "levels": [
+      { "id": "", "name": "All Levels" },
+      { "id": "2", "name": "Beginner" }
+    ],
+    "locations": [
+      { "id": "", "name": "All Locations" },
+      { "id": "Central", "name": "Central" }
+    ]
+  }
+}
+Packages & Bundles
+POST get-packages PUBLIC
+List active priced packages grouped by category.
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 6 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be get-packages
+EXAMPLE REQUEST
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 7 ===
+{ "action": "get-packages" }
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": {
+    "Private": [
+      {
+        "id": "1",
+        "title": "Private 1:1",
+        "amount": "100",
+        "benefit": "Unlimited",
+        "class_access": "Private classes",
+        "duration_label": "1 month",
+        "access_label": "Unlimited"
+      }
+    ],
+    "Regular": [],
+    "TTC": [],
+    "Workshop": [],
+    "Event": [],
+    "Retreat": []
+  }
+}
+Categories: Private, Regular, TTC, Workshop, Event, Retreat. Only status=1 and amount > 0.
+POST get-package-detail PUBLIC
+Single package plus “frequently bought together” bundles.
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 8 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be get-package-detail
+package_id int yes Package ID (> 0)
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 9 ===
+EXAMPLE REQUEST
+{
+  "action": "get-package-detail",
+  "package_id": 5
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": {
+    "id": "5",
+    "title": "Monthly Unlimited",
+    "benefit": "...",
+    "frequently_bought_together": [
+      {
+        "id": "2",
+        "name": "Starter Bundle",
+        "packages": [],
+        "original_price": 300.0,
+        "discounted_price": 280.0,
+        "bundle_discount": 28.0,
+        "final_price": 252.0,
+        "savings": 48.0,
+        "priority": 1,
+        "discount_type": "percentage",
+        "discount_value": "10"
+      }
+    ]
+  }
+}
+ERRORS
+package_id <= 0 → Missing package id
+Not found → Package not found
+Events & Teachers
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 10 ===
+POST teachers PUBLIC
+Public teacher/instructor list with images.
+UI PREVIEW
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be teachers
+EXAMPLE REQUEST
+{ "action": "teachers" }
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": [
+    {
+      "staff_id": "7",
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 11 ===
+      "name": "Guru Ram",
+      "description": "...",
+      "post": "Senior Instructor",
+      "image": "https://pragya-yog.com/uploads/teachers/ram.jpg"
+    }
+  ]
+}
+Support & Misc
+POST policies PUBLIC
+Fetch one policy row by ID.
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 12 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be policies
+id int/string no Policy row ID (see ID usage below)
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 13 ===
+ID USAGE
+id Policy
+1 Booking and Cancellation Policy
+2 Terms & Conditions
+3 Privacy Policy
+4 About Us
+EXAMPLE REQUEST
+{
+  "action": "policies",
+  "id": 1
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": {
+    "id": "1",
+    "title": "Booking and Cancellation Policy"
+  }
+}
+Not found may return an empty response body.
+POST get-daily-quote PUBLIC
+One random daily quote.
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 14 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be get-daily-quote
+EXAMPLE REQUEST
+{ "action": "get-daily-quote" }
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": [
+    { "q": "Quote text", "a": "Author", "h": "<p>Quote HTML</p>" }
+  ]
+}
+ERRORS
+HTTP 404 → { "error": "No daily quote available" }
+POST faqs PUBLIC
+Public FAQ Q&A list.
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 15 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be faqs
+EXAMPLE REQUEST
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 16 ===
+{ "action": "faqs" }
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": [
+    { "question": "How do I cancel?", "answer": "Go to bookings..." }
+  ]
+}
+Packages & Bundles
+POST bundle-list PUBLIC
+Active in-window bundles with pricing.
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 17 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be bundle-list
+EXAMPLE REQUEST
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 18 ===
+{
+  "action": "bundle-list"
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": [
+    {
+      "id": "2",
+      "name": "Starter Bundle",
+      "packages": [],
+      "original_price": 300.0,
+      "discounted_price": 280.0,
+      "bundle_discount": 28.0,
+      "final_price": 252.0,
+      "savings": 48.0
+    }
+  ]
+}
+Once-per-customer filtering is not applied for public callers.
+Events & Teachers
+POST upcoming-events PUBLIC
+List running/future upcoming events (decorated).
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 19 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be upcoming-events
+EXAMPLE REQUEST
+{
+  "action": "upcoming-events"
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": [
+    {
+      "id": "5",
+      "title": "Weekend Retreat",
+      "name": "Weekend Retreat",
+      "description": "...",
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 20 ===
+      "amount": 0.0,
+      "is_free": 1,
+      "image": "https://pragya-yog.com/uploads/...",
+      "starts_at": "2026-08-01 09:00:00",
+      "ends_at": "2026-08-02 17:00:00"
+    }
+  ]
+}
+Filter: ends_at > now().
+POST upcoming-event-detail PUBLIC
+Event detail — free events return schedules; paid return packages.
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 21 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be upcoming-event-detail
+event_id int yes Must be > 0
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 22 ===
+EXAMPLE REQUEST
+{
+  "action": "upcoming-event-detail",
+  "event_id": 5
+}
+SUCCESS RESPONSE (FREE EVENT)
+{
+  "status": true,
+  "data": {
+    "id": "5",
+    "title": "Weekend Retreat",
+    "is_free": 1,
+    "schedules": [
+      {
+        "id": "25601",
+        "title": "Morning Flow",
+        "timing": "9:00AM",
+        "duration": "60",
+        "book_cost": 0,
+        "book_cost_apply": "3",
+        "book_limit": 20,
+        "spots_left": 15,
+        "is_full": false
+      }
+    ],
+    "packages": []
+  }
+}
+ERRORS
+Missing event id / Event not found
+Paid events populate packages[] and set schedules=[].
+Media
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 23 ===
+Public media only — members_only content is not unlocked; is_favorite is always false.
+POST media-gallery-home PUBLIC
+Gallery home — featured albums/videos/audio/docs plus top-level categories.
+UI PREVIEW
+How this endpoint looks in the app
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 24 ===
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be media-gallery-home
+media_type string no image | video | audio | document
+EXAMPLE REQUEST
+{
+  "action": "media-gallery-home",
+  "media_type": "video"
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "featured_albums": [
+    { "id": "3", "title": "Retreat 2026", "cover_url": "https://pragya-yog.com/uploads/media/albums/c.jpg", "
+  ],
+  "featured_videos": [
+    { "id": "8", "title": "Intro", "youtube_id": "abc", "thumbnail_url": "..." }
+  ],
+  "featured_audio": [
+    { "id": "2", "title": "Meditation", "audio_url": ".../media/audio/m.mp3", "cover_url": "..." }
+  ],
+  "featured_documents": [
+    { "id": "1", "title": "Guide", "pdf_url": ".../media/documents/g.pdf", "cover_url": "..." }
+  ],
+  "categories": [
+    {
+      "id": "10",
+      "name": "Videos",
+      "media_type": "video",
+      "image_url": "...",
+      "total_count": 12,
+      "album_count": 0,
+      "video_count": 12,
+      "audio_count": 0,
+      "document_count": 0
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 25 ===
+ 
+    }
+  ]
+}
+POST media-category-detail PUBLIC
+Category page: category, subcategories, and media of that type.
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 26 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be media-category-detail
+category_id int yes Must be > 0
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 27 ===
+EXAMPLE REQUEST
+{
+  "action": "media-category-detail",
+  "category_id": 10
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "category": { "id": "10", "name": "Videos", "media_type": "video", "image_url": "..." },
+  "subcategories": [
+    { "id": "11", "name": "Beginner", "total_count": 4 }
+  ],
+  "albums": [],
+  "videos": [
+    { "id": "8", "title": "Intro", "thumbnail_url": "...", "category_name": "Videos" }
+  ],
+  "audio": [],
+  "documents": []
+}
+ERRORS
+category_id required / Category not found
+POST media-albums PUBLIC
+Paginated photo albums.
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be media-albums
+category_id int no Filter
+page int no Default 1, min 1
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 28 ===
+Name Type Required Description
+limit int no Default 20, max 50
+EXAMPLE REQUEST
+{
+  "action": "media-albums",
+  "category_id": 5,
+  "page": 1,
+  "limit": 20
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": [
+    {
+      "id": "3",
+      "title": "Retreat",
+      "cover_url": "...",
+      "image_count": 24,
+      "category_name": "Events",
+      "is_favorite": false
+    }
+  ],
+  "total": 12,
+  "page": 1,
+  "limit": 20
+}
+POST media-album-detail PUBLIC
+One album plus images; increments view count.
+REQUEST PARAMETERS
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 29 ===
+Name Type Required Description
+action string yes Must be media-album-detail
+id int yes Album id
+EXAMPLE REQUEST
+{
+  "action": "media-album-detail",
+  "id": 3
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": {
+    "id": "3",
+    "title": "Retreat",
+    "cover_url": "...",
+    "category_name": "Events",
+    "images": [
+      {
+        "id": "100",
+        "filename": "1.jpg",
+        "url": "https://pragya-yog.com/uploads/media/albums/1.jpg"
+      }
+    ]
+  }
+}
+ERRORS
+Album not found or access denied
+Side effects: view_count++ and media_views insert (anonymous OK).
+POST media-videos PUBLIC
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 30 ===
+Paginated videos; optional single-video view tracking via id.
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be media-videos
+category_id int no Filter
+page int no Default 1
+limit int no Default 20, max 50
+id int no If set, increments that video’s view_count
+EXAMPLE REQUEST
+{
+  "action": "media-videos",
+  "category_id": 10,
+  "page": 1,
+  "limit": 20,
+  "id": 8
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": [
+    {
+      "id": "8",
+      "title": "Intro",
+      "youtube_id": "abc",
+      "youtube_url": "...",
+      "thumbnail_url": "...",
+      "duration": "5:00",
+      "view_count": "120",
+      "category_name": "Videos",
+      "is_favorite": false
+    }
+  ],
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 31 ===
+  "total": 12,
+  "page": 1,
+  "limit": 20
+}
+POST media-audio PUBLIC
+Paginated audio tracks.
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be media-audio
+category_id int no Filter
+page int no Default 1
+limit int no Default 20, max 50
+EXAMPLE REQUEST
+{
+  "action": "media-audio",
+  "page": 1,
+  "limit": 20
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "data": [
+    {
+      "id": "2",
+      "title": "Meditation",
+      "filename": "m.mp3",
+      "audio_url": ".../media/audio/m.mp3",
+      "cover_url": "...",
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 32 ===
+      "duration": "10:00",
+      "play_count": "34",
+      "allow_download": "1",
+      "category_name": "Audio",
+      "is_favorite": false
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "limit": 20
+}
+POST media-documents PUBLIC
+Paginated PDFs; optional view tracking via id.
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be media-documents
+category_id int no Filter
+page int no Default 1
+limit int no Default 20, max 50
+id int no If set, increments document view_count
+EXAMPLE REQUEST
+{
+  "action": "media-documents",
+  "page": 1,
+  "limit": 20,
+  "id": 1
+}
+SUCCESS RESPONSE
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 33 ===
+{
+  "status": true,
+  "data": [
+    {
+      "id": "1",
+      "title": "Guide",
+      "filename": "g.pdf",
+      "pdf_url": ".../media/documents/g.pdf",
+      "cover_url": "...",
+      "view_count": "9",
+      "allow_download": "1",
+      "category_name": "Docs",
+      "is_favorite": false
+    }
+  ],
+  "total": 3,
+  "page": 1,
+  "limit": 20
+}
+POST media-search PUBLIC
+Title search across media types (up to 10 per type).
+UI PREVIEW
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 34 ===
+How this endpoint looks in the app
+REQUEST PARAMETERS
+Name Type Required Description
+action string yes Must be media-search
+q string no Search text (%q% LIKE); empty matches all
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
+=== Page 35 ===
+Name Type Required Description
+media_type string no image | video | audio | document
+EXAMPLE REQUEST
+{
+  "action": "media-search",
+  "q": "retreat",
+  "media_type": "image"
+}
+SUCCESS RESPONSE
+{
+  "status": true,
+  "albums": [
+    { "id": "3", "title": "Retreat", "type": "album", "cover_url": "..." }
+  ],
+  "videos": [],
+  "audio": [],
+  "documents": []
+}
+media_type=image maps to albums. Each type capped at 10 results.
+
+
+Public API
+POST /api.php
+OVERVIEW
+Introduction
+ENDPOINTS
+Classes & Schedule
+publicClassByDate
+get-filters
+Packages & Bundles
+get-packages
+get-package-detail
+bundle-list
+Events & Teachers
+teachers
+upcoming-events
+upcoming-event-detail
+Media
+media-gallery-home
+media-category-detail
+media-albums
+media-album-detail
+media-videos
+media-audio
+media-documents
+media-search
+Support & Misc
+policies
+get-daily-quote
+faqs
+
