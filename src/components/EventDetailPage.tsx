@@ -47,6 +47,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
       
       {/* Top Fixed / Floating Back Button Bar */}
       <div
+        className="edp-back-bar"
         style={{
           maxWidth: '1280px',
           margin: '0 auto',
@@ -86,10 +87,11 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
       </div>
 
       {/* Main Content Area */}
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 32px' }}>
+      <div className="edp-main-content" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 32px' }}>
         
-        {/* Event Hero Banner Section (Matches Reference Design) */}
+        {/* Event Hero Banner Section */}
         <div
+          className="edp-hero-banner"
           style={{
             position: 'relative',
             width: '100%',
@@ -119,6 +121,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
 
           {/* Dark Warm Overlay Gradient */}
           <div
+            className="edp-hero-overlay"
             style={{
               position: 'absolute',
               inset: 0,
@@ -128,6 +131,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
 
           {/* Hero Text & Actions Overlay */}
           <div
+            className="edp-hero-content"
             style={{
               position: 'relative',
               zIndex: 2,
@@ -153,7 +157,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             {/* Main Title */}
             <h1
               style={{
-                fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                fontFamily: "var(--font-serif)",
                 fontSize: 'clamp(36px, 4.5vw, 54px)',
                 fontWeight: 400,
                 color: '#FFFFFF',
@@ -184,7 +188,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             </div>
 
             {/* Action Buttons Row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <div className="edp-hero-actions" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
               <button
                 onClick={() => onOpenBooking('event', event.title || event.name, event)}
                 style={{
@@ -252,6 +256,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
 
         {/* Event Key Details & Description Card */}
         <div
+          className="edp-details-card"
           style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '28px',
@@ -262,6 +267,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
         >
           {/* Event Key Details Grid */}
           <div
+            className="edp-key-details"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -308,7 +314,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <div className="edp-key-cta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => onOpenBooking('event', event.title || event.name, event)}
                 style={{
@@ -396,7 +402,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             </div>
             <h2
               style={{
-                fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                fontFamily: "var(--font-serif)",
                 fontSize: '32px',
                 fontWeight: 400,
                 color: '#21201E',
@@ -444,7 +450,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             </div>
             <h3
               style={{
-                fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                fontFamily: "var(--font-serif)",
                 fontSize: '26px',
                 fontWeight: 400,
                 color: '#21201E',
@@ -454,7 +460,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
               Immersion Privileges & Amenities
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <div className="edp-amenities-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
               {[
                 { title: 'Certified Guidance', desc: 'Led by internationally certified master teachers with over 15+ years of practice.' },
                 { title: 'Luxury Props Provided', desc: 'Complimentary eco-mats, cork blocks, organic bolsters, and sanitized linen towels.' },
@@ -520,7 +526,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             </div>
             <h3
               style={{
-                fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                fontFamily: "var(--font-serif)",
                 fontSize: '26px',
                 fontWeight: 400,
                 color: '#21201E',
@@ -530,38 +536,100 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
               Immersion Schedule & Flow
             </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {[
                 { time: '08:00 AM – 09:15 AM', title: 'Opening Flow & Mindful Pranayama', desc: 'Solar activation practices and oceanfront breathing exercises.' },
                 { time: '09:30 AM – 11:30 AM', title: 'Alignment, Biomechanics & Asana Workshop', desc: 'Deconstructing peak posture alignment with hands-on adjustments.' },
                 { time: '11:45 AM – 01:00 PM', title: 'Organic Nourishment & Hydrotherapy', desc: 'Cold-pressed botanical juices, sauna relaxation, and reflection.' }
-              ].map((sch, sIdx) => (
-                <div
-                  key={sIdx}
-                  style={{
-                    backgroundColor: '#F5EFE5',
-                    borderRadius: '16px',
-                    padding: '20px 24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '16px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ backgroundColor: '#944426', color: '#FFFFFF', borderRadius: '10px', padding: '6px 14px', fontSize: '13px', fontWeight: 800 }}>
-                      {sch.time}
+              ].map((sch, sIdx) => {
+                const [startTime, endTime] = sch.time.split('–').map(t => t.trim());
+                return (
+                  <div
+                    key={sIdx}
+                    className="itinerary-row"
+                    style={{
+                      backgroundColor: '#F5EFE5',
+                      borderRadius: '16px',
+                      padding: '18px 20px',
+                      display: 'flex',
+                      alignItems: 'stretch',
+                      gap: '16px',
+                      borderLeft: '4px solid #944426'
+                    }}
+                  >
+                    {/* Step Number */}
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      flexShrink: 0
+                    }}>
+                      <div style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        backgroundColor: '#944426',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        flexShrink: 0
+                      }}>
+                        {sIdx + 1}
+                      </div>
                     </div>
-                    <div>
-                      <h4 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '16px', fontWeight: 700, color: '#21201E', margin: '0 0 2px 0' }}>
+
+                    {/* Time + Title + Desc */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* Time range: two compact pills */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                        <span style={{
+                          backgroundColor: '#944426',
+                          color: '#FFFFFF',
+                          borderRadius: '6px',
+                          padding: '3px 10px',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {startTime}
+                        </span>
+                        <span style={{ color: '#944426', fontWeight: 800, fontSize: '13px' }}>→</span>
+                        <span style={{
+                          backgroundColor: 'rgba(148, 68, 38, 0.12)',
+                          color: '#944426',
+                          borderRadius: '6px',
+                          padding: '3px 10px',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {endTime}
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <h4 style={{
+                        fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        color: '#21201E',
+                        margin: '0 0 4px 0',
+                        lineHeight: 1.3
+                      }}>
                         {sch.title}
                       </h4>
-                      <div style={{ fontSize: '13.5px', color: '#6B655F' }}>{sch.desc}</div>
+
+                      {/* Description */}
+                      <div style={{ fontSize: '13px', color: '#6B655F', lineHeight: 1.5 }}>
+                        {sch.desc}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -643,6 +711,34 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
           )}
         </div>
 
+        {/* Sticky Mobile CTA */}
+        <div className="edp-sticky-mobile-cta">
+          <button
+            onClick={() => onOpenBooking('event', event.title || event.name, event)}
+            style={{
+              width: '100%',
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+              backgroundColor: '#944426',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '999px',
+              padding: '16px',
+              fontSize: '15px',
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 8px 24px rgba(148, 68, 38, 0.35)'
+            }}
+          >
+            <Calendar size={18} />
+            <span>RESERVE YOUR SPOT</span>
+          </button>
+        </div>
+
         {/* Explore Other Events Section */}
         {otherEvents.length > 0 && (
           <div style={{ marginTop: '64px' }}>
@@ -662,7 +758,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
               </div>
               <h2
                 style={{
-                  fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                  fontFamily: "var(--font-serif)",
                   fontSize: 'clamp(28px, 3.5vw, 40px)',
                   fontWeight: 400,
                   color: '#21201E',
@@ -853,6 +949,164 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
           </div>
         )}
       </div>
+
+      <style>{`
+        /* ── Mobile responsive overrides for EventDetailPage ── */
+        @media (max-width: 768px) {
+
+          /* Back bar */
+          .edp-back-bar {
+            padding: 96px 16px 16px 16px !important;
+          }
+
+          /* Main content horizontal padding */
+          .edp-main-content {
+            padding: 0 16px !important;
+          }
+
+          /* Hero banner */
+          .edp-hero-banner {
+            min-height: 320px !important;
+            border-radius: 20px !important;
+            margin-bottom: 20px !important;
+          }
+
+          /* Hero overlay — top-to-bottom on mobile */
+          .edp-hero-overlay {
+            background: linear-gradient(
+              to top,
+              rgba(18, 14, 12, 0.95) 0%,
+              rgba(18, 14, 12, 0.55) 55%,
+              rgba(18, 14, 12, 0.1) 100%
+            ) !important;
+          }
+
+          /* Hero content padding */
+          .edp-hero-content {
+            padding: 24px 20px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+
+          /* Hero title */
+          .edp-hero-content h1 {
+            font-size: 26px !important;
+            margin-bottom: 10px !important;
+          }
+
+          /* Date/location line */
+          .edp-hero-content > div[style*='marginBottom: 32px'] {
+            font-size: 13px !important;
+            margin-bottom: 20px !important;
+          }
+
+          /* Hero action buttons — stack on mobile */
+          .edp-hero-actions {
+            gap: 10px !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .edp-hero-actions button {
+            width: 100% !important;
+            text-align: center !important;
+            justify-content: center !important;
+            padding: 13px 20px !important;
+            font-size: 12px !important;
+          }
+
+          /* Details card */
+          .edp-details-card {
+            padding: 24px 18px !important;
+            border-radius: 20px !important;
+            margin-bottom: 0 !important;
+          }
+
+          /* Key details grid → single column */
+          .edp-key-details {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+            padding: 20px 18px !important;
+            margin-bottom: 28px !important;
+            border-radius: 16px !important;
+          }
+
+          /* Hide the desktop CTA inside the key-details box */
+          .edp-key-cta {
+            display: none !important;
+          }
+
+          /* Description text */
+          .event-rich-description {
+            font-size: 14.5px !important;
+            line-height: 1.7 !important;
+          }
+
+          /* Section headings */
+          .edp-details-card h2 {
+            font-size: 24px !important;
+          }
+          .edp-details-card h3 {
+            font-size: 20px !important;
+          }
+
+          /* Amenities grid → single column */
+          .edp-amenities-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          /* Itinerary rows → stack time + content vertically */
+          .edp-details-card > div[style*='marginBottom: 48px'] > div > div[style*='display: flex'][style*='alignItems: center'][style*='justifyContent: space-between'] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+          }
+
+          /* Instructor box → vertical on mobile */
+          .edp-details-card > div[style*='padding: 32px'] {
+            flex-direction: column !important;
+            padding: 20px 18px !important;
+            gap: 16px !important;
+          }
+
+          /* Other events section */
+          .other-events-cards-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          /* Other event card description — truncate shorter */
+          .other-event-card p {
+            -webkit-line-clamp: 2 !important;
+          }
+
+          /* Sticky bottom CTA bar — shown only on mobile */
+          .edp-sticky-mobile-cta {
+            display: flex !important;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: rgba(245, 239, 229, 0.96) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            padding: 14px 20px calc(14px + env(safe-area-inset-bottom)) 20px !important;
+            border-top: 1px solid rgba(0,0,0,0.08) !important;
+            z-index: 500 !important;
+            box-shadow: 0 -8px 24px rgba(0,0,0,0.08) !important;
+          }
+
+          /* Extra bottom padding so content doesn't hide behind the sticky bar */
+          .edp-main-content {
+            padding-bottom: 100px !important;
+          }
+        }
+
+        /* Desktop — hide the sticky mobile CTA */
+        @media (min-width: 769px) {
+          .edp-sticky-mobile-cta {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

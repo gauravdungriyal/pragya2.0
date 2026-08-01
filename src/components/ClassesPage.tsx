@@ -101,11 +101,13 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
   const classImages = [
     'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?q=80&w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1512290900673-70024421191e?q=80&w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop'
   ];
+
+  const fallbackImage = 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop';
 
   // Fetch API schedule whenever selectedDate changes
   useEffect(() => {
@@ -192,7 +194,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               <span
                 className="classes-title-span"
                 style={{
-                  fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                  fontFamily: "var(--font-serif)",
                   fontStyle: 'italic',
                   fontWeight: 400,
                   color: '#21201E'
@@ -243,7 +245,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               lineHeight: 1.1
             }}
           >
-            Discover Your <span style={{ fontFamily: "'Canela', Georgia, serif", fontStyle: 'italic', fontWeight: 400 }}>Ideal</span> Yoga <span style={{ fontFamily: "'Canela', Georgia, serif", fontStyle: 'italic', fontWeight: 400 }}>Practice</span>
+            Discover Your <span style={{ fontFamily: "var(--font-accent)", fontStyle: 'italic', fontWeight: 400 }}>Ideal</span> Yoga <span style={{ fontFamily: "var(--font-accent)", fontStyle: 'italic', fontWeight: 400 }}>Practice</span>
           </h2>
           <p style={{ fontFamily: "var(--font-sans)", fontSize: '16px', color: '#6B655F', margin: 0 }}>
             Join a class that matches your pace, your goals, and your lifestyle
@@ -279,6 +281,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                 <img
                   src={item.image}
                   alt={item.title}
+                  onError={(e) => { (e.target as HTMLImageElement).src = fallbackImage; }}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -411,7 +414,12 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
 
               {/* Bottom Featured Image */}
               <div className="card-img-box">
-                <img src={item.image} alt={item.title} className="card-img" />
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="card-img"
+                  onError={(e) => { (e.target as HTMLImageElement).src = fallbackImage; }}
+                />
               </div>
             </div>
           ))}
@@ -819,7 +827,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             The{' '}
             <span
               style={{
-                fontFamily: "'Canela', Georgia, serif",
+                fontFamily: "var(--font-accent)",
                 fontStyle: 'italic',
                 fontWeight: 400
               }}

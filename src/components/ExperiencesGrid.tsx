@@ -89,7 +89,7 @@ export const ExperiencesGrid: React.FC<ExperiencesGridProps> = ({ onOpenBooking 
         </div>
 
         {/* Alternating Card Grid (#9D9D48 & #944426) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '28px' }}>
+        <div className="experiences-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '28px' }}>
           {experiences.map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -204,6 +204,18 @@ export const ExperiencesGrid: React.FC<ExperiencesGridProps> = ({ onOpenBooking 
           })}
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          #experiences {
+            padding: 40px 0 52px 0 !important;
+          }
+          .experiences-card-grid {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+          }
+        }
+      `}</style>
     </section>
   );
 };

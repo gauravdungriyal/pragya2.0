@@ -174,7 +174,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
 
           <h2
             style={{
-              fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+              fontFamily: "var(--font-serif)",
               fontSize: 'clamp(34px, 4.5vw, 56px)',
               fontWeight: 400,
               color: '#21201E',
@@ -272,7 +272,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '12px' }}>
                         <span
                           style={{
-                            fontFamily: 'Canela, "Cormorant Garamond", Georgia, serif',
+                            fontFamily: 'var(--font-accent)',
                             fontSize: '44px',
                             fontWeight: 400,
                             lineHeight: 1

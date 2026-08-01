@@ -81,7 +81,7 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
           </span>
           <h2
             style={{
-              fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+              fontFamily: "var(--font-serif)",
               fontSize: 'clamp(32px, 4.2vw, 56px)',
               fontWeight: 400,
               color: '#21201E',
@@ -91,7 +91,7 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
           >
             Guided by Passion and Purpose
           </h2>
-          <p style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '15px', color: '#757069', lineHeight: 1.6 }}>
+          <p style={{ fontFamily: "var(--font-sans)", fontSize: '15px', color: '#757069', lineHeight: 1.6 }}>
             Passionate teachers guiding your journey with care.
           </p>
         </div>
@@ -413,26 +413,10 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
         @media (max-width: 768px) {
           #teachers {
             padding: 56px 0 64px 0 !important;
+            overflow: hidden !important;
           }
-          .watermark-left {
-            display: block !important;
-            right: auto !important;
-            left: -32px !important;
-            top: 46% !important;
-            font-size: 44px !important;
-            letter-spacing: 0.08em !important;
-            color: rgba(33, 32, 30, 0.04) !important;
-            WebkitTextStroke: 1.5px rgba(33, 32, 30, 0.15) !important;
-          }
-          .watermark-right {
-            display: block !important;
-            left: auto !important;
-            right: -32px !important;
-            top: 46% !important;
-            font-size: 44px !important;
-            letter-spacing: 0.08em !important;
-            color: rgba(33, 32, 30, 0.04) !important;
-            WebkitTextStroke: 1.5px rgba(33, 32, 30, 0.15) !important;
+          .watermark-left, .watermark-right {
+            display: none !important;
           }
         }
       `}</style>

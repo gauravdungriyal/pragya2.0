@@ -60,6 +60,7 @@ export const WellnessJourney: React.FC<WellnessJourneyProps> = ({ onOpenBooking 
 
         {/* Journey Step Selectors */}
         <div
+          className="journey-steps-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -112,7 +113,7 @@ export const WellnessJourney: React.FC<WellnessJourneyProps> = ({ onOpenBooking 
             gridTemplateColumns: '1fr',
             gap: '36px'
           }}
-          className="grid-md-2"
+          className="grid-md-2 journey-showcase-card"
         >
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#944426', fontSize: '13px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>
@@ -147,7 +148,7 @@ export const WellnessJourney: React.FC<WellnessJourneyProps> = ({ onOpenBooking 
             </div>
           </div>
 
-          <div style={{ borderRadius: '24px', overflow: 'hidden', height: '360px', position: 'relative' }}>
+          <div className="journey-img-container" style={{ borderRadius: '24px', overflow: 'hidden', height: '360px', position: 'relative' }}>
             <img
               src={steps[activeStep].image}
               alt={steps[activeStep].title}
@@ -156,6 +157,30 @@ export const WellnessJourney: React.FC<WellnessJourneyProps> = ({ onOpenBooking 
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          #journey {
+            padding: 40px 0 52px 0 !important;
+          }
+          .journey-steps-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+          }
+          .journey-showcase-card {
+            padding: 24px 18px !important;
+            border-radius: 20px !important;
+            gap: 24px !important;
+          }
+          .journey-showcase-card h3 {
+            font-size: 24px !important;
+          }
+          .journey-img-container {
+            height: 240px !important;
+            border-radius: 16px !important;
+          }
+        }
+      `}</style>
     </section>
   );
 };

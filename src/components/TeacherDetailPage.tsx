@@ -278,7 +278,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
         {/* About Instructor Heading */}
         <h2
           style={{
-            fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+            fontFamily: "var(--font-serif)",
             fontSize: 'clamp(28px, 3.5vw, 42px)',
             fontWeight: 400,
             color: '#21201E',

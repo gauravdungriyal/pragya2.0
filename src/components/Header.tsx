@@ -86,7 +86,8 @@ export const Header: React.FC<HeaderProps> = ({
       if (onViewChange) onViewChange('home');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item.type === 'action' && item.id === 'login') {
-      onOpenBooking('user', 'Account / Login');
+      if (onViewChange) onViewChange('home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       if (onViewChange && currentView !== 'home') {
         onViewChange('home');
@@ -224,7 +225,10 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <button
-          onClick={() => onOpenBooking('user', 'Account')}
+          onClick={() => {
+            if (onViewChange) onViewChange('home');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           aria-label="User Account"
           className="hdr-icon-btn"
           style={{

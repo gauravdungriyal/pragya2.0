@@ -167,7 +167,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
               Events &{' '}
               <span
                 style={{
-                  fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                  fontFamily: "var(--font-serif)",
                   fontStyle: 'italic',
                   fontWeight: 400,
                   color: '#21201E'
@@ -284,7 +284,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
             <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 16px auto', display: 'block' }} />
             <p
               style={{
-                fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                fontFamily: "var(--font-serif)",
                 fontStyle: 'italic',
                 fontSize: '20px',
                 color: '#6B655F',

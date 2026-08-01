@@ -239,7 +239,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           </span>
           <h2
             style={{
-              fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+              fontFamily: "var(--font-serif)",
               fontSize: 'clamp(28px, 3.8vw, 42px)',
               fontWeight: 400,
               color: '#21201E',
@@ -301,7 +301,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           </span>
           <h2
             style={{
-              fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+              fontFamily: "var(--font-serif)",
               fontSize: 'clamp(28px, 3.8vw, 42px)',
               fontWeight: 400,
               color: '#21201E',
@@ -395,7 +395,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           letter-spacing: -0.02em;
         }
         .title-serif-italic {
-          font-family: 'BNCringeSerif', 'Canela', Georgia, serif;
+          font-family: var(--font-serif);
           font-style: italic;
           font-weight: 400;
         }
@@ -434,7 +434,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           align-items: start;
         }
         .block-title {
-          font-family: 'BNCringeSerif', 'Canela', Georgia, serif;
+          font-family: var(--font-serif);
           font-size: 28px;
           font-weight: 400;
           color: #21201E;
@@ -621,7 +621,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         .cta-italic {
-          font-family: 'BNCringeSerif', 'Canela', Georgia, serif;
+          font-family: var(--font-serif);
           font-style: italic;
           font-weight: 400;
         }

@@ -79,7 +79,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
         <h1
           className="hero-main-title"
           style={{
-            fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+            fontFamily: "var(--font-serif)",
             fontSize: 'clamp(36px, 5.2vw, 76px)',
             fontWeight: 400,
             lineHeight: 1.1,
@@ -88,7 +88,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
             letterSpacing: '-0.02em'
           }}
         >
-          Stronger Core, <span style={{ fontFamily: "'Canela', Georgia, serif", fontStyle: 'italic', fontWeight: 400 }}>Stronger You</span>
+          Stronger Core, <span style={{ fontFamily: "var(--font-accent)", fontStyle: 'italic', fontWeight: 400 }}>Stronger You</span>
         </h1>
 
         {/* Subtitle Paragraph */}
@@ -290,7 +290,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <span style={{ fontFamily: 'Canela, "Cormorant Garamond", Georgia, serif', fontSize: '38px', fontWeight: 400, color: '#21201E' }}>
+            <span style={{ fontFamily: 'var(--font-accent)', fontSize: '38px', fontWeight: 400, color: '#21201E' }}>
               50+
             </span>
             <span style={{ fontSize: '13px', color: '#4A4640', maxWidth: '140px', lineHeight: 1.35 }}>
@@ -317,6 +317,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
             min-height: 100dvh !important;
             justify-content: flex-start !important;
             background-color: #F5EFE5 !important;
+            overflow: hidden !important;
           }
           .hero-bg-desktop, .hero-bg-overlay-desktop {
             display: none !important;

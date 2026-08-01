@@ -141,7 +141,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
             Your Yoga{' '}
             <span
               style={{
-                fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                fontFamily: "var(--font-serif)",
                 fontStyle: 'italic',
                 fontWeight: 400,
                 color: '#21201E'

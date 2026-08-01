@@ -123,7 +123,7 @@ export const WhyChooseUs: React.FC = () => {
           margin-bottom: 10px;
         }
         .why-us-heading {
-          font-family: 'BNCringeSerif', 'Canela', Georgia, serif;
+          font-family: var(--font-serif);
           font-size: clamp(30px, 3.6vw, 44px);
           font-weight: 400;
           color: #21201E;
@@ -131,7 +131,7 @@ export const WhyChooseUs: React.FC = () => {
           margin: 0;
         }
         .why-us-description {
-          font-family: 'Neue Montreal', sans-serif;
+          font-family: var(--font-sans);
           max-width: 380px;
           font-size: 14.5px;
           color: #757069;

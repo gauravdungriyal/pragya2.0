@@ -133,7 +133,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
             </span>
             <h2
               style={{
-                fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+                fontFamily: "var(--font-serif)",
                 fontSize: 'clamp(32px, 4.5vw, 54px)',
                 fontWeight: 400,
                 color: '#272727',

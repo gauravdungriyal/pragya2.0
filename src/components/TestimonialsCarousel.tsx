@@ -216,7 +216,7 @@ export const TestimonialsCarousel: React.FC = () => {
           border-radius: 2px;
         }
         .testimonials-heading {
-          font-family: 'BNCringeSerif', 'Canela', Georgia, serif;
+          font-family: var(--font-serif);
           font-size: clamp(34px, 4.5vw, 56px);
           font-weight: 400;
           color: #21201E;
@@ -228,7 +228,7 @@ export const TestimonialsCarousel: React.FC = () => {
           padding-top: 40px;
         }
         .stat-number {
-          font-family: 'Canela', serif;
+          font-family: var(--font-accent);
           font-size: clamp(64px, 7vw, 92px);
           font-weight: 400;
           color: #00381F;

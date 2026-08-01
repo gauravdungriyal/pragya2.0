@@ -122,7 +122,7 @@ export const LocationsSection: React.FC<LocationsSectionProps> = ({ onOpenBookin
             gridTemplateColumns: '1fr',
             gap: '40px'
           }}
-          className="grid-md-2"
+          className="grid-md-2 locations-showcase-card"
         >
           {/* Left Details */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -186,7 +186,7 @@ export const LocationsSection: React.FC<LocationsSectionProps> = ({ onOpenBookin
           </div>
 
           {/* Right Image & Map Preview */}
-          <div style={{ borderRadius: '24px', overflow: 'hidden', height: '420px', position: 'relative' }}>
+          <div className="locations-img-container" style={{ borderRadius: '24px', overflow: 'hidden', height: '420px', position: 'relative' }}>
             <img
               src={loc.image}
               alt={loc.name}
@@ -216,6 +216,26 @@ export const LocationsSection: React.FC<LocationsSectionProps> = ({ onOpenBookin
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          #locations {
+            padding: 40px 0 52px 0 !important;
+          }
+          .locations-showcase-card {
+            padding: 24px 18px !important;
+            border-radius: 20px !important;
+            gap: 24px !important;
+          }
+          .locations-showcase-card h3 {
+            font-size: 24px !important;
+          }
+          .locations-img-container {
+            height: 240px !important;
+            border-radius: 16px !important;
+          }
+        }
+      `}</style>
     </section>
   );
 };

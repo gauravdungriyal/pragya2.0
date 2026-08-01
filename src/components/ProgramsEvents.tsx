@@ -423,7 +423,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
           margin-bottom: 12px;
         }
         .programs-heading {
-          font-family: 'BNCringeSerif', 'Canela', Georgia, serif;
+          font-family: var(--font-serif);
           font-size: clamp(32px, 4vw, 54px);
           font-weight: 400;
           color: #21201E;

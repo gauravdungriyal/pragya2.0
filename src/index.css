@@ -70,6 +70,14 @@
 
 @font-face {
   font-family: 'Canela';
+  src: url('/fonts/Canela-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Canela';
   src: url('/fonts/Canela-Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
@@ -106,9 +114,9 @@
   --color-border-subtle: rgba(39, 39, 39, 0.12);
   --color-border-light: rgba(245, 239, 229, 0.2);
 
-  /* Typography Stacks */
-  --font-serif: 'BNCringeSerif', 'Canela', 'Cormorant Garamond', Georgia, serif;
-  --font-sans: 'Neue Montreal', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Typography Stacks — Strictly Business Fonts (01. Fonts) */
+  --font-serif: 'BNCringeSerif', 'Canela', serif;
+  --font-sans: 'Neue Montreal', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-accent: 'Canela', 'BNCringeSerif', serif;
 
   /* 8px Spacing System */
@@ -149,6 +157,13 @@
   padding: 0;
 }
 
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden !important;
+  position: relative;
+}
+
 html {
   font-family: var(--font-sans);
   background-color: var(--color-main-bg);
@@ -159,8 +174,28 @@ html {
 }
 
 body {
-  overflow-x: hidden;
   line-height: 1.6;
+}
+
+#root, main, section, .section {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  html, body, #root, main {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+  .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
 }
 
 button, input, select, textarea {

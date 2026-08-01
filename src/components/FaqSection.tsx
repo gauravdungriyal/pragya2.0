@@ -82,7 +82,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
           <h2
             className="faq-heading"
             style={{
-              fontFamily: "'BNCringeSerif', 'Canela', Georgia, serif",
+              fontFamily: "var(--font-serif)",
               fontSize: 'clamp(32px, 4.5vw, 54px)',
               fontWeight: 400,
               color: '#21201E',
