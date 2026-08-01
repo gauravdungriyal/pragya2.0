@@ -93,11 +93,15 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
   const displayList = events.length > 0 ? events : defaultEvents;
   const total = displayList.length;
 
+  const [lastClickedBtn, setLastClickedBtn] = useState<'prev' | 'next'>('next');
+
   const handleNext = () => {
+    setLastClickedBtn('next');
     setActiveIndex((prev) => (prev + 1) % total);
   };
 
   const handlePrev = () => {
+    setLastClickedBtn('prev');
     setActiveIndex((prev) => (prev - 1 + total) % total);
   };
 
@@ -174,8 +178,8 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
               <div
                 className="programs-carousel-track"
                 style={{
-                  transform: `var(--track-transform)`
-                }}
+                  '--active-index': activeIndex
+                } as React.CSSProperties}
               >
                 {displayList.map((item, idx) => (
                   <div
@@ -220,7 +224,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
                 <div
                   className="programs-progress-fill"
                   style={{
-                    width: `${((activeIndex + 1) / total) * 100}%`
+                    transform: `scaleX(${((activeIndex + 1) / total)})`
                   }}
                 />
               </div>
@@ -229,7 +233,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
                 <button
                   onClick={handlePrev}
                   aria-label="Previous event"
-                  className="programs-nav-btn prev-btn"
+                  className={`programs-nav-btn ${lastClickedBtn === 'prev' ? 'btn-active-black' : 'btn-inactive-white'}`}
                 >
                   <ChevronLeft size={18} />
                 </button>
@@ -237,7 +241,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
                 <button
                   onClick={handleNext}
                   aria-label="Next event"
-                  className="programs-nav-btn next-btn"
+                  className={`programs-nav-btn ${lastClickedBtn === 'next' ? 'btn-active-black' : 'btn-inactive-white'}`}
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -248,10 +252,6 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
       </div>
 
       <style>{`
-        :root {
-          --track-transform: translateX(calc(-${activeIndex} * (33.333% + 6.66px)));
-        }
-
         .programs-header {
           display: flex;
           justify-content: space-between;
@@ -289,20 +289,23 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
           margin: 4px 0 0 0;
         }
 
-        /* Carousel Track Desktop */
+        /* Hardware Accelerated Carousel Track */
         .programs-carousel-wrapper {
           width: 100%;
           overflow: hidden;
           padding: 4px 0 8px 0;
+          touch-action: pan-y;
         }
         .programs-carousel-track {
           display: flex;
-          transition: transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+          transform: translate3d(calc(-1 * var(--active-index, 0) * (33.3333% + 6.66px)), 0, 0);
+          transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: transform;
         }
 
         /* Dark Event Cards */
         .programs-event-card {
-          width: calc(33.333% - 13.33px);
+          width: calc(33.3333% - 13.33px);
           flex-shrink: 0;
           margin-right: 20px;
           background-color: #21201E;
@@ -314,8 +317,9 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
           flex-direction: column;
           justify-content: space-between;
           cursor: pointer;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
           box-sizing: border-box;
+          backface-visibility: hidden;
         }
         .programs-event-card:hover {
           transform: translateY(-3px);
@@ -336,7 +340,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
           object-fit: cover;
           object-position: center top;
           display: block;
-          transition: transform 0.4s ease;
+          transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .programs-event-card:hover .programs-card-img {
           transform: scale(1.03);
@@ -376,7 +380,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
           overflow: hidden;
         }
 
-        /* Bottom Controls Row */
+        /* Bottom Controls Row & Hardware-Accelerated Progress Line */
         .programs-controls-row {
           display: flex;
           align-items: center;
@@ -393,9 +397,12 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
           overflow: hidden;
         }
         .programs-progress-fill {
+          width: 100%;
           height: 100%;
           background-color: #21201E;
-          transition: width 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+          transform-origin: left center;
+          transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: transform;
         }
         .programs-nav-buttons {
           display: flex;
@@ -411,31 +418,41 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: all 0.25s ease;
+          user-select: none;
+          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+          will-change: transform;
         }
-        .prev-btn {
-          background-color: #FFFFFF;
-          border: 1px solid #21201E;
-          color: #21201E;
+        .programs-nav-btn:active {
+          transform: scale(0.90) !important;
+          transition: transform 0.08s ease;
         }
-        .prev-btn:hover {
-          background-color: #F5F3EF;
-          transform: scale(1.05);
-        }
-        .next-btn {
+
+        .btn-active-black {
           background-color: #21201E;
           border: 1px solid #21201E;
           color: #FFFFFF;
         }
-        .next-btn:hover {
+        .btn-active-black:hover {
           background-color: #383633;
-          transform: scale(1.05);
+          transform: scale(1.06);
+          box-shadow: 0 4px 12px rgba(33, 32, 30, 0.2);
+        }
+
+        .btn-inactive-white {
+          background-color: #FFFFFF;
+          border: 1px solid #21201E;
+          color: #21201E;
+        }
+        .btn-inactive-white:hover {
+          background-color: #F5F3EF;
+          transform: scale(1.06);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         /* Mobile Responsive View */
         @media (max-width: 768px) {
-          :root {
-            --track-transform: translateX(calc(-${activeIndex} * (100% + 14px)));
+          .programs-carousel-track {
+            transform: translate3d(calc(-1 * var(--active-index, 0) * (100% + 14px)), 0, 0);
           }
           .programs-section {
             padding: 32px 0 40px 0 !important;
