@@ -311,12 +311,12 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
 
         @media (max-width: 768px) {
           .hero-section {
-            padding-top: 120px !important;
+            padding-top: 102px !important;
             padding-bottom: 24px !important;
             min-height: 100vh !important;
             min-height: 100dvh !important;
             justify-content: flex-start !important;
-            background-color: #E2DACD !important;
+            background-color: #F5EFE5 !important;
           }
           .hero-bg-desktop, .hero-bg-overlay-desktop {
             display: none !important;
@@ -332,23 +332,23 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
             z-index: 1 !important;
           }
           .hero-main-title {
-            font-size: clamp(38px, 9vw, 52px) !important;
-            line-height: 1.12 !important;
-            margin-bottom: 16px !important;
+            font-size: clamp(34px, 8.5vw, 46px) !important;
+            line-height: 1.1 !important;
+            margin-bottom: 12px !important;
             color: #21201E !important;
           }
           .hero-subtitle {
-            font-size: 14.5px !important;
-            max-width: 325px !important;
-            margin-bottom: 28px !important;
-            line-height: 1.55 !important;
+            font-size: 14px !important;
+            max-width: 310px !important;
+            margin-bottom: 20px !important;
+            line-height: 1.5 !important;
             color: #4A4640 !important;
           }
           .hero-cta-btn {
             background-color: #21201E !important;
             color: #FFFFFF !important;
-            padding: 16px 36px !important;
-            font-size: 12.5px !important;
+            padding: 14px 34px !important;
+            font-size: 12px !important;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
             border-radius: 999px !important;
           }
