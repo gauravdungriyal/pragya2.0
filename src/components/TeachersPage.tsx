@@ -13,7 +13,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
   const [teachers, setTeachers] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Fallback high quality instructor profiles matching the reference image layout
+  // Fallback high quality instructor profiles matching all API teachers
   const fallbackTeachers: (Instructor & { image: string; tag: string })[] = [
     {
       staff_id: 360610,
@@ -21,7 +21,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
       designation: "Founder & PhD Research Scholar",
       description: "Aarya, founder of Pragya Yog School, is a PhD research scholar and seasoned yog teacher with nearly a decade of international teaching experience. His passion for yog began at age three and integrates ancient wisdom with modern physiological science.",
       specialization: ["Classical Hatha", "Pranayama & Kriya", "Meditation Science"],
-      image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop",
+      image: "https://pragya-yog.com/uploads/teachers/1744359416.webp",
       tag: "Classical Hatha, Pranayama"
     },
     {
@@ -30,7 +30,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
       designation: "Senior Vinyasa & Pilates Master",
       description: "Angela brings high-energy grace to mindful movement. Her classes combine dynamic Vinyasa sequencing with postural alignment and restorative Breathwork.",
       specialization: ["Dynamic Vinyasa", "Reformer Pilates", "Postural Realignment"],
-      image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop",
+      image: "https://pragya-yog.com/uploads/teachers/1744359563.webp",
       tag: "Vinyasa Flow, Power Yoga"
     },
     {
@@ -39,25 +39,54 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
       designation: "Sound Healing & Yin Yoga Guide",
       description: "Charlotte specializes in immersive acoustic meditation using Tibetan Singing Bowls and Gongs, coupled with deep restorative Yin practices.",
       specialization: ["Yin Yoga", "Sound Therapy", "Stress Recovery"],
-      image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop",
-      tag: "Yin Yoga, Mindfulness Practices"
+      image: "https://pragya-yog.com/uploads/teachers/1744359589.webp",
+      tag: "Yin Yoga, Sound Healing"
+    },
+    {
+      staff_id: 361006,
+      name: "Ashish P",
+      designation: "Senior Yog & Alignment Specialist",
+      description: "Ashish focuses on precise anatomical alignment, traditional pranayama techniques, and building core structural vitality.",
+      specialization: ["Asana Alignment", "Hatha Yoga", "Breathing Techniques"],
+      image: "https://pragya-yog.com/uploads/teachers/1768183299.webp",
+      tag: "Hatha Yoga, Alignment"
     },
     {
       staff_id: 360801,
       name: "Louise Vance",
-      designation: "Holistic Nutrition & Movement Specialist",
-      description: "Louise integrates mindful functional movement with customized Ayurvedic and modern nutritional counseling for total mind-body vitality.",
-      specialization: ["Functional Yoga", "Ayurvedic Nutrition", "Metabolic Health"],
-      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop",
-      tag: "Gentle Yoga, Breathwork"
+      designation: "Holistic Movement & Yin-Yang Specialist",
+      description: "Louise believes yoga is for every body. Certified in over 500 hours, her teaching balances dynamic Hatha/Vinyasa with restorative Yin and mindfulness.",
+      specialization: ["Yin & Yang Yoga", "Mindfulness", "Prenatal Yoga"],
+      image: "https://pragya-yog.com/uploads/teachers/1779244503.webp",
+      tag: "Yin & Yang Yoga"
+    },
+    {
+      staff_id: 360880,
+      name: "Marcus Chan",
+      designation: "Mindfulness & Tibetan Sound Healer",
+      description: "Marcus combines breath awareness and posture foundations with sound therapy to cultivate deep inner presence and emotional healing.",
+      specialization: ["Sound Therapy", "Mindfulness Meditation", "Chair Yoga"],
+      image: "https://pragya-yog.com/uploads/teachers/1779244590.webp",
+      tag: "Sound Therapy, Breathwork"
+    },
+    {
+      staff_id: 360736,
+      name: "Dr. Yatendra Amoli",
+      designation: "Director of Teaching & Research Scholar",
+      description: "Dr. Amoli holds a PhD in Kashmir Saivism and over 20 years of international academic and yogic research leadership.",
+      specialization: ["Kashmir Shaivism", "Yogic Philosophy", "Tantra & Meditation"],
+      image: "https://pragya-yog.com/uploads/teachers/1781458525.webp",
+      tag: "Master Teacher, Philosophy"
+    },
+    {
+      staff_id: 361004,
+      name: "Master Shoaib M",
+      designation: "Master Yoga Therapist & Neuropathy Specialist",
+      description: "With over 15 years of yog therapy experience, Master Shoaib specializes in spinal health, back pain recovery, and customized neuro-therapy.",
+      specialization: ["Yoga Therapy", "Back & Spine Alignment", "Neuropathy"],
+      image: "/shoaib.webp",
+      tag: "Yoga Therapy, Spine Care"
     }
-  ];
-
-  const teacherImages = [
-    "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop"
   ];
 
   useEffect(() => {
@@ -75,11 +104,14 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
     };
   }, []);
 
-  const displayList = (teachers.length > 0 ? teachers : fallbackTeachers).map((t, idx) => ({
-    ...t,
-    image: (t as any).image || teacherImages[idx % teacherImages.length],
-    tag: (t as any).tag || (t.specialization ? t.specialization.join(', ') : 'Yoga & Mindfulness')
-  }));
+  const displayList = (teachers.length > 0 ? teachers : fallbackTeachers).map((t, idx) => {
+    const isShoaib = (t.name || '').toLowerCase().includes('shoaib') || t.staff_id === 361004;
+    return {
+      ...t,
+      image: isShoaib ? '/shoaib.webp' : ((t as any).image || fallbackTeachers[idx % fallbackTeachers.length].image),
+      tag: (t as any).tag || (t.specialization ? t.specialization.join(', ') : t.designation || 'Yog Instructor')
+    };
+  });
 
   return (
     <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E' }}>

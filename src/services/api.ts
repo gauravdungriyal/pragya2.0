@@ -82,13 +82,26 @@ export async function getTeachers(): Promise<Instructor[]> {
   if (res && Array.isArray(res.data) && res.data.length > 0) {
     return res.data.map((item: any, idx: number) => {
       // Clean HTML tags from description for preview
-      const cleanDesc = (item.description || '').replace(/<[^>]*>?/gm, '').trim();
+      const cleanDesc = (item.description || '')
+        .replace(/<[^>]*>?/gm, '')
+        .replace(/&ndash;/g, '–')
+        .replace(/&rsquo;/g, "'")
+        .replace(/&lsquo;/g, "'")
+        .replace(/&amp;/g, '&')
+        .replace(/&nbsp;/g, ' ')
+        .trim();
+
+      const postTitle = item.post || item.designation || 'Yog Instructor';
+      const isShoaib = (item.name || '').toLowerCase().includes('shoaib') || item.staff_id === 361004;
+      const imgUrl = isShoaib ? '/shoaib.webp' : (item.image || item.photo || item.avatar);
+
       return {
         staff_id: item.staff_id || idx + 100,
         name: item.name || 'Master Teacher',
         description: cleanDesc || 'Dedicated practitioner and guide at Pragya Yog School.',
-        designation: idx === 0 ? 'Founder & Head of School' : idx === 1 ? 'Senior Hatha & Vinyasa Master' : 'Mindfulness & Sound Healing Specialist',
-        specialization: idx === 0 ? ['Traditional Hatha', 'Pranayama', 'Yogic Philosophy'] : idx === 1 ? ['Vinyasa Flow', 'Ashtanga Yoga', 'Core Strength'] : ['Restorative Yoga', 'Sound Bath', 'Meditation']
+        designation: postTitle,
+        specialization: item.specialization || [postTitle],
+        image: imgUrl
       };
     });
   }
@@ -98,28 +111,64 @@ export async function getTeachers(): Promise<Instructor[]> {
       name: "Master Aarya Kuldeep",
       designation: "Founder & PhD Research Scholar",
       description: "Aarya, founder of Pragya Yog School, is a PhD research scholar and seasoned yog teacher with nearly a decade of international teaching experience. His passion for yog began at age three and integrates ancient wisdom with modern physiological science.",
-      specialization: ["Classical Hatha", "Pranayama & Kriya", "Meditation Science"]
+      specialization: ["Classical Hatha", "Pranayama & Kriya", "Meditation Science"],
+      image: "https://pragya-yog.com/uploads/teachers/1744359416.webp"
     },
     {
       staff_id: 360637,
       name: "Angela Lee",
       designation: "Senior Vinyasa & Pilates Master",
       description: "Angela brings high-energy grace to mindful movement. Her classes combine dynamic Vinyasa sequencing with postural alignment and restorative Breathwork.",
-      specialization: ["Dynamic Vinyasa", "Reformer Pilates", "Postural Realignment"]
+      specialization: ["Dynamic Vinyasa", "Reformer Pilates", "Postural Realignment"],
+      image: "https://pragya-yog.com/uploads/teachers/1744359563.webp"
     },
     {
       staff_id: 360735,
       name: "Charlotte Chiu",
       designation: "Sound Healing & Yin Yoga Guide",
       description: "Charlotte specializes in immersive acoustic meditation using Tibetan Singing Bowls and Gongs, coupled with deep restorative Yin practices.",
-      specialization: ["Yin Yoga", "Sound Therapy", "Stress Recovery"]
+      specialization: ["Yin Yoga", "Sound Therapy", "Stress Recovery"],
+      image: "https://pragya-yog.com/uploads/teachers/1744359589.webp"
+    },
+    {
+      staff_id: 361006,
+      name: "Ashish P",
+      designation: "Senior Yog & Alignment Specialist",
+      description: "Ashish focuses on precise anatomical alignment, traditional pranayama techniques, and building core structural vitality.",
+      specialization: ["Asana Alignment", "Hatha Yoga", "Breathing Techniques"],
+      image: "https://pragya-yog.com/uploads/teachers/1768183299.webp"
     },
     {
       staff_id: 360801,
       name: "Louise Vance",
-      designation: "Holistic Nutrition & Movement Specialist",
-      description: "Louise integrates mindful functional movement with customized Ayurvedic and modern nutritional counseling for total mind-body vitality.",
-      specialization: ["Functional Yoga", "Ayurvedic Nutrition", "Metabolic Health"]
+      designation: "Holistic Movement & Yin-Yang Specialist",
+      description: "Louise believes yoga is for every body. Certified in over 500 hours, her teaching balances dynamic Hatha/Vinyasa with restorative Yin and mindfulness.",
+      specialization: ["Yin & Yang Yoga", "Mindfulness", "Prenatal Yoga"],
+      image: "https://pragya-yog.com/uploads/teachers/1779244503.webp"
+    },
+    {
+      staff_id: 360880,
+      name: "Marcus Chan",
+      designation: "Mindfulness & Tibetan Sound Healer",
+      description: "Marcus combines breath awareness and posture foundations with sound therapy to cultivate deep inner presence and emotional healing.",
+      specialization: ["Sound Therapy", "Mindfulness Meditation", "Chair Yoga"],
+      image: "https://pragya-yog.com/uploads/teachers/1779244590.webp"
+    },
+    {
+      staff_id: 360736,
+      name: "Dr. Yatendra Amoli",
+      designation: "Director of Teaching & Research Scholar",
+      description: "Dr. Amoli holds a PhD in Kashmir Saivism and over 20 years of international academic and yogic research leadership.",
+      specialization: ["Kashmir Shaivism", "Yogic Philosophy", "Tantra & Meditation"],
+      image: "https://pragya-yog.com/uploads/teachers/1781458525.webp"
+    },
+    {
+      staff_id: 361004,
+      name: "Master Shoaib M",
+      designation: "Master Yoga Therapist & Neuropathy Specialist",
+      description: "With over 15 years of yog therapy experience, Master Shoaib specializes in spinal health, back pain recovery, and customized neuro-therapy.",
+      specialization: ["Yoga Therapy", "Back & Spine Alignment", "Neuropathy"],
+      image: "/shoaib.webp"
     }
   ];
 }
@@ -241,15 +290,29 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
   if (res && Array.isArray(res.data) && res.data.length > 0) {
     return res.data.map((item: any, idx: number) => {
       const cleanDesc = (item.description || '').replace(/<[^>]*>?/gm, '').trim();
+      const amountVal = typeof item.amount === 'number' ? item.amount : parseFloat(item.amount);
+      const formattedPrice = !isNaN(amountVal) ? `HK$ ${amountVal.toLocaleString()}` : item.price || '$45';
+
       return {
-        id: String(item.id || idx + 1),
-        title: item.title || item.name || 'Pragya Wellness Event',
-        name: item.name || item.title || 'Pragya Wellness Event',
-        description: cleanDesc.slice(0, 180) + '...',
-        date: idx === 0 ? 'Saturday, Sunrise' : idx === 1 ? 'Full Moon Weekend' : 'Upcoming Season',
-        location: idx === 0 ? 'Beachfront Sanctuary' : 'Mountain Retreat Resort',
-        price: idx === 0 ? '$45' : '$850',
-        category: idx === 0 ? 'Outdoor Reset' : 'Luxury Retreat'
+        id: String(item.id || item.event_id || idx + 1),
+        title: item.title || item.name || item.event_title || 'Pragya Wellness Event',
+        name: item.name || item.title || item.event_title || 'Pragya Wellness Event',
+        description: cleanDesc || 'Join us for a transformative session guided by Pragya Yog faculty.',
+        date: item.countdown_label || item.date || item.starts_at || (idx === 0 ? 'Saturday, Sunrise' : idx === 1 ? 'Full Moon Weekend' : 'Upcoming Season'),
+        location: item.location || item.venue || 'Pragya Sanctuary Studio',
+        price: formattedPrice,
+        amount: !isNaN(amountVal) ? amountVal : undefined,
+        category: (item.difficulty_tags && item.difficulty_tags.length > 0 ? item.difficulty_tags[0] : item.category) || 'Retreat',
+        image: item.image || item.banner_image?.url || item.square_image?.url,
+        banner_image: item.banner_image,
+        starts_at: item.starts_at,
+        ends_at: item.ends_at,
+        countdown_label: item.countdown_label,
+        difficulty_tags: item.difficulty_tags || [],
+        instructor: item.instructor,
+        benefits: item.benefits || [],
+        spots_label: item.spots_label,
+        share_url: item.share_url
       };
     });
   }

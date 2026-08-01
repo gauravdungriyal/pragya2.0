@@ -29,6 +29,7 @@ export interface Instructor {
   description: string;
   designation?: string;
   photo?: string;
+  image?: string;
   specialization?: string[];
   experience?: string;
 }
@@ -39,11 +40,11 @@ export interface PackageItem {
   title: string;
   payment_type: number;
   amount: number;
-  discount_type: string;
-  discount: string;
-  discount_remarks: string;
-  discount_start: string | null;
-  discount_end: string | null;
+  discount_type?: string;
+  discount?: string;
+  discount_remarks?: string;
+  discount_start?: string | null;
+  discount_end?: string | null;
   frequency: number;
   period: string;
   duration_type: number;
@@ -62,8 +63,18 @@ export interface UpcomingEvent {
   time?: string;
   location?: string;
   image?: string;
+  banner_image?: { url: string };
   price?: string;
+  amount?: number;
   category?: string;
+  starts_at?: string;
+  ends_at?: string;
+  countdown_label?: string;
+  difficulty_tags?: string[];
+  instructor?: { name?: string; title?: string; image?: string } | null;
+  benefits?: { slug: string; label: string; icon: string }[];
+  spots_label?: string;
+  share_url?: string;
 }
 
 export interface DailyQuote {

@@ -20,10 +20,13 @@ import { AboutPage } from './components/AboutPage';
 import { ClassesPage } from './components/ClassesPage';
 import { TeachersPage } from './components/TeachersPage';
 import { TeacherDetailPage } from './components/TeacherDetailPage';
-import { Instructor } from './types';
+import { MembershipPage } from './components/MembershipPage';
+import { EventsPage } from './components/EventsPage';
+import { EventDetailPage } from './components/EventDetailPage';
+import { Instructor, UpcomingEvent } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail'>('home');
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingType, setBookingType] = useState('class');
   const [bookingTitle, setBookingTitle] = useState('Book a Class');
@@ -32,6 +35,7 @@ export const App: React.FC = () => {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<Instructor | null>(null);
   const [selectedTeacherForPage, setSelectedTeacherForPage] = useState<Instructor | null>(null);
+  const [selectedEventForPage, setSelectedEventForPage] = useState<UpcomingEvent | null>(null);
 
   // Global Scroll Reveal Observer effect for necessary elements only
   useEffect(() => {
@@ -91,6 +95,12 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenEventDetail = (event: UpcomingEvent) => {
+    setSelectedEventForPage(event);
+    setCurrentView('event-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleNavigateSection = (sectionId: string) => {
     if (currentView !== 'home') {
       setCurrentView('home');
@@ -147,6 +157,27 @@ export const App: React.FC = () => {
             onOpenTeacherModal={handleOpenTeacherDetail}
             onOpenBooking={handleOpenBooking}
             onNavigateSection={handleNavigateSection}
+          />
+        ) : currentView === 'membership' ? (
+          <MembershipPage
+            onOpenBooking={handleOpenBooking}
+            onNavigateSection={handleNavigateSection}
+          />
+        ) : currentView === 'events' ? (
+          <EventsPage
+            onOpenBooking={handleOpenBooking}
+            onOpenEventDetail={handleOpenEventDetail}
+            onNavigateSection={handleNavigateSection}
+          />
+        ) : currentView === 'event-detail' && selectedEventForPage ? (
+          <EventDetailPage
+            event={selectedEventForPage}
+            onBack={() => {
+              setCurrentView('events');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onSelectEvent={handleOpenEventDetail}
+            onOpenBooking={handleOpenBooking}
           />
         ) : currentView === 'teacher-detail' && selectedTeacherForPage ? (
           <TeacherDetailPage

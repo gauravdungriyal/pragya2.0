@@ -11,6 +11,7 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
   const [teachers, setTeachers] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [activeNavBtn, setActiveNavBtn] = useState<'prev' | 'next'>('next');
 
   useEffect(() => {
     getTeachers().then((data) => {
@@ -20,18 +21,24 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
   }, []);
 
   const teacherImages = [
-    "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop", // Master Aarya
-    "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop", // Angela
-    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop", // Charlotte
-    "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop"  // Louise
+    "https://pragya-yog.com/uploads/teachers/1744359416.webp", // Master Aarya
+    "https://pragya-yog.com/uploads/teachers/1744359563.webp", // Angela
+    "https://pragya-yog.com/uploads/teachers/1744359589.webp", // Charlotte
+    "https://pragya-yog.com/uploads/teachers/1768183299.webp", // Ashish
+    "https://pragya-yog.com/uploads/teachers/1779244503.webp", // Louise
+    "https://pragya-yog.com/uploads/teachers/1779244590.webp", // Marcus
+    "https://pragya-yog.com/uploads/teachers/1781458525.webp", // Dr. Yatendra
+    "/shoaib.webp"   // Master Shoaib
   ];
 
   const handleNext = () => {
+    setActiveNavBtn('next');
     if (teachers.length === 0) return;
     setActiveIndex((prev) => (prev + 1) % teachers.length);
   };
 
   const handlePrev = () => {
+    setActiveNavBtn('prev');
     if (teachers.length === 0) return;
     setActiveIndex((prev) => (prev - 1 + teachers.length) % teachers.length);
   };
@@ -186,7 +193,8 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
                 // Only render active card and next 2 stacked cards behind
                 if (offset > 2 && offset < total - 1) return null;
 
-                const imgSrc = teacherImages[idx % teacherImages.length];
+                const isShoaib = (teacher.name || '').toLowerCase().includes('shoaib') || (teacher as any).staff_id === 361004;
+                const imgSrc = isShoaib ? '/shoaib.webp' : ((teacher as any).image || (teacher as any).photo || teacherImages[idx % teacherImages.length]);
 
                 let transform = 'translate(-50%, -50%) scale(1)';
                 let zIndex = 10;
@@ -341,23 +349,25 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
                   width: '44px',
                   height: '44px',
                   borderRadius: '50%',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: activeNavBtn === 'prev' ? '#21201E' : '#FFFFFF',
                   border: '1px solid #21201E',
-                  color: '#21201E',
+                  color: activeNavBtn === 'prev' ? '#FFFFFF' : '#21201E',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                  transition: 'all 0.25s ease',
+                  boxShadow: activeNavBtn === 'prev' ? '0 4px 14px rgba(33,32,30,0.22)' : '0 2px 8px rgba(0,0,0,0.05)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#F5EFE5';
-                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.transform = 'scale(1.06)';
+                  if (activeNavBtn !== 'prev') {
+                    e.currentTarget.style.backgroundColor = '#F5EFE5';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#FFFFFF';
                   e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.backgroundColor = activeNavBtn === 'prev' ? '#21201E' : '#FFFFFF';
                 }}
               >
                 <ChevronLeft size={20} />
@@ -370,23 +380,25 @@ export const TeachersShowcase: React.FC<TeachersShowcaseProps> = ({ onOpenTeache
                   width: '44px',
                   height: '44px',
                   borderRadius: '50%',
-                  backgroundColor: '#21201E',
+                  backgroundColor: activeNavBtn === 'next' ? '#21201E' : '#FFFFFF',
                   border: '1px solid #21201E',
-                  color: '#FFFFFF',
+                  color: activeNavBtn === 'next' ? '#FFFFFF' : '#21201E',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 4px 12px rgba(33,32,30,0.18)'
+                  transition: 'all 0.25s ease',
+                  boxShadow: activeNavBtn === 'next' ? '0 4px 14px rgba(33,32,30,0.22)' : '0 2px 8px rgba(0,0,0,0.05)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#000000';
-                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.transform = 'scale(1.06)';
+                  if (activeNavBtn !== 'next') {
+                    e.currentTarget.style.backgroundColor = '#F5EFE5';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#21201E';
                   e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.backgroundColor = activeNavBtn === 'next' ? '#21201E' : '#FFFFFF';
                 }}
               >
                 <ChevronRight size={20} />

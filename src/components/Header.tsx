@@ -6,7 +6,7 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onNavigateSection: (sectionId: string) => void;
   currentView?: string;
-  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers') => void;
+  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers' | 'membership' | 'events') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   onViewChange
 }) => {
   const [activeTab, setActiveTab] = useState(
-    currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : 'Home'
+    currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : currentView === 'membership' ? 'Membership & Packages' : currentView === 'events' ? 'Events' : 'Home'
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -29,6 +29,10 @@ export const Header: React.FC<HeaderProps> = ({
       setActiveTab('Classes');
     } else if (currentView === 'teachers') {
       setActiveTab('Teachers');
+    } else if (currentView === 'membership') {
+      setActiveTab('Membership & Packages');
+    } else if (currentView === 'events') {
+      setActiveTab('Events');
     } else if (currentView === 'home') {
       setActiveTab('Home');
     }
@@ -37,10 +41,10 @@ export const Header: React.FC<HeaderProps> = ({
   const navItems = [
     { label: 'Home', id: 'hero', type: 'section' },
     { label: 'About', id: 'about', type: 'page' },
-    { label: 'Events', id: 'programs', type: 'section' },
+    { label: 'Events', id: 'events', type: 'page' },
     { label: 'Classes', id: 'classes', type: 'page' },
     { label: 'Teachers', id: 'teachers', type: 'page' },
-    { label: 'Membership & Packages', id: 'membership', type: 'section' },
+    { label: 'Membership & Packages', id: 'membership', type: 'page' },
     { label: 'Login', id: 'login', type: 'action' }
   ];
 
@@ -71,6 +75,12 @@ export const Header: React.FC<HeaderProps> = ({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item.label === 'Teachers' || item.id === 'teachers') {
       if (onViewChange) onViewChange('teachers');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (item.label === 'Membership & Packages' || item.id === 'membership') {
+      if (onViewChange) onViewChange('membership');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (item.label === 'Events' || item.id === 'events' || item.id === 'programs') {
+      if (onViewChange) onViewChange('events');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item.label === 'Home') {
       if (onViewChange) onViewChange('home');
