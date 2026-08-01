@@ -248,7 +248,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           <span
             style={{
               fontSize: '12px',
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: '0.14em',
               color: '#944426',
               textTransform: 'uppercase',
@@ -292,7 +292,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
                 >
                   <IconComponent size={22} />
                 </div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#21201E', marginBottom: '10px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 500, color: '#21201E', marginBottom: '10px' }}>
                   {item.title}
                 </h3>
                 <p style={{ fontSize: '14px', color: '#6B655F', lineHeight: 1.6, margin: 0 }}>
@@ -310,7 +310,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           <span
             style={{
               fontSize: '12px',
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: '0.14em',
               color: '#00381F',
               textTransform: 'uppercase',
@@ -343,7 +343,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
                   <span
                     style={{
                       fontSize: '10.5px',
-                      fontWeight: 700,
+                      fontWeight: 500,
                       letterSpacing: '0.12em',
                       color: item.badgeColor,
                       textTransform: 'uppercase'
@@ -367,7 +367,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
                   </div>
                 </div>
 
-                <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#21201E', marginBottom: '12px' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: 500, color: '#21201E', marginBottom: '12px' }}>
                   {item.title}
                 </h3>
                 <p style={{ fontSize: '14.5px', color: '#5A554F', lineHeight: 1.6, margin: 0 }}>
@@ -524,7 +524,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
         }
         .spec-value {
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 500;
           color: #21201E;
         }
         .coaches-pills-list {
@@ -550,7 +550,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
         }
         .coach-name {
           font-size: 13.5px;
-          font-weight: 600;
+          font-weight: 500;
           color: #21201E;
         }
         .about-book-btn {
