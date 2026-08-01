@@ -84,56 +84,67 @@ export const BackToTopButton: React.FC = () => {
   };
 
   return (
-    <button
-      onClick={scrollToTop}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      aria-label="Back to top"
-      style={{
-        position: 'fixed',
-        bottom: '16px',
-        right: '20px',
-        zIndex: 1000,
-        width: '44px',
-        height: '44px',
-        borderRadius: '50%',
-        border: 'none',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: hovered
-          ? 'linear-gradient(135deg, #944426, #D9AE29)'
-          : '#21201E',
-        color: '#F5EFE5',
-        boxShadow: hovered
-          ? '0 8px 24px rgba(148, 68, 38, 0.45)'
-          : '0 4px 16px rgba(0,0,0,0.25)',
-        transform: visible
-          ? hovered ? 'translateY(-4px) scale(1.08)' : 'translateY(0) scale(1)'
-          : 'translateY(20px) scale(0.85)',
-        opacity: visible ? 1 : 0,
-        pointerEvents: visible ? 'auto' : 'none',
-        transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-      }}
-    >
-      {/* Up Arrow SVG */}
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+    <>
+      <button
+        onClick={scrollToTop}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        aria-label="Back to top"
+        className="back-to-top-btn"
         style={{
-          transition: 'transform 0.3s ease',
-          transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+          position: 'fixed',
+          bottom: '16px',
+          right: '20px',
+          zIndex: 1000,
+          width: '44px',
+          height: '44px',
+          borderRadius: '50%',
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: hovered
+            ? 'linear-gradient(135deg, #944426, #D9AE29)'
+            : '#21201E',
+          color: '#F5EFE5',
+          boxShadow: hovered
+            ? '0 8px 24px rgba(148, 68, 38, 0.45)'
+            : '0 4px 16px rgba(0,0,0,0.25)',
+          transform: visible
+            ? hovered ? 'translateY(-4px) scale(1.08)' : 'translateY(0) scale(1)'
+            : 'translateY(20px) scale(0.85)',
+          opacity: visible ? 1 : 0,
+          pointerEvents: visible ? 'auto' : 'none',
+          transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
       >
-        <polyline points="18 15 12 9 6 15" />
-      </svg>
-    </button>
+        {/* Up Arrow SVG */}
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            transition: 'transform 0.3s ease',
+            transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+          }}
+        >
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
+      </button>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .back-to-top-btn {
+            display: none !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };
