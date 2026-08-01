@@ -8,9 +8,7 @@ import { WellnessJourney } from './components/WellnessJourney';
 import { ProgramsEvents } from './components/ProgramsEvents';
 import { InteractiveSchedule } from './components/InteractiveSchedule';
 import { TeachersShowcase } from './components/TeachersShowcase';
-import { MembershipSection } from './components/MembershipSection';
 import { LocationsSection } from './components/LocationsSection';
-import { TestimonialsCarousel } from './components/TestimonialsCarousel';
 import { FaqSection } from './components/FaqSection';
 import { NewsletterFooter } from './components/NewsletterFooter';
 import { BookingModal } from './components/BookingModal';
@@ -276,10 +274,6 @@ export const App: React.FC = () => {
             <ProgramsEvents onOpenBooking={handleOpenBooking} />
 
             <InteractiveSchedule onOpenBooking={handleOpenBooking} />
-
-            <TestimonialsCarousel />
-
-            <MembershipSection onOpenBooking={handleOpenBooking} />
 
             <FaqSection onOpenBooking={handleOpenBooking} />
           </>

@@ -118,15 +118,15 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
         <div className="programs-header">
           <div className="programs-header-left">
             <span className="programs-sub-tag">
-              — CLASSES —
+              — EVENTS —
             </span>
             <h2 className="programs-heading">
-              Find Your Perfect Class
+              Upcoming Events
             </h2>
           </div>
 
           <p className="programs-subtitle">
-            From beginner-friendly sessions to advanced pilates, find the class that suits you best.
+            From beginner-friendly workshops to advanced masterclasses, find the event that suits you best.
           </p>
         </div>
 
@@ -134,7 +134,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking })
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px', color: '#944426' }}>
             <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px auto', display: 'block' }} />
-            <p style={{ color: '#8A8580' }}>Loading available classes...</p>
+            <p style={{ color: '#8A8580' }}>Loading upcoming events...</p>
           </div>
         ) : (
           <>
