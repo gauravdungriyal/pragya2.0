@@ -1,226 +1,91 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  Send,
-  RotateCcw,
-  X,
-  Sparkles,
-  MessageSquare,
-  Mic,
-  MicOff,
-  Volume2,
-  VolumeX,
-  Maximize2,
-  Copy,
-  Check,
-  ThumbsUp,
-  ThumbsDown,
-  Calendar,
-  ExternalLink,
-  Bot,
-  User,
-  ShieldCheck
-} from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Send, RotateCcw, X, Globe, Sparkles, MessageSquare, Mic, ChevronDown } from 'lucide-react';
 
 const CHAT_API_URL = 'https://pragya-ai-assistant.vercel.app/api/chat';
 const WHATSAPP_URL = 'https://wa.me/85267082503?text=Namaste%20%F0%9F%99%8F%20I%20have%20a%20question%20about%20Pragya%20Yog%20School';
 
-export interface Message {
+interface Message {
   id: string;
   sender: 'user' | 'bot';
   text: string;
   timestamp: string;
   suggestions?: string[];
-  action?: {
-    type: 'booking' | 'whatsapp' | 'link';
-    label: string;
-    payload?: string;
-  };
-  feedback?: 'like' | 'dislike';
 }
 
-export interface AIChatWidgetProps {
+interface AIChatWidgetProps {
   onOpenFullPage?: () => void;
   onOpenBooking?: (type?: string, title?: string) => void;
 }
 
-const DEFAULT_WELCOME_MESSAGE: Message = {
-  id: 'welcome-1',
-  sender: 'bot',
-  text: "Namaste 🙏 Welcome to **Pragya Yog School**!\n\nI am your AI Yogic Assistant. How can I guide your practice today?",
-  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-  suggestions: [
-    '🧘 Group Classes & Schedule',
-    '📜 200-Hour Teacher Training',
-    '💳 Memberships & Trial Pass',
-    '📍 Studio Location & Contact'
-  ]
-};
-
-export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
-  onOpenFullPage,
-  onOpenBooking
-}) => {
+export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOpenBooking }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [showTeaser, setShowTeaser] = useState(true);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
-  const [isMuted, setIsMuted] = useState(true);
+  const [unreadBadge, setUnreadBadge] = useState(true);
+  const [showTooltip, setShowTooltip] = useState(true);
+
+  // Language state
+  const [lang, setLang] = useState<'auto' | 'en' | 'yue' | 'cmn'>('auto');
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+
+  // Voice dictation & audio state
   const [isListening, setIsListening] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  // Dynamic greeting based on current time
+  const [greetingTime, setGreetingTime] = useState('Good day');
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreetingTime('Good morning');
+    else if (hour < 17) setGreetingTime('Good afternoon');
+    else setGreetingTime('Good evening');
+  }, []);
+
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'welcome-bot-msg',
+      sender: 'bot',
+      text: "Still browsing? 😊 Most people ask me about the 3-Class Trial Pass (HK$450) or our class schedule. Or just tell me what you're looking for — I'm happy to help!",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      suggestions: [
+        'Compare memberships',
+        'Any current offers?',
+        'Book a trial class',
+        'Payment options'
+      ]
+    }
+  ]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<any>(null);
 
-  // Persistent session messages
-  const [messages, setMessages] = useState<Message[]>(() => {
-    try {
-      const saved = sessionStorage.getItem('pragya_chat_messages');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.warn('Could not restore chat session:', e);
-    }
-    return [DEFAULT_WELCOME_MESSAGE];
-  });
-
-  // Save messages to session storage
-  useEffect(() => {
-    try {
-      sessionStorage.setItem('pragya_chat_messages', JSON.stringify(messages));
-    } catch (e) {
-      // ignore quota limits
-    }
-  }, [messages]);
-
-  // Auto scroll to bottom when new messages arrive
-  const scrollToBottom = useCallback(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
-      // Focus input on desktop
-      if (window.innerWidth >= 640) {
-        setTimeout(() => inputRef.current?.focus(), 150);
-      }
+      setUnreadBadge(false);
+      setShowTooltip(false);
+      setTimeout(() => inputRef.current?.focus(), 150);
     }
-  }, [isOpen, messages, scrollToBottom]);
+  }, [isOpen, messages, loading]);
 
-  // Setup Web Speech Recognition API if available
   useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (SpeechRecognition) {
-      const rec = new SpeechRecognition();
-      rec.continuous = false;
-      rec.interimResults = false;
-      rec.lang = 'en-US';
-
-      rec.onstart = () => setIsListening(true);
-      rec.onend = () => setIsListening(false);
-      rec.onerror = (e: any) => {
-        console.warn('Speech recognition error:', e);
-        setIsListening(false);
-      };
-      rec.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setInput(transcript);
-          handleSend(transcript);
-        }
-      };
-      recognitionRef.current = rec;
-    }
+    const timer = setTimeout(() => setShowTooltip(false), 8000);
+    return () => clearTimeout(timer);
   }, []);
-
-  const toggleVoiceInput = () => {
-    if (!recognitionRef.current) {
-      alert('Voice recognition is not supported in this browser.');
-      return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-      } catch (e) {
-        console.warn(e);
-      }
-    }
-  };
-
-  // Speak bot response using Web Speech Synthesis
-  const speakText = (text: string) => {
-    if (isMuted || !('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      const clean = text.replace(/[*_#`~]/g, '').replace(/\[.*?\]\(.*?\)/g, '');
-      const utterance = new SpeechSynthesisUtterance(clean.slice(0, 300));
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      console.warn('Speech synthesis error:', e);
-    }
-  };
-
-  // Smart Offline Knowledge Fallback
-  const getOfflineFallback = (query: string): { reply: string; suggestions?: string[]; action?: Message['action'] } => {
-    const q = query.toLowerCase();
-
-    if (q.includes('ttc') || q.includes('200') || q.includes('teacher training') || q.includes('certification')) {
-      return {
-        reply: "📜 **200-Hour Hatha & Ashtanga Vinyasa Yoga Teacher Training (TTC)**\n\n- **Affiliation**: University-affiliated program in Hong Kong partnered with Indian Universities.\n- **Curriculum**: Asana alignment, Pranayama, Anatomy, Yogic Philosophy & Teaching Methodology.\n- **Schedule**: Weekend & Intensive options available.\n- **Certificate**: Internationally recognized Yoga Alliance RYT-200 certification.",
-        suggestions: ['How to enroll in TTC?', 'View Membership Options', 'Book a Consultation'],
-        action: { type: 'whatsapp', label: 'Inquire on WhatsApp', payload: WHATSAPP_URL }
-      };
-    }
-
-    if (q.includes('class') || q.includes('schedule') || q.includes('group') || q.includes('type')) {
-      return {
-        reply: "🧘 **Pragya Signature Group Classes**\n\nWe offer 9 specialized class styles led by Master Teachers from Rishikesh & India:\n\n1. **Pragya Flow & Hatha Vinyasa**\n2. **Pranayama & Meditation Sanctuary**\n3. **Yin & Deep Restorative**\n4. **Ashtanga Primary Series**\n5. **Spine & Posture Care**",
-        suggestions: ['Book Trial Class (3 for HK$450)', 'View Class Pricing', 'Contact Us'],
-        action: { type: 'booking', label: '📅 Book a Class Now' }
-      };
-    }
-
-    if (q.includes('trial') || q.includes('price') || q.includes('membership') || q.includes('cost') || q.includes('pass')) {
-      return {
-        reply: "💳 **Passes & Membership Options**\n\n• **New Student Trial Pass**: HK$450 for 3 Group Classes (Valid 14 days)\n• **Single Drop-in**: HK$280 / class\n• **10-Class Pass**: HK$2,400\n• **Unlimited Monthly Pass**: HK$1,980 / month\n• **Annual Unlimited**: Special rates available upon inquiry.",
-        suggestions: ['Book Trial Pass', 'Group Classes Info', 'WhatsApp Studio Manager'],
-        action: { type: 'booking', label: '🎁 Get Trial Pass (HK$450)' }
-      };
-    }
-
-    if (q.includes('location') || q.includes('where') || q.includes('address') || q.includes('contact') || q.includes('phone')) {
-      return {
-        reply: "📍 **Studio Location & Details**\n\n- **Address**: 1303-04 Tak Woo House, 17-19 Wo On Lane, Central, Hong Kong\n- **MTR**: Central Station Exit D2 (3 min walk)\n- **WhatsApp / Phone**: +852 6708 2503\n- **Email**: info@pragyayog.com",
-        suggestions: ['Chat on WhatsApp', 'Book a Class', 'View Schedule'],
-        action: { type: 'whatsapp', label: '💬 Open WhatsApp (+852 6708 2503)' }
-      };
-    }
-
-    return {
-      reply: "Thank you for reaching out! 🙏 I am here to help you with **Group Classes**, **200-Hr Teacher Training**, **Memberships**, and **Retreats** at Pragya Yog School Central HK.\n\nWould you like to book a trial session or speak directly with our studio manager?",
-      suggestions: ['Book Trial Class', 'What classes do you offer?', 'Chat on WhatsApp'],
-      action: { type: 'booking', label: 'Book Trial Session' }
-    };
-  };
 
   const handleSend = async (textToSend?: string) => {
     const query = (textToSend || input).trim();
     if (!query || loading) return;
 
+    const userMsgId = Date.now().toString();
     const userMsg: Message = {
-      id: Date.now().toString(),
+      id: userMsgId,
       sender: 'user',
       text: query,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -234,103 +99,139 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
       const response = await fetch(CHAT_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: query, sessionId: sessionId || undefined })
+        body: JSON.stringify({
+          message: query,
+          sessionId: sessionId || undefined
+        })
       });
 
-      if (!response.ok) throw new Error('API server returned error');
+      if (!response.ok) throw new Error('API Request Failed');
 
       const data = await response.json();
       if (data.sessionId) setSessionId(data.sessionId);
 
-      const replyText = data.reply || 'How else can I assist your yogic journey today?';
-      const fallback = getOfflineFallback(query);
-
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: replyText,
+        text: data.reply || 'I am happy to assist you with any questions about Pragya Yog School.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        suggestions:
-          data.suggestions && data.suggestions.length > 0
-            ? data.suggestions
-            : fallback.suggestions || ['Book Trial Class', 'View Schedule', 'Contact Studio'],
-        action: query.toLowerCase().includes('book') || query.toLowerCase().includes('trial')
-          ? { type: 'booking', label: '📅 Book a Class' }
-          : undefined
+        suggestions: data.suggestions && data.suggestions.length > 0 ? data.suggestions : [
+          'Compare Memberships',
+          'Book a Trial Class',
+          'Contact on WhatsApp'
+        ]
       };
 
       setMessages((prev) => [...prev, botMsg]);
-      speakText(replyText);
+
+      if (!isMuted && 'speechSynthesis' in window) {
+        const cleanText = data.reply.replace(/[*_#`~]/g, '');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+      }
     } catch (err) {
-      console.warn('API fetch issue, using smart fallback logic:', err);
-      const fallback = getOfflineFallback(query);
-
-      const botMsg: Message = {
+      console.error(err);
+      const fallbackMsg: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: fallback.reply,
+        text: 'Namaste! I am experiencing a brief connection delay. You can also chat directly with us on [WhatsApp](https://wa.me/85267082503) or ask me again.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        suggestions: fallback.suggestions,
-        action: fallback.action
+        suggestions: ['Try again', 'Classes & Schedule', 'Contact Info']
       };
-
-      setMessages((prev) => [...prev, botMsg]);
-      speakText(fallback.reply);
+      setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResetSession = () => {
+  const handleReset = () => {
     setSessionId('');
-    setMessages([DEFAULT_WELCOME_MESSAGE]);
-    try {
-      sessionStorage.removeItem('pragya_chat_messages');
-    } catch (e) {
-      // ignore
+    setMessages([
+      {
+        id: Date.now().toString(),
+        sender: 'bot',
+        text: 'Conversation reset. Namaste! How may I assist you today?',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        suggestions: [
+          'Book a Trial Class',
+          '200-Hour TTC Info',
+          'Membership Prices',
+          'Studio Location'
+        ]
+      }
+    ]);
+  };
+
+  // Speech Recognition (Dictation)
+  const toggleSpeechRecognition = () => {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      alert('Speech recognition is not supported in this browser.');
+      return;
     }
-  };
 
-  const handleCopyMessage = (id: string, text: string) => {
-    try {
-      const clean = text.replace(/[*_#`~]/g, '');
-      navigator.clipboard.writeText(clean);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (e) {
-      console.warn('Copy failed:', e);
+    if (isListening) {
+      setIsListening(false);
+      return;
     }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = lang === 'yue' ? 'zh-HK' : lang === 'cmn' ? 'zh-CN' : 'en-US';
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setIsListening(false);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+
+    recognition.start();
   };
 
-  const handleFeedback = (id: string, type: 'like' | 'dislike') => {
-    setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, feedback: m.feedback === type ? undefined : type } : m))
-    );
-  };
-
+  // Render markdown text formatting
   const renderFormattedText = (text: string) => {
     return text.split('\n').map((line, lIdx) => {
       const boldFormatted = line.split(/(\*\*.*?\*\*)/g).map((chunk, cIdx) => {
         if (chunk.startsWith('**') && chunk.endsWith('**')) {
-          return (
-            <strong key={cIdx} className="font-semibold text-amber-200">
-              {chunk.slice(2, -2)}
-            </strong>
-          );
+          return <strong key={cIdx} style={{ fontWeight: 600, color: '#FDE68A' }}>{chunk.slice(2, -2)}</strong>;
         }
-        return chunk;
+        
+        const linkSplit = chunk.split(/(\[.*?\]\(.*?\))/g).map((subChunk, sIdx) => {
+          const match = subChunk.match(/^\[(.*?)\]\((.*?)\)$/);
+          if (match) {
+            return (
+              <a
+                key={sIdx}
+                href={match[2]}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#FCD34D', textDecoration: 'underline' }}
+              >
+                {match[1]}
+              </a>
+            );
+          }
+          return subChunk;
+        });
+
+        return <span key={cIdx}>{linkSplit}</span>;
       });
 
       if (line.startsWith('* ') || line.startsWith('- ')) {
         return (
-          <li key={lIdx} className="ml-4 list-disc space-y-0.5 my-0.5 text-stone-200">
+          <li key={lIdx} style={{ marginLeft: '16px', listStyleType: 'disc', margin: '3px 0' }}>
             {boldFormatted}
           </li>
         );
       }
 
       return (
-        <p key={lIdx} className="my-1 leading-relaxed text-stone-100">
+        <p key={lIdx} style={{ margin: '3px 0', lineHeight: '1.55' }}>
           {boldFormatted}
         </p>
       );
@@ -338,355 +239,710 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
   };
 
   return (
-    <>
-      {/* ── Floating Launcher Toggle Button ──────────────────────────────── */}
+    <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+      {/* ── Floating Launcher Button & Tooltip (Hidden when chat modal is open to avoid overlap) ── */}
       {!isOpen && (
-        <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          
-          {/* Teaser notification bubble */}
-          {showTeaser && (
-            <div className="bg-[#1E3A2B] text-[#F5EFE5] border border-[#C5A059]/40 shadow-xl rounded-2xl p-3 max-w-[260px] text-xs flex items-start gap-2.5 relative group animate-bounce-subtle">
-              <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/40">
-                <Sparkles size={14} />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-amber-200">Pragya AI Assistant</p>
-                <p className="text-[11px] text-stone-300">Need help booking a class or TTC details?</p>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 9990,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            pointerEvents: 'none'
+          }}
+        >
+          {/* Idle Tooltip Badge */}
+          {showTooltip && (
+            <div
+              style={{
+                pointerEvents: 'auto',
+                marginBottom: '10px',
+                backgroundColor: '#1C1512',
+                color: '#F5EFE5',
+                border: '1px solid rgba(242, 169, 60, 0.4)',
+                padding: '10px 16px',
+                borderRadius: '16px',
+                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                maxWidth: '280px',
+                fontSize: '13px'
+              }}
+            >
+              <Sparkles size={16} style={{ color: '#FBB534', flexShrink: 0 }} />
+              <div>
+                <span style={{ fontWeight: 600, display: 'block', color: '#FCD34D' }}>Ask Pragya AI</span>
+                <span style={{ fontSize: '11.5px', color: '#D6D3D1' }}>Instant answers on classes, TTC & pricing</span>
               </div>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowTeaser(false);
-                }}
-                className="text-stone-400 hover:text-white p-0.5"
-                title="Dismiss"
+                onClick={() => setShowTooltip(false)}
+                style={{ background: 'none', border: 'none', color: '#A8A29E', cursor: 'pointer', padding: '2px', marginLeft: '4px' }}
+                aria-label="Dismiss message"
               >
-                <X size={13} />
+                <X size={14} />
               </button>
             </div>
           )}
 
-          {/* Trigger Button */}
+          {/* Floating Trigger Circle */}
           <button
-            onClick={() => {
-              setIsOpen(true);
-              setShowTeaser(false);
+            onClick={() => setIsOpen(true)}
+            aria-label="Toggle AI Assistant Chat"
+            style={{
+              pointerEvents: 'auto',
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              border: '2px solid rgba(242, 169, 60, 0.7)',
+              background: 'linear-gradient(135deg, #FF7F3F 0%, #F2A93C 50%, #5E9E56 100%)',
+              color: '#FFFFFF',
+              boxShadow: '0 8px 32px rgba(255, 127, 63, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'all 0.3s ease'
             }}
-            className="group relative flex items-center gap-2.5 bg-gradient-to-r from-[#1E3A2B] to-[#11241A] hover:from-[#254936] hover:to-[#173023] text-[#F5EFE5] px-4 py-3 sm:px-5 sm:py-3.5 rounded-full shadow-2xl border border-[#C5A059]/50 hover:border-amber-400 transition-all duration-300 hover:scale-105 active:scale-95"
-            aria-label="Open Pragya AI Assistant"
           >
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-            </span>
+            <span
+              style={{
+                position: 'absolute',
+                top: '-4px',
+                left: '-4px',
+                right: '-4px',
+                bottom: '-4px',
+                borderRadius: '50%',
+                border: '2px solid #F2A93C',
+                opacity: 0.8,
+                animation: 'pulseGlow 2.5s infinite ease-out'
+              }}
+            />
 
-            <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-300">
-              <Bot size={18} />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Mascot Lotus Yogi Avatar */}
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#FBB534', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.6)' }}>
+                <svg viewBox="0 0 100 100" style={{ width: '32px', height: '32px', fill: '#23130E' }}>
+                  <circle cx="50" cy="50" r="45" fill="#FBB534" />
+                  <path d="M50 22c-3.5 0-6.5 3-6.5 6.5s3 6.5 6.5 6.5 6.5-3 6.5-6.5S53.5 22 50 22zm-12 36c-2 0-3.5 1.5-3.5 3.5s1.5 3.5 3.5 3.5h24c2 0 3.5-1.5 3.5-3.5S64 58 62 58H38zm-4-10c-3 0-5 2.5-5 5.5s2 5.5 5 5.5h32c3 0 5-2.5 5-5.5s-2-5.5-5-5.5H34z" />
+                </svg>
+              </div>
+              {unreadBadge && (
+                <span style={{ position: 'absolute', top: '-4px', right: '-4px', width: '14px', height: '14px', backgroundColor: '#EF4444', borderRadius: '50%', border: '2px solid #1C1512' }} />
+              )}
             </div>
-
-            <span className="font-serif font-medium text-xs sm:text-sm tracking-wide text-amber-100 hidden sm:inline">
-              Ask Pragya AI
-            </span>
           </button>
         </div>
       )}
 
-      {/* ── Main Chat Modal / Mobile Bottom Drawer ───────────────────────── */}
+      {/* ── Exact Chat Window Modal Panel ────────────────────────────────────────── */}
       {isOpen && (
-        <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-50 flex flex-col sm:w-[420px] sm:h-[630px] h-[100dvh] w-full bg-[#1E3A2B] sm:rounded-3xl shadow-2xl border border-[#C5A059]/40 overflow-hidden animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-4 duration-300">
-          
-          {/* Mobile Top Drag Indicator Bar */}
-          <div className="sm:hidden w-full bg-[#11241A] pt-2 pb-1 flex justify-center border-b border-amber-500/10">
-            <div className="w-12 h-1.5 bg-amber-500/30 rounded-full"></div>
-          </div>
-
-          {/* Header Bar */}
-          <div className="bg-gradient-to-r from-[#11241A] to-[#1E3A2B] px-4 py-3.5 sm:px-5 sm:py-4 border-b border-[#C5A059]/30 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 shadow-inner">
-                  <Bot size={22} />
-                </div>
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#11241A] rounded-full"></span>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            width: 'min(400px, calc(100vw - 32px))',
+            height: 'min(640px, calc(100vh - 40px))',
+            maxHeight: 'calc(100vh - 40px)',
+            zIndex: 9995,
+            backgroundColor: '#1E1815',
+            color: '#F5EFE5',
+            borderRadius: '24px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(196, 154, 42, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}
+        >
+          {/* 1. Header with Sunrise Gradient & Close Button */}
+          <div
+            style={{
+              background: 'linear-gradient(120deg, #ff7f3f 0%, #f2a93c 48%, #5e9e56 100%)',
+              padding: '12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '2px solid #C49A2A',
+              position: 'relative'
+            }}
+          >
+            {/* Left: Avatar + Status */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FBB534',
+                  boxShadow: '0 0 0 2px rgba(196, 154, 42, 0.6), 0 2px 8px rgba(0,0,0,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  flexShrink: 0
+                }}
+              >
+                <svg viewBox="0 0 100 100" style={{ width: '34px', height: '34px', fill: '#23130E' }}>
+                  <circle cx="50" cy="50" r="46" fill="#FBB534" />
+                  <circle cx="50" cy="30" r="8" fill="#23130E" />
+                  <path d="M50 40c-10 0-18 6-18 14 0 3 1.5 6 4 8l-6 12c-1 2 0 4 2 4h36c2 0 3-2 2-4l-6-12c2.5-2 4-5 4-8 0-8-8-14-18-14z" fill="#23130E" />
+                </svg>
               </div>
+
               <div>
-                <div className="flex items-center gap-1.5">
-                  <h2 className="font-serif font-bold text-sm sm:text-base text-amber-100 tracking-wide">
-                    Pragya AI Assistant
-                  </h2>
-                  <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded font-mono uppercase">
-                    Live
-                  </span>
+                <h3 style={{ margin: 0, fontWeight: 700, fontSize: '15px', color: '#FFFFFF', letterSpacing: '0.2px', lineHeight: 1.2 }}>Pragya</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.92)', marginTop: '2px', fontWeight: 600 }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#FFFFFF', display: 'inline-block' }} />
+                  Online
                 </div>
-                <p className="text-[11px] text-stone-300 flex items-center gap-1">
-                  <ShieldCheck size={11} className="text-amber-400" />
-                  Official Studio Intelligence
-                </p>
               </div>
             </div>
 
-            {/* Top Controls */}
-            <div className="flex items-center gap-1">
-              {/* Voice Mute/Unmute */}
-              <button
-                onClick={() => setIsMuted(!isMuted)}
-                className={`p-2 rounded-xl text-stone-300 hover:text-white hover:bg-emerald-900/50 transition-colors ${
-                  !isMuted ? 'text-amber-400 bg-amber-500/10' : ''
-                }`}
-                title={isMuted ? 'Unmute Audio Speech' : 'Mute Audio Speech'}
-              >
-                {isMuted ? <VolumeX size={17} /> : <Volume2 size={17} className="animate-pulse" />}
-              </button>
-
-              {/* Reset Session */}
-              <button
-                onClick={handleResetSession}
-                className="p-2 rounded-xl text-stone-300 hover:text-white hover:bg-emerald-900/50 transition-colors"
-                title="Clear Session"
-              >
-                <RotateCcw size={16} />
-              </button>
-
-              {/* Open Full Screen Page */}
-              {onOpenFullPage && (
+            {/* Right: Lang Picker + WhatsApp + Reset + Close */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {/* Language Dropdown */}
+              <div style={{ position: 'relative' }}>
                 <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    onOpenFullPage();
+                  onClick={() => setLangMenuOpen(!langMenuOpen)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    backgroundColor: 'rgba(255,255,255,0.22)',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    padding: '4px 10px',
+                    borderRadius: '16px',
+                    cursor: 'pointer'
                   }}
-                  className="p-2 rounded-xl text-stone-300 hover:text-amber-300 hover:bg-emerald-900/50 transition-colors hidden sm:flex"
-                  title="Expand to Full Page"
                 >
-                  <Maximize2 size={16} />
+                  <Globe size={13} />
+                  <span>{lang === 'auto' ? 'Auto' : lang === 'en' ? 'EN' : lang === 'yue' ? '廣' : '普'}</span>
+                  <ChevronDown size={11} />
                 </button>
-              )}
 
-              {/* Close Widget Button */}
+                {langMenuOpen && (
+                  <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: '6px', width: '180px', backgroundColor: '#231A15', border: '1px solid rgba(242, 169, 60, 0.3)', borderRadius: '12px', boxShadow: '0 12px 32px rgba(0,0,0,0.4)', padding: '6px', zIndex: 50 }}>
+                    <button onClick={() => { setLang('auto'); setLangMenuOpen(false); }} style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'none', border: 'none', color: lang === 'auto' ? '#FCD34D' : '#E7E5E4', fontSize: '12px', borderRadius: '6px', cursor: 'pointer' }}>🌐 Auto-detect</button>
+                    <button onClick={() => { setLang('en'); setLangMenuOpen(false); }} style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'none', border: 'none', color: lang === 'en' ? '#FCD34D' : '#E7E5E4', fontSize: '12px', borderRadius: '6px', cursor: 'pointer' }}>English</button>
+                    <button onClick={() => { setLang('yue'); setLangMenuOpen(false); }} style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'none', border: 'none', color: lang === 'yue' ? '#FCD34D' : '#E7E5E4', fontSize: '12px', borderRadius: '6px', cursor: 'pointer' }}>廣東話 Cantonese</button>
+                    <button onClick={() => { setLang('cmn'); setLangMenuOpen(false); }} style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'none', border: 'none', color: lang === 'cmn' ? '#FCD34D' : '#E7E5E4', fontSize: '12px', borderRadius: '6px', cursor: 'pointer' }}>普通话 Mandarin</button>
+                  </div>
+                )}
+              </div>
+
+              {/* WhatsApp Green Circle Button */}
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: '#25D366',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 8px rgba(37,211,102,0.4)',
+                  flexShrink: 0
+                }}
+                title="Chat on WhatsApp"
+              >
+                <svg viewBox="0 0 24 24" style={{ width: '18px', height: '18px', fill: '#FFFFFF' }}>
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+              </a>
+
+              {/* Reset Button */}
+              <button
+                onClick={handleReset}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255,255,255,0.22)',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+                title="Reset Conversation"
+              >
+                <RotateCcw size={15} />
+              </button>
+
+              {/* Close Button */}
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 rounded-xl text-stone-300 hover:text-white hover:bg-emerald-900/50 transition-colors ml-1"
-                aria-label="Close Chat"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255,255,255,0.22)',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  marginLeft: '2px'
+                }}
+                title="Close Window"
               >
-                <X size={18} />
+                <X size={17} />
               </button>
             </div>
           </div>
 
-          {/* ── Messages Container ────────────────────────────────────────── */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-radial from-emerald-950/60 to-emerald-950 text-xs sm:text-sm scrollbar-thin">
+          {/* 2. Scrollable Body with Sacred Geometry Background */}
+          <div
+            style={{
+              flexGrow: 1,
+              overflowY: 'auto',
+              padding: '14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              backgroundColor: '#1E1815',
+              backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(196, 154, 42, 0.05) 0%, transparent 65%)'
+            }}
+          >
+            {/* Top Greeting Info Banner */}
+            <div
+              style={{
+                backgroundColor: '#281F1A',
+                border: '1px solid rgba(242, 169, 60, 0.22)',
+                borderRadius: '16px',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
+              }}
+            >
+              <p style={{ margin: 0, fontSize: '13px', color: '#E7E5E4', lineHeight: 1.5, fontWeight: 400 }}>
+                I'm <strong style={{ color: '#FCD34D', fontWeight: 600 }}>Pragya</strong> — ask me about classes, memberships & teacher training.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ backgroundColor: '#1C1512', color: '#FCD34D', border: '1px solid rgba(242, 169, 60, 0.3)', padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  🌙 {greetingTime}
+                </span>
+                <span style={{ backgroundColor: '#1C1512', color: '#FCD34D', border: '1px solid rgba(242, 169, 60, 0.3)', padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  ⚡ 24/7 answers
+                </span>
+              </div>
+            </div>
+
+            {/* Divider 1: HOW CAN I HELP YOU TODAY? */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0 2px 0' }}>
+              <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.12)', flex: 1 }} />
+              <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '1.2px', color: 'rgba(242, 169, 60, 0.85)', fontFamily: 'monospace' }}>
+                HOW CAN I HELP YOU TODAY?
+              </span>
+              <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.12)', flex: 1 }} />
+            </div>
+
+            {/* 4 Quick Action Cards Grid (2x2) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {/* Card 1: Book a Trial */}
+              <button
+                onClick={() => {
+                  if (onOpenBooking) onOpenBooking('class', 'Book a Trial Class');
+                  else handleSend('I want to book a trial class');
+                }}
+                style={{
+                  backgroundColor: '#281F1A',
+                  border: '1px solid rgba(242, 169, 60, 0.22)',
+                  borderRadius: '16px',
+                  padding: '12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '84px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '6px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: 'rgba(249, 115, 22, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>
+                    📝
+                  </div>
+                  <span style={{ backgroundColor: '#F59E0B', color: '#1C1512', fontWeight: 800, fontSize: '8.5px', padding: '2px 6px', borderRadius: '10px', letterSpacing: '0.5px' }}>
+                    ★ POPULAR
+                  </span>
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontWeight: 700, fontSize: '12.5px', color: '#F5EFE5' }}>Book a Trial</h4>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '10.5px', color: '#A8A29E' }}>3 classes · HK$450</p>
+                </div>
+              </button>
+
+              {/* Card 2: Class Schedule */}
+              <button
+                onClick={() => handleSend('Show me the live class schedule')}
+                style={{
+                  backgroundColor: '#281F1A',
+                  border: '1px solid rgba(242, 169, 60, 0.22)',
+                  borderRadius: '16px',
+                  padding: '12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '84px'
+                }}
+              >
+                <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: 'rgba(59, 130, 246, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', marginBottom: '6px' }}>
+                  📅
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontWeight: 700, fontSize: '12.5px', color: '#F5EFE5' }}>Class Schedule</h4>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '10.5px', color: '#A8A29E' }}>View & book online</p>
+                </div>
+              </button>
+
+              {/* Card 3: Memberships */}
+              <button
+                onClick={() => handleSend('What are the membership plans and pricing?')}
+                style={{
+                  backgroundColor: '#281F1A',
+                  border: '1px solid rgba(242, 169, 60, 0.22)',
+                  borderRadius: '16px',
+                  padding: '12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '84px'
+                }}
+              >
+                <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: 'rgba(234, 179, 8, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', marginBottom: '6px' }}>
+                  💰
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontWeight: 700, fontSize: '12.5px', color: '#F5EFE5' }}>Memberships</h4>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '10.5px', color: '#A8A29E' }}>Plans & pricing</p>
+                </div>
+              </button>
+
+              {/* Card 4: Teacher Training */}
+              <button
+                onClick={() => handleSend('Tell me about the 200-Hour Teacher Training program')}
+                style={{
+                  backgroundColor: '#281F1A',
+                  border: '1px solid rgba(242, 169, 60, 0.22)',
+                  borderRadius: '16px',
+                  padding: '12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '84px'
+                }}
+              >
+                <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', marginBottom: '6px' }}>
+                  🎓
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontWeight: 700, fontSize: '12.5px', color: '#F5EFE5' }}>Teacher Training</h4>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '10.5px', color: '#A8A29E' }}>200-Hr certified</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Divider 2: OR ASK ME ANYTHING */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0 2px 0' }}>
+              <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.12)', flex: 1 }} />
+              <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '1.2px', color: 'rgba(242, 169, 60, 0.85)', fontFamily: 'monospace' }}>
+                OR ASK ME ANYTHING
+              </span>
+              <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.12)', flex: 1 }} />
+            </div>
+
+            {/* Question Pills Row */}
+            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }} className="no-scrollbar">
+              {[
+                'What courses do you offer?',
+                'What is Pragya Yog School?',
+                'Do you offer beginner classes?'
+              ].map((q, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSend(q)}
+                  style={{
+                    backgroundColor: '#281F1A',
+                    border: '1px solid rgba(242, 169, 60, 0.25)',
+                    color: '#E7E5E4',
+                    fontSize: '12px',
+                    padding: '7px 12px',
+                    borderRadius: '12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
+                  }}
+                >
+                  <MessageSquare size={13} style={{ color: '#FCD34D' }} />
+                  <span>{q}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* WhatsApp Full Banner Button */}
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                backgroundColor: '#1B2C1E',
+                border: '1px solid rgba(37, 211, 102, 0.4)',
+                color: '#6EE7B7',
+                fontSize: '12px',
+                fontWeight: 600,
+                padding: '10px 14px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                textDecoration: 'none',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
+              }}
+            >
+              <svg viewBox="0 0 24 24" style={{ width: '16px', height: '16px', fill: '#25D366' }}>
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              Talk to a human on WhatsApp
+            </a>
+
+            {/* Messages Stream */}
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex flex-col ${
-                  msg.sender === 'user' ? 'items-end' : 'items-start'
-                } max-w-[88%] sm:max-w-[85%] ${msg.sender === 'user' ? 'ml-auto' : 'mr-auto'}`}
+                style={{
+                  display: 'flex',
+                  gap: '10px',
+                  justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                  maxWidth: '92%',
+                  marginLeft: msg.sender === 'user' ? 'auto' : '0',
+                  marginRight: msg.sender === 'bot' ? 'auto' : '0'
+                }}
               >
-                {/* Header Icon + Sender Label */}
-                <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-stone-400 font-mono">
-                  {msg.sender === 'bot' ? (
-                    <>
-                      <Sparkles size={11} className="text-amber-400" />
-                      <span>Pragya AI</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>You</span>
-                      <User size={11} className="text-amber-300" />
-                    </>
-                  )}
-                  <span>· {msg.timestamp}</span>
-                </div>
-
-                {/* Message Bubble */}
-                <div
-                  className={`p-3.5 sm:p-4 rounded-2xl leading-relaxed text-xs sm:text-sm shadow-md relative group ${
-                    msg.sender === 'user'
-                      ? 'bg-gradient-to-r from-[#944426] to-[#7B351B] text-[#F5EFE5] rounded-br-xs border border-amber-500/20'
-                      : 'bg-[#2A4E3B] text-[#F5EFE5] rounded-bl-xs border border-[#C5A059]/30'
-                  }`}
-                >
-                  {renderFormattedText(msg.text)}
-
-                  {/* Inline Action Button if available */}
-                  {msg.action && (
-                    <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap gap-2">
-                      {msg.action.type === 'booking' && onOpenBooking && (
-                        <button
-                          onClick={() => {
-                            setIsOpen(false);
-                            onOpenBooking('class', 'Book Trial Class');
-                          }}
-                          className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-semibold py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow"
-                        >
-                          <Calendar size={14} />
-                          {msg.action.label}
-                        </button>
-                      )}
-
-                      {msg.action.type === 'whatsapp' && (
-                        <a
-                          href={msg.action.payload || WHATSAPP_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition-colors shadow text-xs"
-                        >
-                          <MessageSquare size={14} />
-                          {msg.action.label}
-                        </a>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Message Utilities (Copy / Feedback) */}
-                  {msg.sender === 'bot' && (
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-amber-500/10 text-[10px] text-stone-400">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleCopyMessage(msg.id, msg.text)}
-                          className="flex items-center gap-1 hover:text-amber-300 transition-colors"
-                          title="Copy text"
-                        >
-                          {copiedId === msg.id ? (
-                            <>
-                              <Check size={12} className="text-emerald-400" />
-                              <span className="text-emerald-400">Copied</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy size={12} />
-                              <span>Copy</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => handleFeedback(msg.id, 'like')}
-                          className={`p-1 rounded hover:text-amber-300 ${
-                            msg.feedback === 'like' ? 'text-amber-400 bg-amber-500/20' : ''
-                          }`}
-                        >
-                          <ThumbsUp size={12} />
-                        </button>
-                        <button
-                          onClick={() => handleFeedback(msg.id, 'dislike')}
-                          className={`p-1 rounded hover:text-amber-300 ${
-                            msg.feedback === 'dislike' ? 'text-amber-400 bg-amber-500/20' : ''
-                          }`}
-                        >
-                          <ThumbsDown size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Chips Suggestions */}
-                {msg.sender === 'bot' && msg.suggestions && msg.suggestions.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2.5 max-w-full">
-                    {msg.suggestions.map((sug, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleSend(sug)}
-                        className="text-[11px] sm:text-xs bg-emerald-950/80 hover:bg-amber-600 text-amber-200 hover:text-stone-950 border border-amber-500/30 px-3 py-1.5 rounded-full transition-all duration-200 active:scale-95 shadow-sm"
-                      >
-                        {sug}
-                      </button>
-                    ))}
+                {/* Bot Avatar Icon */}
+                {msg.sender === 'bot' && (
+                  <div
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '50%',
+                      backgroundColor: '#FBB534',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                      marginTop: '2px'
+                    }}
+                  >
+                    <svg viewBox="0 0 100 100" style={{ width: '26px', height: '26px', fill: '#23130E' }}>
+                      <circle cx="50" cy="50" r="45" fill="#FBB534" />
+                      <circle cx="50" cy="30" r="8" fill="#23130E" />
+                      <path d="M50 40c-10 0-18 6-18 14 0 3 1.5 6 4 8l-6 12c-1 2 0 4 2 4h36c2 0 3-2 2-4l-6-12c2.5-2 4-5 4-8 0-8-8-14-18-14z" fill="#23130E" />
+                    </svg>
                   </div>
                 )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: msg.sender === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                      backgroundColor: msg.sender === 'user' ? '#944426' : '#281F1A',
+                      color: '#F5EFE5',
+                      border: msg.sender === 'user' ? 'none' : '1px solid rgba(196, 154, 42, 0.2)',
+                      fontSize: '13px',
+                      lineHeight: '1.5'
+                    }}
+                  >
+                    {renderFormattedText(msg.text)}
+                  </div>
+
+                  <div style={{ fontSize: '10px', color: '#A8A29E', padding: '0 4px' }}>{msg.timestamp}</div>
+
+                  {/* Suggestions Pills */}
+                  {msg.sender === 'bot' && msg.suggestions && msg.suggestions.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingTop: '4px' }}>
+                      {msg.suggestions.map((sug, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleSend(sug)}
+                          style={{
+                            backgroundColor: '#281F1A',
+                            border: '1px solid rgba(242, 169, 60, 0.3)',
+                            color: '#FCD34D',
+                            fontSize: '11.5px',
+                            padding: '5px 12px',
+                            borderRadius: '16px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {sug}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
 
             {/* Loading Indicator */}
             {loading && (
-              <div className="flex items-center gap-2.5 bg-emerald-900/40 border border-amber-500/20 px-4 py-3 rounded-2xl w-fit animate-pulse">
-                <Bot size={18} className="text-amber-400 animate-spin" />
-                <span className="text-xs text-stone-300 font-medium">Pragya AI is typing...</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#281F1A', border: '1px solid rgba(242, 169, 60, 0.2)', padding: '10px 14px', borderRadius: '16px', fontSize: '12px', color: '#E7E5E4', width: 'fit-content' }}>
+                <span style={{ width: '6px', height: '6px', backgroundColor: '#FCD34D', borderRadius: '50%', animation: 'bounce 1s infinite -0.3s' }} />
+                <span style={{ width: '6px', height: '6px', backgroundColor: '#FCD34D', borderRadius: '50%', animation: 'bounce 1s infinite -0.15s' }} />
+                <span style={{ width: '6px', height: '6px', backgroundColor: '#FCD34D', borderRadius: '50%', animation: 'bounce 1s infinite' }} />
+                <span style={{ marginLeft: '4px', color: '#A8A29E' }}>Pragya is thinking...</span>
               </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* ── Quick Contact Banner for Mobile ─────────────────────────── */}
-          <div className="bg-[#11241A] px-4 py-2 border-t border-amber-500/20 flex items-center justify-between text-[11px] text-stone-300 shrink-0">
-            <span className="flex items-center gap-1.5 text-stone-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              Central Studio HK
-            </span>
-            <div className="flex items-center gap-3">
-              {onOpenBooking && (
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    onOpenBooking('class', 'Book Trial Class');
-                  }}
-                  className="text-amber-300 hover:underline font-medium"
-                >
-                  Book Trial Pass
-                </button>
-              )}
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-400 hover:underline flex items-center gap-1"
-              >
-                WhatsApp <ExternalLink size={10} />
-              </a>
-            </div>
-          </div>
-
-          {/* ── Input Controls Bar ────────────────────────────────────────── */}
-          <div className="p-3 sm:p-4 bg-stone-950 border-t border-emerald-800/40 shrink-0 pb-safe">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex items-center gap-2 bg-emerald-950 border border-amber-500/30 rounded-2xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:border-amber-400 transition-colors shadow-inner"
-            >
-              {/* Voice Mic Button */}
+          {/* 3. Input Footer Bar */}
+          <div style={{ padding: '10px 12px', backgroundColor: '#16100D', borderTop: '1px solid rgba(242, 169, 60, 0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Voice Dictation Button */}
               <button
-                type="button"
-                onClick={toggleVoiceInput}
-                className={`p-2 rounded-xl transition-all ${
-                  isListening
-                    ? 'bg-rose-500 text-white animate-pulse'
-                    : 'text-stone-400 hover:text-amber-300 hover:bg-emerald-900/50'
-                }`}
-                title={isListening ? 'Stop Recording' : 'Voice Input (Speak)'}
+                onClick={toggleSpeechRecognition}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  border: isListening ? '1px solid #EF4444' : '1px solid rgba(242, 169, 60, 0.35)',
+                  backgroundColor: isListening ? '#DC2626' : '#281F1A',
+                  color: isListening ? '#FFFFFF' : '#FCD34D',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+                title="Dictate message"
               >
-                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                <Mic size={17} />
               </button>
 
-              {/* Text Input */}
+              {/* Text Input Pill */}
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={isListening ? 'Listening to your voice...' : 'Ask about classes, TTC, pricing...'}
-                className="w-full bg-transparent text-xs sm:text-sm text-stone-100 placeholder-stone-400 focus:outline-none py-1 min-h-[38px]"
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="Ask me anything"
+                style={{
+                  flex: 1,
+                  backgroundColor: '#281F1A',
+                  border: '1px solid rgba(242, 169, 60, 0.3)',
+                  borderRadius: '20px',
+                  padding: '8px 14px',
+                  fontSize: '13px',
+                  color: '#F5EFE5',
+                  outline: 'none'
+                }}
               />
 
-              {/* Send Button */}
+              {/* Glowing Yellow Soundwave Button */}
               <button
-                type="submit"
-                disabled={!input.trim() || loading}
-                className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 to-amber-400 disabled:opacity-40 text-stone-950 p-2.5 rounded-xl font-bold transition-all shrink-0 active:scale-95 shadow"
-                aria-label="Send message"
+                onClick={() => setIsMuted(!isMuted)}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FACC15',
+                  color: '#1C1512',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 10px rgba(250, 204, 21, 0.4)',
+                  flexShrink: 0
+                }}
+                title={isMuted ? 'Enable Voice Output' : 'Mute Voice Output'}
               >
-                <Send size={16} />
+                |||
               </button>
-            </form>
+
+              {/* Send Button Circle */}
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || loading}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  backgroundColor: input.trim() && !loading ? '#896315' : '#281F1A',
+                  border: input.trim() && !loading ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                  color: input.trim() && !loading ? '#FEF3C7' : '#78716C',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
+                  flexShrink: 0
+                }}
+                title="Send message"
+              >
+                <Send size={15} />
+              </button>
+            </div>
           </div>
         </div>
       )}
-    </>
+
+      {/* Global Animation Styles */}
+      <style>{`
+        @keyframes pulseGlow {
+          0% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.22); opacity: 0; }
+          100% { transform: scale(1); opacity: 0; }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+    </div>
   );
 };
-
-export default AIChatWidget;
