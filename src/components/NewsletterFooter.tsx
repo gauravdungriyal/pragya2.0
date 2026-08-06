@@ -10,11 +10,11 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
   onNavigateSection
 }) => {
   const quickLinks = [
+    { label: 'Pragya Connect Community', section: 'community' },
     { label: 'Contact Us', section: 'faq' },
     { label: 'Website Terms', section: 'terms' },
     { label: 'Studio Guidelines', section: 'guidelines' },
     { label: 'Privacy Policy', section: 'privacy' },
-    { label: 'Careers', section: 'careers' },
     { label: 'FAQs', section: 'faq' }
   ];
 
@@ -191,7 +191,13 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
               {quickLinks.map((link) => (
                 <a
                   key={link.label}
-                  onClick={() => onNavigateSection && onNavigateSection(link.section)}
+                  onClick={() => {
+                    if (link.section === 'community') {
+                      window.open('https://pragya-connect.vercel.app/', '_blank', 'noopener,noreferrer');
+                    } else if (onNavigateSection) {
+                      onNavigateSection(link.section);
+                    }
+                  }}
                   style={{
                     fontSize: '14px',
                     color: 'rgba(255, 255, 255, 0.8)',

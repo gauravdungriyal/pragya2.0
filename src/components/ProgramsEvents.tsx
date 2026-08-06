@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ChevronLeft, ChevronRight, BarChart2, Clock, Target, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart2, Clock, Target, RefreshCw, Users } from 'lucide-react';
 import { getUpcomingEvents } from '../services/api';
 import { UpcomingEvent } from '../types';
 
 interface ProgramsEventsProps {
   onOpenBooking: (type?: string, title?: string) => void;
   onOpenEventDetail?: (event: UpcomingEvent) => void;
+  onViewChange?: (view: any) => void;
 }
 
 const cleanText = (str: string) => {
@@ -21,7 +22,7 @@ const cleanText = (str: string) => {
     .trim();
 };
 
-export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, onOpenEventDetail }) => {
+export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, onOpenEventDetail, onViewChange }) => {
   const defaultEvents = [
     {
       id: '1',
@@ -298,6 +299,64 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
             </div>
           </>
         )}
+
+        {/* ── Community Sangha CTA Banner ───────────────────────────────── */}
+        <div style={{
+          marginTop: '48px',
+          background: 'linear-gradient(135deg, #11241A 0%, #0A1811 100%)',
+          borderRadius: '24px',
+          padding: '32px 36px',
+          border: '1px solid rgba(217, 174, 41, 0.3)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '24px',
+          flexWrap: 'wrap',
+          boxShadow: '0 12px 36px rgba(0, 0, 0, 0.25)'
+        }}>
+          <div style={{ maxWidth: '600px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: '99px', background: 'rgba(217, 174, 41, 0.15)', color: '#FCD34D', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
+              <Users size={13} />
+              Pragya Connect Portal
+            </div>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 700, color: '#F5EFE5', marginBottom: '8px', lineHeight: 1.3 }}>
+              Join Our Global Yogic Sangha Community
+            </h3>
+            <p style={{ fontSize: '13px', color: '#A3B18A', lineHeight: 1.6, margin: 0 }}>
+              Connect with fellow practitioners, share your daily practice, RSVP to exclusive studio events, and chat with master teachers on Pragya Connect.
+            </p>
+          </div>
+
+          <button
+            onClick={() => window.open('https://pragya-connect.vercel.app/', '_blank', 'noopener,noreferrer')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              backgroundColor: '#944426',
+              color: '#FFFFFF',
+              fontWeight: 700,
+              fontSize: '14px',
+              padding: '14px 28px',
+              borderRadius: '16px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(148, 68, 38, 0.4)',
+              transition: 'transform 0.2s ease, background 0.2s ease'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = '#7B351B';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = '#944426';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <span>Explore Community</span>
+            <Users size={16} />
+          </button>
+        </div>
       </div>
 
       <style>{`

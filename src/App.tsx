@@ -25,10 +25,12 @@ import { ScrollProgressBar } from './components/ScrollUI';
 import { AdminStandalonePage } from './components/admin/AdminStandalonePage';
 import { AIChatWidget } from './components/AIChatWidget';
 import { AiAssistantPage } from './components/AiAssistantPage';
-import { Instructor, UpcomingEvent } from './types';
+import { PackageDetailPage } from './components/PackageDetailPage';
+import { PragyaConnectPage } from './components/PragyaConnectPage';
+import { Instructor, UpcomingEvent, DynamicPackage } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'admin' | 'ai-assistant'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'admin' | 'ai-assistant' | 'community'>('home');
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingType, setBookingType] = useState('class');
   const [bookingTitle, setBookingTitle] = useState('Book a Class');
@@ -38,6 +40,7 @@ export const App: React.FC = () => {
   const [selectedTeacher, setSelectedTeacher] = useState<Instructor | null>(null);
   const [selectedTeacherForPage, setSelectedTeacherForPage] = useState<Instructor | null>(null);
   const [selectedEventForPage, setSelectedEventForPage] = useState<UpcomingEvent | null>(null);
+  const [selectedPackageForPage, setSelectedPackageForPage] = useState<DynamicPackage | null>(null);
   const [pageVisible, setPageVisible] = useState(true);
   const mainRef = useRef<HTMLDivElement>(null);
 
@@ -284,11 +287,22 @@ export const App: React.FC = () => {
             }}
             onOpenBooking={handleOpenBooking}
           />
+        ) : currentView === 'package-detail' && selectedPackageForPage ? (
+          <PackageDetailPage
+            pkg={selectedPackageForPage}
+            onBack={() => {
+              setCurrentView('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenBooking={handleOpenBooking}
+          />
         ) : currentView === 'ai-assistant' ? (
           <AiAssistantPage
             onBackToHome={() => handleViewChange('home')}
             onOpenBooking={handleOpenBooking}
           />
+        ) : currentView === 'community' ? (
+          <PragyaConnectPage onOpenBooking={handleOpenBooking} />
         ) : (
           <>
             <Hero
@@ -303,6 +317,7 @@ export const App: React.FC = () => {
             <ProgramsEvents
               onOpenBooking={handleOpenBooking}
               onOpenEventDetail={handleOpenEventDetail}
+              onViewChange={handleViewChange}
             />
 
             <InteractiveSchedule onOpenBooking={handleOpenBooking} />

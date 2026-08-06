@@ -3,7 +3,7 @@ import {
   Plus, Edit2, Trash2, CheckCircle2, XCircle, ArrowLeft,
   RefreshCw, Sparkles, Database, Layers, Search, Award, Zap,
   Calendar, Compass, UserCheck, Gift, Grid3X3, List, Copy,
-  Check, AlertTriangle, Tag, Clock, Users, MapPin
+  Check, AlertTriangle, Tag, Clock, Users, MapPin, Eye
 } from 'lucide-react';
 import { DynamicPackage, PackageType } from '../../types';
 import {
@@ -11,6 +11,7 @@ import {
   deleteDynamicPackage, toggleDynamicPackageActive
 } from '../../services/api';
 import { AdminPackageForm } from './AdminPackageForm';
+import { PackageDetailPage } from '../PackageDetailPage';
 
 // ─── Brand palette ──────────────────────────────────────────────────────────
 const C = {
@@ -67,6 +68,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const [viewMode,      setViewMode]      = useState<'grid' | 'table'>('grid');
   const [isEditing,     setIsEditing]     = useState(false);
   const [editingPkg,    setEditingPkg]    = useState<DynamicPackage | null>(null);
+  const [previewPkg,    setPreviewPkg]    = useState<DynamicPackage | null>(null);
   const [notification,  setNotification]  = useState<{ msg: string; ok: boolean } | null>(null);
   const [confirmDel,    setConfirmDel]    = useState<string | null>(null);
 
@@ -218,6 +220,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     </button>
   );
 
+  if (previewPkg) {
+    return (
+      <PackageDetailPage
+        pkg={previewPkg}
+        onBack={() => setPreviewPkg(null)}
+        onOpenBooking={(t, title) => alert(`[Preview Mode] Booking clicked for "${title}"`)}
+        isPreview={true}
+      />
+    );
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', backgroundColor: C.cream, fontFamily: 'var(--font-sans)' }}>
@@ -263,16 +276,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
 
         {/* Right */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 7,
-            fontSize: 12, color: '#86efac',
-            padding: '7px 14px', borderRadius: 99,
-            backgroundColor: 'rgba(255,255,255,0.07)',
-            border: '1px solid rgba(255,255,255,0.10)',
-          }}>
-            <Database size={13} style={{ color: '#4ade80' }} />
-            <span>Live Sync</span>
-          </div>
 
           <button
             onClick={load}
@@ -638,12 +641,29 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                         backgroundColor: C.cream,
                       }}>
                         <IconBtn icon={Copy}   onClick={() => handleDuplicate(pkg)}  title="Duplicate" />
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            onClick={() => setPreviewPkg(pkg)}
+                            title="Preview Template Page"
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 5,
+                              padding: '8px 14px', borderRadius: 9,
+                              border: `1px solid ${C.borderMed}`,
+                              backgroundColor: C.white,
+                              color: C.forest, fontSize: 13, fontWeight: 700,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = C.forest}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = C.borderMed}
+                          >
+                            <Eye size={13} style={{ color: C.forest }} /> Preview
+                          </button>
                           <button
                             onClick={() => { setEditingPkg(pkg); setIsEditing(true); }}
                             style={{
                               display: 'flex', alignItems: 'center', gap: 6,
-                              padding: '8px 18px', borderRadius: 9,
+                              padding: '8px 16px', borderRadius: 9,
                               border: `1px solid ${C.borderMed}`,
                               backgroundColor: C.white,
                               color: C.charcoal, fontSize: 13, fontWeight: 700,
@@ -708,6 +728,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                             <td style={{ padding: '18px 20px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <IconBtn icon={Copy}  onClick={() => handleDuplicate(pkg)} title="Duplicate" />
+                                <button
+                                  onClick={() => setPreviewPkg(pkg)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 9, border: `1px solid ${C.borderMed}`, backgroundColor: 'transparent', color: C.forest, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                                >
+                                  <Eye size={13} style={{ color: C.forest }} /> Preview
+                                </button>
                                 <button
                                   onClick={() => { setEditingPkg(pkg); setIsEditing(true); }}
                                   style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, border: `1px solid ${C.borderMed}`, backgroundColor: 'transparent', color: C.charcoal, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}

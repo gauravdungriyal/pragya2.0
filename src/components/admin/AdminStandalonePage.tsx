@@ -192,17 +192,6 @@ export const AdminStandalonePage: React.FC<AdminStandalonePageProps> = ({ onBack
                     }}>
                       Passcode
                     </label>
-                    <button
-                      type="button"
-                      onClick={fillDemo}
-                      style={{
-                        fontSize: 11, color: '#944426', background: 'none',
-                        border: 'none', cursor: 'pointer', fontWeight: 600,
-                        textDecoration: 'underline', textUnderlineOffset: 3,
-                      }}
-                    >
-                      Auto-fill demo code
-                    </button>
                   </div>
 
                   <div style={{ position: 'relative' }}>
@@ -260,7 +249,7 @@ export const AdminStandalonePage: React.FC<AdminStandalonePageProps> = ({ onBack
                     }}>
                       <HelpCircle size={15} style={{ color: '#ef4444', flexShrink: 0, marginTop: 1 }} />
                       <span style={{ fontSize: 12, color: '#b91c1c', lineHeight: 1.5 }}>
-                        Incorrect passcode. Please enter the correct admin passcode or click "Auto-fill".
+                        Incorrect passcode. Please enter the correct admin passcode.
                       </span>
                     </div>
                   )}
@@ -306,8 +295,7 @@ export const AdminStandalonePage: React.FC<AdminStandalonePageProps> = ({ onBack
                   onMouseEnter={e => { e.currentTarget.style.opacity = '0.92'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
                   onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
                 >
-                  <Sparkles size={16} />
-                  Unlock Admin Console
+                  Log In
                 </button>
               </form>
             </div>

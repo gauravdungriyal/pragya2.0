@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import {
   Plus, Trash2, Save, Award, Zap, Calendar,
-  Compass, UserCheck, Sparkles, ArrowLeft
+  Compass, UserCheck, Sparkles, ArrowLeft, Eye
 } from 'lucide-react';
 import { DynamicPackage, PackageType, ItineraryItem, SyllabusModule } from '../../types';
+import { PackageDetailPage } from '../PackageDetailPage';
 
 // ─── Brand Tokens ───────────────────────────────────────────────────────────
 const C = {
@@ -142,6 +143,7 @@ interface AdminPackageFormProps {
 }
 
 export const AdminPackageForm: React.FC<AdminPackageFormProps> = ({ initialPackage, onSave, onCancel }) => {
+  const [showPreview, setShowPreview] = useState(false);
 
   // ── Core fields ──────────────────────────────────────────────────────────
   const [type,         setType]         = useState<PackageType>(initialPackage?.type ?? 'teacher_training');
@@ -149,7 +151,7 @@ export const AdminPackageForm: React.FC<AdminPackageFormProps> = ({ initialPacka
   const [subtitle,     setSubtitle]     = useState(initialPackage?.subtitle ?? '');
   const [price,        setPrice]        = useState<number>(initialPackage?.price ?? 1000);
   const [discountPrice,setDiscountPrice]= useState<number | undefined>(initialPackage?.discountPrice);
-  const [currency,     setCurrency]     = useState(initialPackage?.currency ?? '₹');
+  const [currency,     setCurrency]     = useState(initialPackage?.currency ?? 'HK$');
   const [badge,        setBadge]        = useState(initialPackage?.badge ?? '');
   const [coverImage,   setCoverImage]   = useState(initialPackage?.coverImage ?? '');
   const [description,  setDescription]  = useState(initialPackage?.description ?? '');
@@ -170,13 +172,62 @@ export const AdminPackageForm: React.FC<AdminPackageFormProps> = ({ initialPacka
   const [totalSeats,      setTotalSeats]      = useState(m.totalSeats      ?? 20);
   const [bookedSeats,     setBookedSeats]     = useState(m.bookedSeats     ?? 0);
   const [instructorName,  setInstructorName]  = useState(m.instructorName  ?? 'Master Faculty');
-  const [location,        setLocation]        = useState(m.location        ?? 'Rishikesh, India');
-  const [itinerary,       setItinerary]       = useState<ItineraryItem[]>(m.itinerary ?? [{ day: 'Day 1', title: 'Arrival & Welcome', detail: 'Orientation & Ganga Aarti' }]);
+  const [location,        setLocation]        = useState(m.location        ?? 'Central, Hong Kong');
+  const [itinerary,       setItinerary]       = useState<ItineraryItem[]>(m.itinerary ?? [{ day: 'Day 1', title: 'Arrival & Welcome', detail: 'Orientation & Sound Healing' }]);
   const [validityPeriod,  setValidityPeriod]  = useState(m.validityPeriod  ?? '30 Days');
   const [classCount,      setClassCount]      = useState(String(m.classCount ?? 'Unlimited'));
   const [sessionDuration, setSessionDuration] = useState(m.sessionDuration ?? '90 Minutes');
   const [focusAreasText,  setFocusAreasText]  = useState((m.focusAreas ?? ['Postural Rehab', 'Spine Health']).join(', '));
   const [assignedInstructor, setAssignedInstructor] = useState(m.assignedInstructor ?? 'Dr. Yatendra Amoli');
+
+  const buildDraftPackage = (): DynamicPackage => {
+    return {
+      id: initialPackage?.id ?? 'preview-' + Date.now(),
+      type,
+      title: title.trim() || 'Untitled Package',
+      subtitle: subtitle.trim() || undefined,
+      price: Number(price) || 0,
+      discountPrice: discountPrice ? Number(discountPrice) : undefined,
+      currency,
+      badge: badge.trim() || undefined,
+      coverImage: coverImage.trim() || undefined,
+      description: description.trim() || 'No description provided.',
+      features: features.filter(f => f.trim().length > 0),
+      isActive,
+      isFeatured,
+      displayOrder: Number(displayOrder) || 1,
+      metadata: {
+        certification,
+        totalHours,
+        batchDates,
+        syllabus,
+        eventDate,
+        eventTime,
+        venue,
+        totalSeats,
+        bookedSeats,
+        instructorName,
+        location,
+        itinerary,
+        validityPeriod,
+        classCount,
+        sessionDuration,
+        focusAreas: focusAreasText.split(',').map(s => s.trim()).filter(Boolean),
+        assignedInstructor
+      }
+    };
+  };
+
+  if (showPreview) {
+    return (
+      <PackageDetailPage
+        pkg={buildDraftPackage()}
+        onBack={() => setShowPreview(false)}
+        onOpenBooking={(type, title) => alert(`[Preview Mode] Booking button clicked for "${title}"`)}
+        isPreview={true}
+      />
+    );
+  }
 
   // ── Build Package Object ─────────────────────────────────────────────────
   const buildPkg = (): DynamicPackage => {
@@ -513,6 +564,20 @@ export const AdminPackageForm: React.FC<AdminPackageFormProps> = ({ initialPacka
                 }}
               >
                 Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPreview(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '11px 20px', borderRadius: 11,
+                  border: `1.5px solid ${C.terracotta}`,
+                  backgroundColor: C.white, color: C.terracotta,
+                  fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <Eye size={16} /> Live Preview
               </button>
               <button
                 type="submit"
