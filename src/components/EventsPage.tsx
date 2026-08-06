@@ -329,244 +329,195 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                   className="event-card-box"
                   style={{
                     backgroundColor: '#FFFFFF',
-                    borderRadius: '24px',
+                    borderRadius: '0px',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     position: 'relative',
-                    boxShadow: '0 6px 24px rgba(0, 0, 0, 0.04)',
+                    boxShadow: '0 8px 28px rgba(0, 0, 0, 0.04)',
                     border: '1px solid rgba(0, 0, 0, 0.08)',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease'
                   }}
                 >
                   <div>
-                    {/* Top Cover Image Box with Overlay Tags */}
-                    <div style={{ width: '100%', height: '220px', overflow: 'hidden', position: 'relative' }}>
+                    {/* 1. Top Aspect Ratio Image with Pill Badge at Top-Left */}
+                    <div style={{ width: '100%', height: '240px', backgroundColor: '#1C1917', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <img
                         src={coverImg}
-                        alt={ev.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+                        alt={ev.title || ev.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', display: 'block' }}
                       />
 
-                      {/* Category Pill Tag Overlay */}
+                      {/* Top-Left Status Badge */}
                       <div
                         style={{
                           position: 'absolute',
-                          top: '16px',
-                          right: '16px',
-                          backgroundColor: 'rgba(200, 109, 81, 0.15)',
-                          color: '#C86D51',
+                          top: '12px',
+                          left: '12px',
+                          backgroundColor: '#21201E',
+                          color: '#FFFFFF',
                           borderRadius: '999px',
-                          padding: '4px 14px',
-                          fontSize: '11px',
+                          padding: '5px 14px',
+                          fontSize: '10.5px',
                           fontWeight: 800,
-                          letterSpacing: '0.04em',
+                          letterSpacing: '0.08em',
                           textTransform: 'uppercase',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+                          zIndex: 2
                         }}
                       >
-                        {ev.category || 'SPECIAL EVENT'}
+                        {ev.spots_label ? 'NOW BOOKING' : 'NOW BOOKING'}
                       </div>
-
-                      {/* Social Proof Badge Overlay */}
-                      {ev.spots_label && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: '16px',
-                            left: '16px',
-                            backgroundColor: 'rgba(33, 32, 30, 0.85)',
-                            color: '#FFFFFF',
-                            borderRadius: '999px',
-                            padding: '4px 12px',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            backdropFilter: 'blur(4px)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}
-                        >
-                          <Sparkles size={12} color="#D9AE29" />
-                          <span>{ev.spots_label}</span>
-                        </div>
-                      )}
                     </div>
 
-                    {/* Card Body Area */}
+                    {/* Card Body Content Area */}
                     <div style={{ padding: '24px 24px 16px 24px' }}>
-                      {/* Sub-Category Upper Label */}
+                      {/* 2. Sub-tag Header */}
                       <div
                         style={{
                           fontFamily: "'Neue Montreal', -apple-system, sans-serif",
                           fontSize: '11px',
                           fontWeight: 800,
-                          letterSpacing: '0.08em',
-                          color: '#C86D51',
+                          letterSpacing: '0.12em',
+                          color: '#944426',
                           textTransform: 'uppercase',
-                          marginBottom: '6px'
+                          marginBottom: '10px'
                         }}
                       >
-                        {ev.category ? `${ev.category.toUpperCase()} WORKSHOP` : 'PRAGYA SANCTUARY IMMERSION'}
+                        {ev.category ? `${ev.category.toUpperCase()} · PRAGYA` : 'TEACHER TRAINING · SECOND EDITION'}
                       </div>
 
-                      {/* Event Title */}
+                      {/* 3. Event Title */}
                       <h3
                         style={{
                           fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                          fontSize: '21px',
+                          fontSize: '22px',
                           fontWeight: 700,
                           color: '#21201E',
                           margin: '0 0 14px 0',
-                          lineHeight: 1.25
+                          lineHeight: 1.25,
+                          letterSpacing: '-0.01em'
                         }}
                       >
                         {ev.title || ev.name}
                       </h3>
 
-                      {/* Price & Date Rounded Box */}
-                      <div
-                        style={{
-                          backgroundColor: '#F8FAF9',
-                          border: '1px solid rgba(0, 0, 0, 0.05)',
-                          borderRadius: '12px',
-                          padding: '10px 14px',
-                          textAlign: 'center',
-                          fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                          fontSize: '14px',
-                          fontWeight: 700,
-                          color: '#21201E',
-                          marginBottom: '16px'
-                        }}
-                      >
-                        {ev.price || 'HK$ 450'} &nbsp;|&nbsp; {ev.date || ev.starts_at || 'Upcoming Season'}
-                      </div>
-
-                      {/* Location Badge Line */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '13px',
-                          color: '#7A756F',
-                          fontWeight: 600,
-                          marginBottom: '12px'
-                        }}
-                      >
-                        <MapPin size={14} color="#944426" />
-                        <span>{ev.location || 'Pragya Sanctuary Studio'}</span>
-                      </div>
-
-                      {/* Description Preview */}
+                      {/* 4. Description Preview / Summary Paragraph */}
                       <p
                         style={{
                           fontFamily: "'Neue Montreal', -apple-system, sans-serif",
                           fontSize: '13.5px',
-                          color: '#5A554F',
-                          lineHeight: 1.55,
+                          color: '#4A4540',
+                          lineHeight: 1.6,
                           margin: '0 0 20px 0',
-                          minHeight: '42px'
+                          minHeight: '64px'
                         }}
                       >
-                        {cleanDescText.length > 160 ? cleanDescText.slice(0, 160) + '...' : cleanDescText}
+                        {cleanDescText.length > 140 ? cleanDescText.slice(0, 140) + '...' : cleanDescText}
                       </p>
 
-                      {/* Included Highlights List */}
-                      <div>
-                        <div
-                          style={{
-                            fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            letterSpacing: '0.08em',
-                            color: '#C86D51',
-                            textTransform: 'uppercase',
-                            marginBottom: '10px'
-                          }}
-                        >
-                          EVENT HIGHLIGHTS:
+                      {/* 5. Meta Table Grid (3 rows x 2 columns matching Reference Image) */}
+                      <div
+                        style={{
+                          backgroundColor: '#FBF9F5',
+                          borderRadius: '0px',
+                          border: '1px solid rgba(0, 0, 0, 0.08)',
+                          overflow: 'hidden',
+                          marginBottom: '20px'
+                        }}
+                      >
+                        {/* Row 1: DATES & LOCATION */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                          <div style={{ padding: '10px 12px', borderRight: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                            <span style={{ display: 'block', fontSize: '9.5px', fontWeight: 800, color: '#8A857F', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>
+                              DATES
+                            </span>
+                            <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '12.5px', fontWeight: 700, color: '#21201E', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {ev.date || ev.starts_at || 'Upcoming Season'}
+                            </span>
+                          </div>
+                          <div style={{ padding: '10px 12px' }}>
+                            <span style={{ display: 'block', fontSize: '9.5px', fontWeight: 800, color: '#8A857F', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>
+                              LOCATION
+                            </span>
+                            <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '12.5px', fontWeight: 700, color: '#21201E', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {ev.location || 'Hong Kong'}
+                            </span>
+                          </div>
                         </div>
 
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#4A4540', fontWeight: 500 }}>
-                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(200, 109, 81, 0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <Check size={10} color="#C86D51" strokeWidth={3} />
-                            </div>
-                            <span>Guided by Internationally Certified Faculty</span>
-                          </li>
-                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#4A4540', fontWeight: 500 }}>
-                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(200, 109, 81, 0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <Check size={10} color="#C86D51" strokeWidth={3} />
-                            </div>
-                            <span>Complimentary Eco-Mats & Hydrotherapy Access</span>
-                          </li>
-                        </ul>
+                        {/* Row 2: DURATION & LEVEL */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                          <div style={{ padding: '10px 12px', borderRight: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                            <span style={{ display: 'block', fontSize: '9.5px', fontWeight: 800, color: '#8A857F', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>
+                              DURATION
+                            </span>
+                            <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '12.5px', fontWeight: 700, color: '#21201E' }}>
+                              {ev.duration || '60 - 90 min'}
+                            </span>
+                          </div>
+                          <div style={{ padding: '10px 12px' }}>
+                            <span style={{ display: 'block', fontSize: '9.5px', fontWeight: 800, color: '#8A857F', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>
+                              LEVEL
+                            </span>
+                            <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '12.5px', fontWeight: 700, color: '#21201E' }}>
+                              {ev.level || 'All Levels'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Row 3: INVESTMENT & FORMAT */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                          <div style={{ padding: '10px 12px', borderRight: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                            <span style={{ display: 'block', fontSize: '9.5px', fontWeight: 800, color: '#8A857F', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>
+                              INVESTMENT
+                            </span>
+                            <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13px', fontWeight: 800, color: '#944426' }}>
+                              {ev.price || 'HK$ 680'}
+                            </span>
+                          </div>
+                          <div style={{ padding: '10px 12px' }}>
+                            <span style={{ display: 'block', fontSize: '9.5px', fontWeight: 800, color: '#8A857F', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>
+                              FORMAT
+                            </span>
+                            <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '12.5px', fontWeight: 700, color: '#21201E' }}>
+                              In-Person Studio
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Card Action Footer */}
-                  <div style={{ padding: '0 24px 24px 24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {/* 6. Bottom Full-Width CTA Button */}
+                  <div style={{ padding: '0 24px 24px 24px' }}>
                     <button
                       onClick={() => onOpenEventDetail(ev)}
                       style={{
-                        flex: 1,
+                        width: '100%',
                         fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                        backgroundColor: 'rgba(200, 109, 81, 0.14)',
-                        color: '#C86D51',
-                        border: 'none',
-                        borderRadius: '999px',
-                        padding: '11px 16px',
-                        fontSize: '12.5px',
-                        fontWeight: 800,
-                        letterSpacing: '0.02em',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                        transition: 'all 0.25s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#C86D51';
-                        e.currentTarget.style.color = '#FFFFFF';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(200, 109, 81, 0.14)';
-                        e.currentTarget.style.color = '#C86D51';
-                      }}
-                    >
-                      READ MORE
-                    </button>
-
-                    <button
-                      onClick={() => onOpenBooking('event', ev.title || ev.name, ev)}
-                      style={{
-                        flex: 1.2,
-                        fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                        backgroundColor: '#21201E',
+                        backgroundColor: '#944426',
                         color: '#FFFFFF',
                         border: 'none',
-                        borderRadius: '999px',
-                        padding: '11px 16px',
-                        fontSize: '12.5px',
+                        borderRadius: '0px',
+                        padding: '14px 20px',
+                        fontSize: '13px',
                         fontWeight: 800,
-                        letterSpacing: '0.02em',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
                         cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
+                        boxShadow: '0 4px 14px rgba(148, 68, 38, 0.25)',
                         transition: 'all 0.25s ease'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#944426';
-                      }}
-                      onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = '#21201E';
                       }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#944426';
+                      }}
                     >
-                      <Calendar size={14} />
-                      <span>BOOK SESSION</span>
+                      VIEW DETAILS & APPLY →
                     </button>
                   </div>
                 </div>

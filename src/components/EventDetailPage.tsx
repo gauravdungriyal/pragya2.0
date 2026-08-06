@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Calendar, MapPin, Tag, User, Sparkles, CheckCircle2, ShieldCheck, Share2, ArrowUpRight, Check } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, ArrowRight, ShieldCheck, Sparkles, Clock, BarChart2, MapPin } from 'lucide-react';
 import { UpcomingEvent } from '../types';
 import { getUpcomingEvents } from '../services/api';
 
@@ -10,6 +10,18 @@ interface EventDetailPageProps {
   onSelectEvent?: (event: UpcomingEvent) => void;
 }
 
+const splitEventTitle = (fullTitle: string) => {
+  if (!fullTitle) return { titlePrefix: 'Mastering the Art of', titleMain: 'YOG PRACTICE' };
+  const cleaned = fullTitle.trim();
+  const parts = cleaned.split(' ');
+  if (parts.length <= 2) {
+    return { titlePrefix: 'Mastering the Art of', titleMain: cleaned };
+  }
+  const prefix = parts.slice(0, Math.ceil(parts.length / 2)).join(' ');
+  const main = parts.slice(Math.ceil(parts.length / 2)).join(' ');
+  return { titlePrefix: prefix, titleMain: main };
+};
+
 export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack, onOpenBooking, onSelectEvent }) => {
   const [otherEvents, setOtherEvents] = useState<UpcomingEvent[]>([]);
 
@@ -19,7 +31,6 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
       .then((res) => {
         if (!isMounted) return;
         const list = Array.isArray(res) ? res : [];
-        // Filter out current event and pick 3 other events
         const filtered = list.filter((e: UpcomingEvent) => String(e.id) !== String(event.id));
         setOtherEvents(filtered.slice(0, 3));
       })
@@ -33,23 +44,50 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
   }, [event.id]);
 
   const coverImage = event.image || event.banner_image?.url || "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1600&auto=format&fit=crop";
+  const title = event.title || event.name || 'Pragya Yog Masterclass';
+  const { titlePrefix, titleMain } = splitEventTitle(title);
+  const displayLevel = event.level || 'All Levels';
+  const displayDuration = event.duration || '60 - 90 min';
+  const displayFocus = event.focus || event.category || 'Mindful Movement & Posture';
+  const displayPrice = event.price || 'HK$ 680';
+  const displayLocation = event.location || 'Pragya Yog Studio';
 
-  // Clean raw HTML or render description safely
-  const cleanDescriptionHtml = (event.description || '')
+  const cleanDescText = (event.description || '')
+    .replace(/<[^>]*>?/gm, '')
     .replace(/&ndash;/g, '–')
     .replace(/&rsquo;/g, "'")
     .replace(/&lsquo;/g, "'")
     .replace(/&amp;/g, '&')
-    .replace(/&nbsp;/g, ' ');
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&ldquo;/g, '"')
+    .replace(/&rdquo;/g, '"')
+    .trim();
+
+  // Extract a clean 2-3 line summary for the hero header (matching reference 2)
+  const getHeroSummary = (text: string) => {
+    if (!text) return 'Join our expert-led yoga masterclass to strengthen your core, improve posture, and cultivate deep breath awareness in a peaceful sanctuary.';
+    let firstPart = text.split(/What You'll Learn|Part 1 Schedule|Session 1|Week 1|Schedule:/i)[0].trim();
+    if (firstPart.length > 240) {
+      const endDot = firstPart.indexOf('.', 120);
+      if (endDot !== -1 && endDot <= 240) {
+        firstPart = firstPart.slice(0, endDot + 1);
+      } else {
+        firstPart = firstPart.slice(0, 240).trim() + '...';
+      }
+    }
+    return firstPart;
+  };
+
+  const heroSummary = getHeroSummary(cleanDescText);
 
   return (
-    <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E', paddingBottom: '100px' }}>
+    <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E', paddingBottom: '120px' }}>
       
-      {/* Top Fixed / Floating Back Button Bar */}
+      {/* Top Fixed Back Button Bar */}
       <div
         className="edp-back-bar"
         style={{
-          maxWidth: '1280px',
+          maxWidth: '1240px',
           margin: '0 auto',
           padding: '110px 32px 24px 32px'
         }}
@@ -60,11 +98,11 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             fontFamily: "'Neue Montreal', -apple-system, sans-serif",
             backgroundColor: '#FFFFFF',
             color: '#21201E',
-            border: '1px solid rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(0, 0, 0, 0.12)',
             borderRadius: '999px',
             padding: '10px 22px',
             fontSize: '13.5px',
-            fontWeight: 700,
+            fontWeight: 600,
             cursor: 'pointer',
             display: 'inline-flex',
             alignItems: 'center',
@@ -73,11 +111,13 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             transition: 'all 0.25s ease'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#21201E';
+            e.currentTarget.style.backgroundColor = '#944426';
+            e.currentTarget.style.borderColor = '#944426';
             e.currentTarget.style.color = '#FFFFFF';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = '#FFFFFF';
+            e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.12)';
             e.currentTarget.style.color = '#21201E';
           }}
         >
@@ -86,953 +126,253 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
         </button>
       </div>
 
-      {/* Main Content Area */}
-      <div className="edp-main-content" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 32px' }}>
+      <div className="edp-main-content" style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 32px' }}>
         
-        {/* Event Hero Banner Section (Clean Poster Image) */}
-        <div
-          className="edp-hero-banner"
+        {/* SECTION 1: HERO HEADER */}
+        <section
           style={{
-            position: 'relative',
-            width: '100%',
-            borderRadius: '28px',
-            overflow: 'hidden',
-            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.08)',
-            marginBottom: '28px',
-            backgroundColor: '#21201E'
+            textAlign: 'center',
+            padding: '40px 0 60px 0',
+            maxWidth: '900px',
+            margin: '0 auto'
           }}
         >
-          {/* Hero Clean Background Poster Image */}
-          <img
-            src={coverImage}
-            alt={event.title || event.name || 'Event Banner'}
+          <span
             style={{
-              width: '100%',
-              height: 'auto',
-              maxHeight: '620px',
-              objectFit: 'contain',
-              objectPosition: 'center',
+              fontFamily: "'Neue Montreal', sans-serif",
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '0.2em',
+              color: '#944426',
+              textTransform: 'uppercase',
               display: 'block',
-              margin: '0 auto'
-            }}
-          />
-        </div>
-
-        {/* Action Buttons Row */}
-        <div className="edp-hero-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}>
-          <button
-            onClick={() => onOpenBooking('event', event.title || event.name, event)}
-            style={{
-              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-              backgroundColor: '#C86D51',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '999px',
-              padding: '16px 40px',
-              fontSize: '14px',
-              fontWeight: 800,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              boxShadow: '0 8px 24px rgba(200, 109, 81, 0.35)',
-              transition: 'all 0.25s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#B25B40';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#C86D51';
+              marginBottom: '16px'
             }}
           >
-            BOOK SESSION NOW
-          </button>
+            PRAGYA YOG SERIES · LEVEL: {displayLevel.toUpperCase()}
+          </span>
 
-          <button
-            onClick={() => {
-              const footerElem = document.getElementById('contact');
-              if (footerElem) {
-                footerElem.scrollIntoView({ behavior: 'smooth' });
-              } else {
-                onOpenBooking('contact', 'Contact Pragya Sanctuary', event);
-              }
-            }}
+          <h1 style={{ margin: '0 0 24px 0', lineHeight: 1.08 }}>
+            <span
+              style={{
+                display: 'block',
+                fontFamily: "var(--font-serif)",
+                fontStyle: 'italic',
+                fontSize: 'clamp(32px, 4vw, 52px)',
+                fontWeight: 400,
+                color: '#21201E',
+                marginBottom: '4px'
+              }}
+            >
+              {titlePrefix}
+            </span>
+            <span
+              style={{
+                display: 'block',
+                fontFamily: "'Neue Montreal', sans-serif",
+                fontSize: 'clamp(40px, 5.8vw, 76px)',
+                fontWeight: 800,
+                color: '#21201E',
+                letterSpacing: '-0.02em',
+                textTransform: 'uppercase'
+              }}
+            >
+              {titleMain}
+            </span>
+          </h1>
+
+          <p
             style={{
-              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-              backgroundColor: '#21201E',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '999px',
-              padding: '16px 40px',
-              fontSize: '14px',
-              fontWeight: 800,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(33, 32, 30, 0.2)',
-              transition: 'all 0.25s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#C86D51';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#21201E';
+              fontFamily: "'Neue Montreal', sans-serif",
+              fontSize: '16px',
+              color: '#4A4540',
+              lineHeight: 1.65,
+              maxWidth: '680px',
+              margin: '0 auto 32px auto',
+              fontWeight: 400
             }}
           >
-            CONTACT US
-          </button>
-        </div>
+            {heroSummary}
+          </p>
 
-        {/* Event Key Details & Description Card */}
-        <div
-          className="edp-details-card"
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '28px',
-            padding: '48px 40px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.04)',
-            border: '1px solid rgba(0, 0, 0, 0.04)'
-          }}
-        >
-          {/* Event Key Details Grid */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '48px' }}>
+            <span style={{ fontSize: '18px', color: '#8A857F', textDecoration: 'line-through' }}>
+              HK$ 1,200
+            </span>
+            <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '36px', fontWeight: 800, color: '#944426' }}>
+              {displayPrice}
+            </span>
+          </div>
+
           <div
-            className="edp-key-details"
+            className="edp-hero-stats-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '24px',
-              backgroundColor: '#F5EFE5',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '16px',
+              padding: '24px 0',
+              borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+              backgroundColor: '#FFFFFF',
               borderRadius: '20px',
-              padding: '28px 32px',
-              marginBottom: '44px'
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
+              border: '1px solid rgba(0, 0, 0, 0.06)'
             }}
           >
-            <div>
-              <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#944426', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
-                Date & Schedule
-              </div>
-              <div style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
-                {event.date || event.starts_at || 'Upcoming Season'}
-              </div>
-              <div style={{ fontSize: '13px', color: '#7A756F', marginTop: '2px' }}>
-                Full Immersion Schedule
-              </div>
+            <div style={{ textAlign: 'center', borderRight: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '24px', fontWeight: 800, color: '#21201E' }}>1</span>
+              <span style={{ fontSize: '11px', color: '#7A756F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>SESSION</span>
             </div>
-
-            <div>
-              <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#944426', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
-                Sanctuary Location
-              </div>
-              <div style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
-                {event.location || 'Pragya Sanctuary Studio'}
-              </div>
-              <div style={{ fontSize: '13px', color: '#7A756F', marginTop: '2px' }}>
-                Hong Kong & Global Venues
-              </div>
+            <div style={{ textAlign: 'center', borderRight: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '24px', fontWeight: 800, color: '#21201E' }}>{displayDuration}</span>
+              <span style={{ fontSize: '11px', color: '#7A756F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>DURATION</span>
             </div>
-
-            <div>
-              <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#944426', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
-                Investment Fee
-              </div>
-              <div style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '20px', fontWeight: 800, color: '#944426' }}>
-                {event.price || 'HK$ 450'}
-              </div>
-              <div style={{ fontSize: '13px', color: '#7A756F', marginTop: '2px' }}>
-                Includes Props & Amenities
-              </div>
+            <div style={{ textAlign: 'center', borderRight: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '24px', fontWeight: 800, color: '#21201E' }}>{displayLevel.toUpperCase()}</span>
+              <span style={{ fontSize: '11px', color: '#7A756F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>LEVEL</span>
             </div>
-
-            <div className="edp-key-cta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => onOpenBooking('event', event.title || event.name, event)}
-                style={{
-                  fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                  backgroundColor: '#944426',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '999px',
-                  padding: '14px 28px',
-                  fontSize: '13.5px',
-                  fontWeight: 800,
-                  letterSpacing: '0.04em',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 18px rgba(148, 68, 38, 0.3)',
-                  transition: 'all 0.25s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#21201E';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#944426';
-                }}
-              >
-                <span>RESERVE YOUR SPOT</span>
-                <ArrowUpRight size={16} />
-              </button>
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '24px', fontWeight: 800, color: '#21201E' }}>IN-PERSON</span>
+              <span style={{ fontSize: '11px', color: '#7A756F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>SANCTUARY</span>
             </div>
           </div>
+        </section>
 
-          {/* Difficulty Tags & Badges */}
-          {((event.difficulty_tags && event.difficulty_tags.length > 0) || (event.benefits && event.benefits.length > 0)) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
-              {event.difficulty_tags?.map((tag, tIdx) => (
-                <span
-                  key={tIdx}
-                  style={{
-                    fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                    backgroundColor: 'rgba(148, 68, 38, 0.08)',
-                    color: '#944426',
-                    borderRadius: '999px',
-                    padding: '6px 16px',
-                    fontSize: '13px',
-                    fontWeight: 700
-                  }}
-                >
-                  ✦ {tag}
-                </span>
-              ))}
-              {event.benefits?.map((ben, bIdx) => (
-                <span
-                  key={bIdx}
-                  style={{
-                    fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                    backgroundColor: '#F5EFE5',
-                    color: '#4A4540',
-                    borderRadius: '999px',
-                    padding: '6px 16px',
-                    fontSize: '13px',
-                    fontWeight: 600
-                  }}
-                >
-                  ✓ {ben.label}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Section 1: Overview & About */}
-          <div style={{ marginBottom: '48px' }}>
-            <div
-              style={{
-                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                color: '#944426',
-                textTransform: 'uppercase',
-                marginBottom: '10px'
-              }}
-            >
-              Overview & Immersion Highlights
-            </div>
-            <h2
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontSize: '32px',
-                fontWeight: 400,
-                color: '#21201E',
-                margin: '0 0 20px 0',
-                lineHeight: 1.25
-              }}
-            >
-              About This Experience
+        {/* SECTION 2: WHAT'S INSIDE */}
+        <section style={{ padding: '72px 0', borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+            <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', color: '#944426', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>
+              WORKSHOP OVERVIEW · LEVEL: {displayLevel.toUpperCase()}
+            </span>
+            <h2 style={{ margin: 0, lineHeight: 1.08 }}>
+              <span style={{ display: 'block', fontFamily: "var(--font-serif)", fontStyle: 'italic', fontSize: 'clamp(32px, 4vw, 48px)', fontWeight: 400, color: '#21201E' }}>What's</span>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: 'clamp(38px, 5vw, 64px)', fontWeight: 800, color: '#21201E', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>INSIDE</span>
             </h2>
-
-            <div
-              className="event-rich-description"
-              style={{
-                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                fontSize: '16.5px',
-                lineHeight: 1.8,
-                color: '#4A4540'
-              }}
-              dangerouslySetInnerHTML={{ __html: cleanDescriptionHtml }}
-            />
           </div>
-
-          {/* Section 2: Package Includes & Benefits Grid */}
-          <div
-            style={{
-              backgroundColor: '#F8FAF9',
-              borderRadius: '24px',
-              padding: '36px 32px',
-              border: '1px solid rgba(0, 0, 0, 0.05)',
-              marginBottom: '48px'
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                color: '#944426',
-                textTransform: 'uppercase',
-                marginBottom: '12px'
-              }}
-            >
-              What is Included
+          <div className="edp-inside-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '56px', alignItems: 'center' }}>
+            <div style={{ borderRadius: '24px', overflow: 'hidden', boxShadow: '0 16px 40px rgba(0, 0, 0, 0.08)', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+              <img src={coverImage} alt={title} style={{ width: '100%', height: '460px', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
             </div>
-            <h3
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontSize: '26px',
-                fontWeight: 400,
-                color: '#21201E',
-                margin: '0 0 24px 0'
-              }}
-            >
-              Immersion Privileges & Amenities
-            </h3>
-
-            <div className="edp-amenities-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {[
-                { title: 'Certified Guidance', desc: 'Led by internationally certified master teachers with over 15+ years of practice.' },
-                { title: 'Luxury Props Provided', desc: 'Complimentary eco-mats, cork blocks, organic bolsters, and sanitized linen towels.' },
-                { title: 'Hydrotherapy Privileges', desc: 'Access to hydrotherapy saunas, relaxation lounges, and organic herbal infusions.' },
-                { title: 'Intimate Group Capacity', desc: 'Strictly limited sanctuary capacity ensuring individualized posture correction.' },
-                { title: 'Post-Retreat Integration', desc: 'Access to guided pranayama audio tracks and post-session reflection workbook.' },
-                { title: 'Sanctuary Certification', desc: 'Official certificate of completion issued upon workshop immersion end.' }
-              ].map((item, itemIdx) => (
-                <div
-                  key={itemIdx}
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '16px',
-                    padding: '20px 22px',
-                    border: '1px solid rgba(0, 0, 0, 0.06)',
-                    display: 'flex',
-                    gap: '14px',
-                    alignItems: 'flex-start'
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      backgroundColor: 'rgba(148, 68, 38, 0.12)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      marginTop: '2px'
-                    }}
-                  >
-                    <CheckCircle2 size={15} color="#944426" />
-                  </div>
-                  <div>
-                    <h4 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', fontWeight: 700, color: '#21201E', margin: '0 0 4px 0' }}>
-                      {item.title}
-                    </h4>
-                    <p style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13.5px', color: '#6B655F', margin: 0, lineHeight: 1.5 }}>
-                      {item.desc}
-                    </p>
-                  </div>
+                { title: 'Master core postural alignment', desc: 'The essential foundation that elevates your posture and protects your spine.' },
+                { title: 'Learn precise breathwork control', desc: 'To stabilize nervous system response and deepen mental focus.' },
+                { title: 'Develop body awareness and equilibrium', desc: 'To eliminate tension, compensation, and sway.' },
+                { title: 'Structured training sequences', desc: 'Designed to build long-term strength and grace.' },
+                { title: 'Personalized cues & hands-on guidance', desc: 'From PhD research scholars and master faculty.' }
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', paddingBottom: i < 4 ? '16px' : '0', borderBottom: i < 4 ? '1px solid rgba(0, 0, 0, 0.08)' : 'none' }}>
+                  <span style={{ color: '#944426', fontSize: '18px', lineHeight: 1 }}>•</span>
+                  <p style={{ margin: 0, fontSize: '15px', color: '#4A4540', lineHeight: 1.6 }}>
+                    <strong style={{ color: '#21201E', fontWeight: 700 }}>{item.title}</strong> — {item.desc}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
+        </section>
 
-          {/* Section 3: Sample Itinerary Schedule */}
-          <div style={{ marginBottom: '48px' }}>
-            <div
-              style={{
-                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                color: '#944426',
-                textTransform: 'uppercase',
-                marginBottom: '10px'
-              }}
-            >
-              Session Flow
-            </div>
-            <h3
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontSize: '26px',
-                fontWeight: 400,
-                color: '#21201E',
-                margin: '0 0 24px 0'
-              }}
-            >
-              Immersion Schedule & Flow
-            </h3>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[
-                { time: '08:00 AM – 09:15 AM', title: 'Opening Flow & Mindful Pranayama', desc: 'Solar activation practices and oceanfront breathing exercises.' },
-                { time: '09:30 AM – 11:30 AM', title: 'Alignment, Biomechanics & Asana Workshop', desc: 'Deconstructing peak posture alignment with hands-on adjustments.' },
-                { time: '11:45 AM – 01:00 PM', title: 'Organic Nourishment & Hydrotherapy', desc: 'Cold-pressed botanical juices, sauna relaxation, and reflection.' }
-              ].map((sch, sIdx) => {
-                const [startTime, endTime] = sch.time.split('–').map(t => t.trim());
-                return (
-                  <div
-                    key={sIdx}
-                    className="itinerary-row"
-                    style={{
-                      backgroundColor: '#F5EFE5',
-                      borderRadius: '16px',
-                      padding: '18px 20px',
-                      display: 'flex',
-                      alignItems: 'stretch',
-                      gap: '16px',
-                      borderLeft: '4px solid #944426'
-                    }}
-                  >
-                    {/* Step Number */}
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      flexShrink: 0
-                    }}>
-                      <div style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '50%',
-                        backgroundColor: '#944426',
-                        color: '#FFFFFF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        fontWeight: 800,
-                        flexShrink: 0
-                      }}>
-                        {sIdx + 1}
-                      </div>
-                    </div>
-
-                    {/* Time + Title + Desc */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      {/* Time range: two compact pills */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                        <span style={{
-                          backgroundColor: '#944426',
-                          color: '#FFFFFF',
-                          borderRadius: '6px',
-                          padding: '3px 10px',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {startTime}
-                        </span>
-                        <span style={{ color: '#944426', fontWeight: 800, fontSize: '13px' }}>→</span>
-                        <span style={{
-                          backgroundColor: 'rgba(148, 68, 38, 0.12)',
-                          color: '#944426',
-                          borderRadius: '6px',
-                          padding: '3px 10px',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {endTime}
-                        </span>
-                      </div>
-
-                      {/* Title */}
-                      <h4 style={{
-                        fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                        fontSize: '15px',
-                        fontWeight: 700,
-                        color: '#21201E',
-                        margin: '0 0 4px 0',
-                        lineHeight: 1.3
-                      }}>
-                        {sch.title}
-                      </h4>
-
-                      {/* Description */}
-                      <div style={{ fontSize: '13px', color: '#6B655F', lineHeight: 1.5 }}>
-                        {sch.desc}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* SECTION 3: OBJECTIVES */}
+        <section style={{ padding: '72px 0', borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+            <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', color: '#944426', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>WORKSHOP OBJECTIVES & GOALS</span>
+            <h2 style={{ margin: 0, lineHeight: 1.08 }}>
+              <span style={{ display: 'block', fontFamily: "var(--font-serif)", fontStyle: 'italic', fontSize: 'clamp(30px, 3.8vw, 44px)', fontWeight: 400, color: '#21201E' }}>By the End</span>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: 'clamp(36px, 4.8vw, 60px)', fontWeight: 800, color: '#21201E', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>YOU WILL BE ABLE TO:</span>
+            </h2>
           </div>
+          <div className="edp-objectives-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '28px' }}>
+            {[
+              { t: 'ALIGN FREELY', d: 'Master core stabilization and micro-adjustments to hold your posture gracefully without tension.' },
+              { t: 'DEEPEN BREATHWORK', d: 'Regulate respiratory flow to calm nervous system stress and sustain focus throughout your practice.' },
+              { t: 'PRACTICE INDEPENDENTLY', d: 'Follow structured daily programs and self-assess your technique with lasting confidence.' }
+            ].map((card, i) => (
+              <div key={i} style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', padding: '40px 32px', textAlign: 'center', border: '1px solid rgba(0, 0, 0, 0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.04)' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#944426', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}><Check size={22} /></div>
+                <h3 style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 800, color: '#21201E', margin: '0 0 12px 0', letterSpacing: '0.04em' }}>{card.t}</h3>
+                <p style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '14px', color: '#4A4540', lineHeight: 1.55, margin: 0 }}>{card.d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
-          {/* Section 4: Lead Faculty Profile Box */}
-          {event.instructor ? (
-            <div
-              style={{
-                padding: '32px',
-                backgroundColor: '#F5EFE5',
-                borderRadius: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '24px',
-                flexWrap: 'wrap'
-              }}
-            >
-              {event.instructor.image && (
-                <img
-                  src={event.instructor.image}
-                  alt={event.instructor.name || 'Instructor'}
-                  style={{ width: '84px', height: '84px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #944426' }}
-                />
-              )}
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#944426', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
-                  Guided by Master Faculty
+        {/* SECTION 4: WHY CHOOSE */}
+        <section style={{ padding: '72px 0', borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+            <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', color: '#944426', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>THE PRAGYA YOG METHOD</span>
+            <h2 style={{ margin: 0, lineHeight: 1.08 }}>
+              <span style={{ display: 'block', fontFamily: "var(--font-serif)", fontStyle: 'italic', fontSize: 'clamp(30px, 3.8vw, 44px)', fontWeight: 400, color: '#21201E' }}>Why Choose</span>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: 'clamp(36px, 4.8vw, 60px)', fontWeight: 800, color: '#21201E', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>THIS WORKSHOP?</span>
+            </h2>
+          </div>
+          <div style={{ maxWidth: '820px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {[
+              { t: 'Expert Master Instruction', d: 'Clear, concise guidance from PhD research scholars and seasoned yog masters.' },
+              { t: 'Proven Ancient & Scientific Methodology', d: 'Based on a well-established approach uniting classical Hatha wisdom with modern anatomical alignment.' },
+              { t: 'Inclusive & Flexible Learning', d: 'Structured for both beginners building foundation and advanced practitioners seeking posture refinement.' },
+              { t: 'Tranquil Sanctuary Community', d: 'Connect with fellow wellness enthusiasts in a supportive, tranquil environment.' }
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', paddingBottom: i < 3 ? '24px' : '0', borderBottom: i < 3 ? '1px solid rgba(0, 0, 0, 0.08)' : 'none' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#944426', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Check size={18} /></div>
+                <div>
+                  <h4 style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: '0 0 6px 0' }}>{item.t}</h4>
+                  <p style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '14.5px', color: '#4A4540', lineHeight: 1.6, margin: 0 }}>{item.d}</p>
                 </div>
-                <h3 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '22px', fontWeight: 700, color: '#21201E', margin: '0 0 4px 0' }}>
-                  {event.instructor.name || 'Master Aarya Kuldeep'}
-                </h3>
-                {event.instructor.title && (
-                  <div style={{ fontSize: '14px', color: '#944426', fontWeight: 600, marginBottom: '8px' }}>{event.instructor.title}</div>
-                )}
-                <p style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '14px', color: '#5A554F', margin: 0, lineHeight: 1.55 }}>
-                  {(event.instructor as any).bio || 'Internationally acclaimed yoga master specializing in authentic Hatha flow, posture alignment, and deep sound bath meditation.'}
-                </p>
               </div>
-            </div>
-          ) : (
-            <div
-              style={{
-                padding: '32px',
-                backgroundColor: '#F5EFE5',
-                borderRadius: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '24px',
-                flexWrap: 'wrap'
-              }}
-            >
-              <div
-                style={{
-                  width: '84px',
-                  height: '84px',
-                  borderRadius: '50%',
-                  backgroundColor: '#944426',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '28px',
-                  fontWeight: 800
-                }}
-              >
-                P
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#944426', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
-                  Guided by Certified Master Faculty
-                </div>
-                <h3 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '22px', fontWeight: 700, color: '#21201E', margin: '0 0 4px 0' }}>
-                  Pragya Master Faculty Team
-                </h3>
-                <p style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '14px', color: '#5A554F', margin: 0, lineHeight: 1.55 }}>
-                  Lead by senior resident teachers holding Yoga Alliance E-RYT 500 credentials with extensive international teaching backgrounds.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        </section>
 
-        {/* Sticky Mobile CTA */}
-        <div className="edp-sticky-mobile-cta">
-          <button
-            onClick={() => onOpenBooking('event', event.title || event.name, event)}
-            style={{
-              width: '100%',
-              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-              backgroundColor: '#944426',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '999px',
-              padding: '16px',
-              fontSize: '15px',
-              fontWeight: 800,
-              letterSpacing: '0.04em',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              boxShadow: '0 8px 24px rgba(148, 68, 38, 0.35)'
-            }}
-          >
-            <Calendar size={18} />
-            <span>RESERVE YOUR SPOT</span>
-          </button>
-        </div>
+        {/* SECTION 5: CTA */}
+        <section style={{ padding: '80px 0 60px 0', borderTop: '1px solid rgba(0, 0, 0, 0.08)', textAlign: 'center' }}>
+          <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: '#944426', textTransform: 'uppercase', display: 'block', marginBottom: '16px' }}>RESERVE YOUR SPOT TODAY</span>
+          <h2 style={{ margin: '0 0 28px 0', lineHeight: 1.08 }}>
+            <span style={{ display: 'block', fontFamily: "var(--font-serif)", fontStyle: 'italic', fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 400, color: '#21201E' }}>Master the Art of</span>
+            <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: 'clamp(40px, 5.5vw, 72px)', fontWeight: 800, color: '#21201E', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>{titleMain}</span>
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '36px' }}>
+            <span style={{ fontSize: '18px', color: '#8A857F', textDecoration: 'line-through' }}>HK$ 1,200</span>
+            <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '36px', fontWeight: 800, color: '#944426' }}>{displayPrice}</span>
+          </div>
+          <button onClick={() => onOpenBooking('event', title, event)} style={{ backgroundColor: '#944426', color: '#FFFFFF', border: 'none', borderRadius: '999px', padding: '18px 48px', fontSize: '14px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 10px 28px rgba(148, 68, 38, 0.35)', transition: 'all 0.3s ease' }}>BOOK SESSION NOW</button>
+        </section>
 
-        {/* Explore Other Events Section */}
+        {/* Other Events */}
         {otherEvents.length > 0 && (
-          <div style={{ marginTop: '64px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-              <div
-                style={{
-                  fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  letterSpacing: '0.12em',
-                  color: '#944426',
-                  textTransform: 'uppercase',
-                  marginBottom: '8px'
-                }}
-              >
-                PRAGYA SANCTUARY CALENDAR
-              </div>
-              <h2
-                style={{
-                  fontFamily: "var(--font-serif)",
-                  fontSize: 'clamp(28px, 3.5vw, 40px)',
-                  fontWeight: 400,
-                  color: '#21201E',
-                  margin: 0
-                }}
-              >
-                Explore Other Upcoming Events
-              </h2>
-            </div>
-
-            <div
-              className="other-events-cards-grid"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '24px'
-              }}
-            >
-              {otherEvents.map((ev, idx) => {
-                const cleanDescText = (ev.description || '')
-                  .replace(/<[^>]*>?/gm, '')
-                  .replace(/&ndash;/g, '–')
-                  .replace(/&rsquo;/g, "'")
-                  .replace(/&lsquo;/g, "'")
-                  .replace(/&amp;/g, '&')
-                  .replace(/&nbsp;/g, ' ')
-                  .trim();
-
-                return (
-                  <div
-                    key={ev.id || idx}
-                    className="other-event-card"
-                    style={{
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '20px',
-                      padding: '24px 24px 20px 24px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      position: 'relative',
-                      boxShadow: '0 4px 18px rgba(0, 0, 0, 0.03)',
-                      border: '1px solid rgba(0, 0, 0, 0.08)',
-                      transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-                    }}
-                  >
-                    <div>
-                      {/* Top Row: Category Pill Tag */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <span
-                          style={{
-                            fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            letterSpacing: '0.06em',
-                            color: '#C86D51',
-                            backgroundColor: 'rgba(200, 109, 81, 0.14)',
-                            padding: '4px 12px',
-                            borderRadius: '999px',
-                            textTransform: 'uppercase'
-                          }}
-                        >
-                          {ev.category || 'SPECIAL WORKSHOP'}
-                        </span>
-                        {ev.spots_label && (
-                          <span style={{ fontSize: '11.5px', color: '#944426', fontWeight: 700 }}>
-                            {ev.spots_label}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Event Title */}
-                      <h3
-                        style={{
-                          fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                          fontSize: '18px',
-                          fontWeight: 700,
-                          color: '#21201E',
-                          margin: '0 0 12px 0',
-                          lineHeight: 1.3
-                        }}
-                      >
-                        {ev.title || ev.name}
-                      </h3>
-
-                      {/* Price & Date Rounded Box */}
-                      <div
-                        style={{
-                          backgroundColor: '#F8FAF9',
-                          border: '1px solid rgba(0, 0, 0, 0.05)',
-                          borderRadius: '10px',
-                          padding: '8px 12px',
-                          textAlign: 'center',
-                          fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: '#21201E',
-                          marginBottom: '14px'
-                        }}
-                      >
-                        {ev.price || 'HK$ 450'} &nbsp;|&nbsp; {ev.date || ev.starts_at || 'Upcoming Season'}
-                      </div>
-
-                      {/* Description Preview */}
-                      <p
-                        style={{
-                          fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                          fontSize: '13px',
-                          color: '#6B655F',
-                          lineHeight: 1.5,
-                          margin: '0 0 20px 0',
-                          minHeight: '38px'
-                        }}
-                      >
-                        {cleanDescText.length > 110 ? cleanDescText.slice(0, 110) + '...' : cleanDescText}
-                      </p>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <button
-                        onClick={() => {
-                          if (onSelectEvent) {
-                            onSelectEvent(ev);
-                          } else {
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }
-                        }}
-                        style={{
-                          flex: 1,
-                          fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                          backgroundColor: 'rgba(200, 109, 81, 0.14)',
-                          color: '#C86D51',
-                          border: 'none',
-                          borderRadius: '999px',
-                          padding: '10px 14px',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          textAlign: 'center',
-                          transition: 'all 0.25s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#C86D51';
-                          e.currentTarget.style.color = '#FFFFFF';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(200, 109, 81, 0.14)';
-                          e.currentTarget.style.color = '#C86D51';
-                        }}
-                      >
-                        READ MORE
-                      </button>
-
-                      <button
-                        onClick={() => onOpenBooking('event', ev.title || ev.name, ev)}
-                        style={{
-                          flex: 1.2,
-                          fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                          backgroundColor: '#21201E',
-                          color: '#FFFFFF',
-                          border: 'none',
-                          borderRadius: '999px',
-                          padding: '10px 14px',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          transition: 'all 0.25s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#944426';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#21201E';
-                        }}
-                      >
-                        <Calendar size={13} />
-                        <span>BOOK SESSION</span>
-                      </button>
-                    </div>
+          <section style={{ paddingTop: '64px', borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+            <h3 style={{ fontFamily: "var(--font-serif)", fontStyle: 'italic', fontSize: '28px', fontWeight: 400, color: '#21201E', marginBottom: '32px', textAlign: 'center' }}>Explore Other Upcoming Events</h3>
+            <div className="other-events-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+              {otherEvents.map((ev, idx) => (
+                <div key={ev.id || idx} style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', border: '1px solid rgba(0, 0, 0, 0.08)', boxShadow: '0 4px 18px rgba(0, 0, 0, 0.03)' }}>
+                  <div>
+                    <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: '#944426', textTransform: 'uppercase', display: 'block', marginBottom: '10px' }}>{ev.category || 'WORKSHOP'}</span>
+                    <h4 style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: '0 0 12px 0' }}>{ev.title || ev.name}</h4>
                   </div>
-                );
-              })}
+                  <button onClick={() => onSelectEvent ? onSelectEvent(ev) : window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ backgroundColor: 'transparent', color: '#21201E', border: '1px solid rgba(0, 0, 0, 0.15)', borderRadius: '8px', padding: '10px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '16px' }}>
+                    <span>VIEW EVENT</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              ))}
             </div>
-          </div>
+          </section>
         )}
       </div>
 
+      <div className="edp-sticky-bottom-bar" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 99, backgroundColor: 'rgba(245, 239, 229, 0.96)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderTop: '1px solid rgba(0, 0, 0, 0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.08)' }}>
+        <button onClick={() => onOpenBooking('event', title, event)} style={{ backgroundColor: '#944426', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '14px 48px', fontSize: '14px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', maxWidth: '640px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 6px 20px rgba(148, 68, 38, 0.35)', transition: 'all 0.25s ease' }}>
+          <span>Enroll</span>
+          <span style={{ opacity: 0.5, textDecoration: 'line-through', fontSize: '13px' }}>HK$ 1,200</span>
+          <span>{displayPrice}</span>
+        </button>
+      </div>
+
       <style>{`
-        /* ── Mobile responsive overrides for EventDetailPage ── */
-        @media (max-width: 768px) {
-
-          /* Back bar */
-          .edp-back-bar {
-            padding: 96px 16px 16px 16px !important;
-          }
-
-          /* Main content horizontal padding */
-          .edp-main-content {
-            padding: 0 16px !important;
-          }
-
-          /* Hero banner */
-          .edp-hero-banner {
-            min-height: 320px !important;
-            border-radius: 20px !important;
-            margin-bottom: 20px !important;
-          }
-
-          /* Hero overlay — top-to-bottom on mobile */
-          .edp-hero-overlay {
-            background: linear-gradient(
-              to top,
-              rgba(18, 14, 12, 0.95) 0%,
-              rgba(18, 14, 12, 0.55) 55%,
-              rgba(18, 14, 12, 0.1) 100%
-            ) !important;
-          }
-
-          /* Hero content padding */
-          .edp-hero-content {
-            padding: 24px 20px !important;
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-
-          /* Hero title */
-          .edp-hero-content h1 {
-            font-size: 26px !important;
-            margin-bottom: 10px !important;
-          }
-
-          /* Date/location line */
-          .edp-hero-content > div[style*='marginBottom: 32px'] {
-            font-size: 13px !important;
-            margin-bottom: 20px !important;
-          }
-
-          /* Hero action buttons — stack on mobile */
-          .edp-hero-actions {
-            gap: 10px !important;
-            flex-direction: column !important;
-            align-items: stretch !important;
-          }
-          .edp-hero-actions button {
-            width: 100% !important;
-            text-align: center !important;
-            justify-content: center !important;
-            padding: 13px 20px !important;
-            font-size: 12px !important;
-          }
-
-          /* Details card */
-          .edp-details-card {
-            padding: 24px 18px !important;
-            border-radius: 20px !important;
-            margin-bottom: 0 !important;
-          }
-
-          /* Key details grid → single column */
-          .edp-key-details {
-            grid-template-columns: 1fr !important;
-            gap: 16px !important;
-            padding: 20px 18px !important;
-            margin-bottom: 28px !important;
-            border-radius: 16px !important;
-          }
-
-          /* Hide the desktop CTA inside the key-details box */
-          .edp-key-cta {
-            display: none !important;
-          }
-
-          /* Description text */
-          .event-rich-description {
-            font-size: 14.5px !important;
-            line-height: 1.7 !important;
-          }
-
-          /* Section headings */
-          .edp-details-card h2 {
-            font-size: 24px !important;
-          }
-          .edp-details-card h3 {
-            font-size: 20px !important;
-          }
-
-          /* Amenities grid → single column */
-          .edp-amenities-grid {
-            grid-template-columns: 1fr !important;
-          }
-
-          /* Itinerary rows → stack time + content vertically */
-          .edp-details-card > div[style*='marginBottom: 48px'] > div > div[style*='display: flex'][style*='alignItems: center'][style*='justifyContent: space-between'] {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 10px !important;
-          }
-
-          /* Instructor box → vertical on mobile */
-          .edp-details-card > div[style*='padding: 32px'] {
-            flex-direction: column !important;
-            padding: 20px 18px !important;
-            gap: 16px !important;
-          }
-
-          /* Other events section */
-          .other-events-cards-grid {
-            grid-template-columns: 1fr !important;
-          }
-
-          /* Other event card description — truncate shorter */
-          .other-event-card p {
-            -webkit-line-clamp: 2 !important;
-          }
-
-          /* Sticky bottom CTA bar — shown only on mobile */
-          .edp-sticky-mobile-cta {
-            display: flex !important;
-            position: fixed !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            background: rgba(245, 239, 229, 0.96) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
-            padding: 14px 20px calc(14px + env(safe-area-inset-bottom)) 20px !important;
-            border-top: 1px solid rgba(0,0,0,0.08) !important;
-            z-index: 500 !important;
-            box-shadow: 0 -8px 24px rgba(0,0,0,0.08) !important;
-          }
-
-          /* Extra bottom padding so content doesn't hide behind the sticky bar */
-          .edp-main-content {
-            padding-bottom: 100px !important;
-          }
-        }
-
-        /* Desktop — hide the sticky mobile CTA */
-        @media (min-width: 769px) {
-          .edp-sticky-mobile-cta {
-            display: none !important;
-          }
+        @media (max-width: 900px) {
+          .edp-inside-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .edp-objectives-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .edp-hero-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 20px !important; }
+          .edp-hero-stats-grid > div { border-right: none !important; }
         }
       `}</style>
     </div>

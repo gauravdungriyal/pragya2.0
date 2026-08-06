@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ChevronLeft, ChevronRight, BarChart2, Clock, Target, RefreshCw } from 'lucide-react';
 import { getUpcomingEvents } from '../services/api';
 import { UpcomingEvent } from '../types';
@@ -65,15 +65,13 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
     }
   ];
 
-  // Render default events instantly (0ms delay), sync live API silently in background
   const [events, setEvents] = useState<any[]>(defaultEvents);
   const [loading, setLoading] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  // Touch handlers for mobile swipe
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [lastClickedBtn, setLastClickedBtn] = useState<'prev' | 'next'>('next');
 
   useEffect(() => {
     let isMounted = true;
@@ -108,47 +106,62 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
   }, []);
 
   const displayList = events.length > 0 ? events : defaultEvents;
-  const total = displayList.length;
+  // Quadrupled list for seamless infinite loop scroll
+  const quadrupledList = [...displayList, ...displayList, ...displayList, ...displayList];
 
-  // Auto-scroll loop (slides smoothly every 4.5s, pauses when hovered or touched)
+  // Automatic Infinite Horizontal Scrolling (Pauses when cursor hovers, Resumes when cursor leaves)
   useEffect(() => {
-    if (isHovered || total <= 1) return;
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % total);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [isHovered, total]);
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-  const [lastClickedBtn, setLastClickedBtn] = useState<'prev' | 'next'>('next');
+    let animationFrameId: number;
+    // UX Gold Standard: ~45px/sec (0.75px per 60fps frame) allows comfortable readability while maintaining dynamic movement
+    const speed = 0.75;
+
+    const animateScroll = () => {
+      if (!isHovered && container) {
+        container.scrollLeft += speed;
+
+        const singleSetWidth = container.scrollWidth / 4;
+        if (singleSetWidth > 0) {
+          if (container.scrollLeft >= singleSetWidth * 2) {
+            container.scrollLeft -= singleSetWidth;
+          }
+          setProgress((container.scrollLeft % singleSetWidth) / singleSetWidth);
+        }
+      }
+      animationFrameId = requestAnimationFrame(animateScroll);
+    };
+
+    animationFrameId = requestAnimationFrame(animateScroll);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isHovered, displayList.length]);
+
+  const pauseTimeoutRef = useRef<any>(null);
+
+  const triggerClickPause = () => {
+    setIsHovered(true);
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+    }
+    pauseTimeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 4000);
+  };
 
   const handleNext = () => {
     setLastClickedBtn('next');
-    setActiveIndex((prev) => (prev + 1) % total);
+    triggerClickPause();
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 380, behavior: 'smooth' });
+    }
   };
 
   const handlePrev = () => {
     setLastClickedBtn('prev');
-    setActiveIndex((prev) => (prev - 1 + total) % total);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsHovered(true);
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    setIsHovered(false);
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    if (distance > 50) {
-      handleNext();
-    } else if (distance < -50) {
-      handlePrev();
+    triggerClickPause();
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -380, behavior: 'smooth' });
     }
   };
 
@@ -196,24 +209,19 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
           </div>
         ) : (
           <>
-            {/* Carousel Container */}
+            {/* Automatic Infinite Scrolling Carousel Wrapper (Pauses only when hovering event cards) */}
             <div
+              ref={scrollContainerRef}
               className="programs-carousel-wrapper"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+              onTouchStart={() => setIsHovered(true)}
+              onTouchEnd={() => setTimeout(() => setIsHovered(false), 1500)}
             >
-              <div
-                className="programs-carousel-track"
-                style={{
-                  '--active-index': activeIndex
-                } as React.CSSProperties}
-              >
-                {displayList.map((item, idx) => (
+              <div className="programs-carousel-track">
+                {quadrupledList.map((item, idx) => (
                   <div
-                    key={item.id || idx}
+                    key={`${item.id || idx}-${idx}`}
                     onClick={() => {
                       if (onOpenEventDetail) {
                         onOpenEventDetail(item as UpcomingEvent);
@@ -260,12 +268,17 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
                 <div
                   className="programs-progress-fill"
                   style={{
-                    transform: `scaleX(${((activeIndex + 1) / total)})`
+                    transform: `scaleX(${Math.min(1, Math.max(0.08, progress))})`
                   }}
                 />
               </div>
 
-              <div className="programs-nav-buttons">
+              {/* Navigation Buttons (Pauses infinite scrolling when hovered or clicked) */}
+              <div
+                className="programs-nav-buttons"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+              >
                 <button
                   onClick={handlePrev}
                   aria-label="Previous event"
@@ -325,23 +338,28 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
           margin: 4px 0 0 0;
         }
 
-        /* Hardware Accelerated Carousel Track */
+        /* Continuous Smooth Infinite Scroll Wrapper */
         .programs-carousel-wrapper {
           width: 100%;
-          overflow: hidden;
-          padding: 4px 0 8px 0;
-          touch-action: pan-y;
+          overflow-x: auto;
+          overflow-y: hidden;
+          padding: 8px 0 16px 0;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          scroll-behavior: smooth;
         }
+        .programs-carousel-wrapper::-webkit-scrollbar {
+          display: none;
+        }
+
         .programs-carousel-track {
           display: flex;
-          transform: translate3d(calc(-1 * var(--active-index, 0) * (33.3333% + 6.66px)), 0, 0);
-          transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
-          will-change: transform;
+          width: max-content;
         }
 
         /* Dark Event Cards */
         .programs-event-card {
-          width: calc(33.3333% - 13.33px);
+          width: 380px;
           flex-shrink: 0;
           margin-right: 20px;
           background-color: #21201E;
@@ -358,8 +376,8 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
           backface-visibility: hidden;
         }
         .programs-event-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 16px 36px rgba(33, 32, 30, 0.25);
+          transform: translateY(-4px);
+          box-shadow: 0 16px 36px rgba(33, 32, 30, 0.28);
         }
 
         .programs-card-img-box {
@@ -437,7 +455,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
           height: 100%;
           background-color: #21201E;
           transform-origin: left center;
-          transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: transform 0.25s linear;
           will-change: transform;
         }
         .programs-nav-buttons {
@@ -487,9 +505,6 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
 
         /* Mobile Responsive View */
         @media (max-width: 768px) {
-          .programs-carousel-track {
-            transform: translate3d(calc(-1 * var(--active-index, 0) * (100% + 14px)), 0, 0);
-          }
           .programs-section {
             padding: 32px 0 40px 0 !important;
           }
@@ -518,18 +533,18 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
           }
 
           .programs-event-card {
-            width: 100% !important;
+            width: 300px !important;
             margin-right: 14px !important;
             padding: 14px !important;
             border-radius: 22px !important;
           }
           .programs-card-img-box {
-            height: 210px !important;
+            height: 190px !important;
             border-radius: 16px !important;
             margin-bottom: 12px !important;
           }
           .programs-card-title {
-            font-size: 19px !important;
+            font-size: 18px !important;
           }
           .programs-controls-row {
             margin-top: 20px !important;

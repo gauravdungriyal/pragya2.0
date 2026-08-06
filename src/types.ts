@@ -67,6 +67,11 @@ export interface UpcomingEvent {
   price?: string;
   amount?: number;
   category?: string;
+  level?: string;
+  duration?: string;
+  focus?: string;
+  instructor_name?: string;
+  instructor_bio?: string;
   starts_at?: string;
   ends_at?: string;
   countdown_label?: string;

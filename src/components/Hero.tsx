@@ -1,11 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface HeroProps {
   onOpenBooking: (type?: string, title?: string) => void;
   onNavigateSection: (sectionId: string) => void;
 }
 
+const HERO_DESKTOP_IMAGES = [
+  'https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=2000&auto=format&fit=crop',
+  '/hero1.webp',
+  '/hero3.webp?v=2'
+];
+
 export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    // Preload desktop hero images for smooth transition
+    HERO_DESKTOP_IMAGES.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % HERO_DESKTOP_IMAGES.length);
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <section
       id="hero"
@@ -23,19 +45,25 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
         backgroundColor: '#F5EFE5'
       }}
     >
-      {/* Desktop Full-Screen Cover Background Image Layer */}
-      <div
-        className="hero-bg-desktop"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `url('https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=2000&auto=format&fit=crop')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 40%',
-          backgroundRepeat: 'no-repeat',
-          zIndex: 1
-        }}
-      />
+      {/* Desktop Full-Screen Cover Background Image Layer (Auto-rotating Slideshow) */}
+      {HERO_DESKTOP_IMAGES.map((imageSrc, index) => (
+        <div
+          key={imageSrc}
+          className="hero-bg-desktop"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url('${imageSrc}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 40%',
+            backgroundRepeat: 'no-repeat',
+            zIndex: 1,
+            opacity: currentImageIndex === index ? 1 : 0,
+            transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            willChange: 'opacity'
+          }}
+        />
+      ))}
 
       {/* Bottom White/Light Gradient Filter for desktop text legibility */}
       <div
@@ -300,6 +328,66 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
         </div>
       </div>
 
+      {/* Bottom Quote Banner (Desktop Only - Matching Reference Design) */}
+      <div
+        className="hero-quote-banner-desktop"
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: '100%',
+          backgroundColor: '#1C1917',
+          color: '#F5EFE5',
+          padding: '20px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          marginTop: '36px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+        }}
+      >
+        {/* 5 Star Rating */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', color: '#E5A93B' }}>
+          {[...Array(5)].map((_, i) => (
+            <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+          ))}
+        </div>
+
+        {/* Quote Text */}
+        <p
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontStyle: 'italic',
+            fontSize: '17px',
+            letterSpacing: '0.01em',
+            color: '#F5EFE5',
+            maxWidth: '780px',
+            margin: '0 0 6px 0',
+            lineHeight: 1.4,
+            fontWeight: 400
+          }}
+        >
+          "Pragya Yog is THE guide in the journey of core strength, mindfulness & graceful movement."
+        </p>
+
+        {/* Author / Location Attribution */}
+        <p
+          style={{
+            fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+            fontSize: '12px',
+            color: '#B5AFA6',
+            letterSpacing: '0.04em',
+            margin: 0,
+            fontWeight: 400
+          }}
+        >
+          — Ananya Sharma · New Delhi
+        </p>
+      </div>
+
       {/* Responsive Styles for Mobile Reference UI */}
       <style>{`
         .hero-bg-mobile {
@@ -319,7 +407,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
             background-color: #F5EFE5 !important;
             overflow: hidden !important;
           }
-          .hero-bg-desktop, .hero-bg-overlay-desktop {
+          .hero-bg-desktop, .hero-bg-overlay-desktop, .hero-quote-banner-desktop {
             display: none !important;
           }
           .hero-bg-mobile {

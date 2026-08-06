@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   Check, 
   ArrowRight, 
@@ -11,16 +11,18 @@ import {
   Activity, 
   Target, 
   Sun,
-  HeartPulse
+  HeartPulse,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { getTeachers } from '../services/api';
+import { getTeachers, getScheduleByDate, getUpcomingEvents } from '../services/api';
 
 interface AboutPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
   onNavigateSection?: (sectionId: string) => void;
 }
 
-export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
+export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateSection }) => {
   const benefits = [
     'Enhances flexibility, strength, and joint mobility',
     'Improves circulation and subtle energy flow',
@@ -53,6 +55,144 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
   ];
 
   const [coaches, setCoaches] = useState(defaultCoaches);
+
+  const locationImages = [
+    {
+      url: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=1200&auto=format&fit=crop',
+      title: 'Central Studio Sanctuary',
+      subtitle: 'Sheung Wan, Central • Hong Kong'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1200&auto=format&fit=crop',
+      title: 'Oceanfront Reset Lawn',
+      subtitle: 'Repulse Bay • Hong Kong'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?q=80&w=1200&auto=format&fit=crop',
+      title: 'Pokhara Mountain Retreat Center',
+      subtitle: 'Annapurna Range • Nepal'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop',
+      title: 'Pragya Academy Center',
+      subtitle: 'Kowloon Bay • Hong Kong'
+    }
+  ];
+
+  const [currentLocationIdx, setCurrentLocationIdx] = useState(0);
+
+  const handleNextLocation = () => {
+    setCurrentLocationIdx((prev) => (prev + 1) % locationImages.length);
+  };
+
+  const handlePrevLocation = () => {
+    setCurrentLocationIdx((prev) => (prev - 1 + locationImages.length) % locationImages.length);
+  };
+
+  const defaultClassStyles = [
+    {
+      title: 'Classical Hatha Alignment',
+      subtitle: 'Awaken vital energy through traditional posture holds and breath awareness.',
+      image: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=1200&auto=format&fit=crop',
+      tag: 'CLASSICAL HATHA ALIGNMENT'
+    },
+    {
+      title: 'Mindful Vinyasa Flow',
+      subtitle: 'Fluid movement synchronized with dynamic breath to build stamina and strength.',
+      image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1200&auto=format&fit=crop',
+      tag: 'DYNAMIC VINYASA FLOW'
+    },
+    {
+      title: 'Restorative Yin Yoga',
+      subtitle: 'Deep cellular relaxation and joint release through prolonged supported postures.',
+      image: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?q=80&w=1200&auto=format&fit=crop',
+      tag: 'YIN & RESTORATIVE YOG'
+    },
+    {
+      title: 'Himalayan Pranayama & Sound',
+      subtitle: 'Reset the central nervous system with acoustic singing bowls and ancient pranayama.',
+      image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop',
+      tag: 'SOUND IMMERSION & BREATH'
+    },
+    {
+      title: 'Ashtanga Primary Series',
+      subtitle: 'Structured meditative series focusing on core vitality, bandhas, and drishti gaze.',
+      image: 'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?q=80&w=1200&auto=format&fit=crop',
+      tag: 'ASHTANGA YOGA PRACTICE'
+    }
+  ];
+
+  const [classStylesList, setClassStylesList] = useState(defaultClassStyles);
+
+  const toOneLineDesc = (text: string) => {
+    if (!text) return 'Guided by Pragya Yog certified faculty for holistic transformation.';
+    const cleaned = text
+      .replace(/<[^>]*>?/gm, '')
+      .replace(/&ndash;/g, '–')
+      .replace(/&rsquo;/g, "'")
+      .replace(/&lsquo;/g, "'")
+      .replace(/&amp;/g, '&')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+    const firstSentence = cleaned.split('.')[0].trim();
+    if (firstSentence && firstSentence.length <= 110 && firstSentence.length >= 20) {
+      return firstSentence + '.';
+    }
+    if (cleaned.length > 90) {
+      return cleaned.slice(0, 90).trim() + '...';
+    }
+    return cleaned;
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    getScheduleByDate().then((schedData) => {
+      if (!isMounted) return;
+      if (schedData && Array.isArray(schedData.schedules) && schedData.schedules.length > 0) {
+        const realClasses = schedData.schedules.map((item: any, idx: number) => ({
+          title: item.title || item.name || defaultClassStyles[idx % defaultClassStyles.length].title,
+          subtitle: toOneLineDesc(item.description || defaultClassStyles[idx % defaultClassStyles.length].subtitle),
+          image: defaultClassStyles[idx % defaultClassStyles.length].image,
+          tag: item.levels ? `${item.levels.toUpperCase()} · CLASS` : 'REGULAR STUDIO CLASS'
+        }));
+        if (realClasses.length > 0) {
+          setClassStylesList(realClasses);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const quadrupledClassStyles = [...classStylesList, ...classStylesList, ...classStylesList, ...classStylesList];
+  const classScrollRef = useRef<HTMLDivElement>(null);
+  const [isClassCarouselHovered, setIsClassCarouselHovered] = useState(false);
+
+  useEffect(() => {
+    const container = classScrollRef.current;
+    if (!container) return;
+
+    let animationFrameId: number;
+    const speed = 0.75;
+
+    const animateScroll = () => {
+      if (!isClassCarouselHovered && container) {
+        container.scrollLeft += speed;
+        const singleSetWidth = container.scrollWidth / 4;
+        if (singleSetWidth > 0) {
+          if (container.scrollLeft >= singleSetWidth * 2) {
+            container.scrollLeft -= singleSetWidth;
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(animateScroll);
+    };
+
+    animationFrameId = requestAnimationFrame(animateScroll);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isClassCarouselHovered, classStylesList.length]);
 
   useEffect(() => {
     getTeachers().then((data) => {
@@ -379,6 +519,587 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
         </div>
       </section>
 
+      {/* SECTION 4: Connect With Our Instructors (Matching Reference Image 1-to-1) */}
+      <section
+        className="about-instructors-feature-section"
+        style={{
+          backgroundColor: '#FFFFFF',
+          padding: '100px 32px 120px 32px',
+          borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+        }}
+      >
+        <div
+          className="about-instructors-grid"
+          style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1.15fr',
+            gap: '64px',
+            alignItems: 'center'
+          }}
+        >
+          {/* Left Column: Headline, Sub-tag, Plus List & Action Link */}
+          <div>
+            <span
+              style={{
+                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                fontSize: '11.5px',
+                fontWeight: 800,
+                letterSpacing: '0.14em',
+                color: '#944426',
+                textTransform: 'uppercase',
+                display: 'block',
+                marginBottom: '14px'
+              }}
+            >
+              CONNECT WITH OUR INSTRUCTORS
+            </span>
+
+            <h2
+              style={{
+                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                fontSize: 'clamp(32px, 4.2vw, 52px)',
+                fontWeight: 700,
+                color: '#21201E',
+                lineHeight: 1.1,
+                letterSpacing: '-0.02em',
+                margin: '0 0 36px 0'
+              }}
+            >
+              Meet our Master<br />Yogic Instructors
+            </h2>
+
+            {/* Accordion / Plus Items List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '44px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span style={{ fontSize: '20px', fontWeight: 600, color: '#21201E' }}>+</span>
+                <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
+                  Traditional Himalayan Lineage & Philosophy
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span style={{ fontSize: '20px', fontWeight: 600, color: '#21201E' }}>+</span>
+                <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
+                  Serene Sanctuary & Oceanfront Resets
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span style={{ fontSize: '20px', fontWeight: 600, color: '#21201E' }}>+</span>
+                <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
+                  World-Class Coaches, Real Results
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span style={{ fontSize: '20px', fontWeight: 600, color: '#21201E' }}>+</span>
+                <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
+                  360° Wellness & Sound Immersion Lifestyle
+                </span>
+              </div>
+            </div>
+
+            {/* Bottom CTA Action Link */}
+            <button
+              onClick={() => {
+                if (onNavigateSection) onNavigateSection('teachers');
+                else onOpenBooking('teacher');
+              }}
+              style={{
+                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                fontSize: '13px',
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                color: '#21201E',
+                backgroundColor: 'transparent',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                textTransform: 'uppercase'
+              }}
+            >
+              <span>BROWSE YOGIC INSTRUCTORS</span>
+              <ArrowRight size={16} color="#944426" />
+            </button>
+          </div>
+
+          {/* Right Column: Dynamic Photo Box with Overlapping Stat Badges */}
+          <div style={{ position: 'relative', width: '100%' }}>
+            {/* Main Instructor Photo Box */}
+            <div
+              style={{
+                width: '100%',
+                height: '460px',
+                borderRadius: '24px',
+                overflow: 'hidden',
+                backgroundColor: '#F5EFE5',
+                position: 'relative',
+                boxShadow: '0 12px 36px rgba(33, 32, 30, 0.08)'
+              }}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=1200&auto=format&fit=crop"
+                alt="Master Yoga Instructor at Pragya Yog School"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }}
+              />
+            </div>
+
+            {/* Overlapping Stat Badges Overlay Grid (Matching Reference Screenshot) */}
+            <div
+              className="about-stat-badges-row"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '16px',
+                maxWidth: '440px',
+                position: 'absolute',
+                bottom: '-40px',
+                left: '24px',
+                zIndex: 2
+              }}
+            >
+              {/* Stat Badge 1: Terracotta Accent (#944426) */}
+              <div
+                style={{
+                  backgroundColor: '#944426',
+                  color: '#FFFFFF',
+                  padding: '24px 22px',
+                  borderRadius: '16px',
+                  boxShadow: '0 12px 28px rgba(148, 68, 38, 0.25)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <Sparkles size={20} color="#FFFFFF" />
+                  <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '32px', fontWeight: 800, lineHeight: 1 }}>
+                    15+
+                  </span>
+                </div>
+                <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.95)', display: 'block', lineHeight: 1.3 }}>
+                  Master Instructors
+                </span>
+              </div>
+
+              {/* Stat Badge 2: Dark Charcoal Accent (#21201E) */}
+              <div
+                style={{
+                  backgroundColor: '#21201E',
+                  color: '#FFFFFF',
+                  padding: '24px 22px',
+                  borderRadius: '16px',
+                  boxShadow: '0 12px 28px rgba(33, 32, 30, 0.25)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <Compass size={20} color="#FFFFFF" />
+                  <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '32px', fontWeight: 800, lineHeight: 1 }}>
+                    50+
+                  </span>
+                </div>
+                <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.95)', display: 'block', lineHeight: 1.3 }}>
+                  Curated Class Types
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* SECTION 5: Discover Our Locations (Matching Reference Screenshot 1-to-1) */}
+      <section
+        className="about-locations-section"
+        style={{
+          backgroundColor: '#F5EFE5',
+          padding: '96px 32px'
+        }}
+      >
+        <div
+          className="about-locations-grid"
+          style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1.15fr',
+            gap: '64px',
+            alignItems: 'center'
+          }}
+        >
+          {/* Left Column: Location Photo Carousel with Controls Below (Matching Reference Layout) */}
+          <div>
+            <div
+              style={{
+                width: '100%',
+                height: '420px',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                backgroundColor: '#21201E',
+                position: 'relative',
+                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.06)'
+              }}
+            >
+              <img
+                src={locationImages[currentLocationIdx].url}
+                alt={locationImages[currentLocationIdx].title}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  transition: 'opacity 0.4s ease'
+                }}
+              />
+
+              {/* Location Badge Tag */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '16px',
+                  left: '16px',
+                  backgroundColor: 'rgba(33, 32, 30, 0.85)',
+                  color: '#FFFFFF',
+                  backdropFilter: 'blur(8px)',
+                  borderRadius: '999px',
+                  padding: '6px 16px',
+                  fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                  fontSize: '12.5px',
+                  fontWeight: 700
+                }}
+              >
+                {locationImages[currentLocationIdx].title} ({locationImages[currentLocationIdx].subtitle})
+              </div>
+            </div>
+
+            {/* Carousel Controls Row Below Image (1-to-1 matching Reference Screenshot) */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: '16px',
+                padding: '0 4px'
+              }}
+            >
+              {/* Left Counter Indicator: e.g. 1 — 4 */}
+              <div style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '14px', fontWeight: 600, color: '#6B655F' }}>
+                <span>{currentLocationIdx + 1}</span>
+                <span style={{ margin: '0 8px', opacity: 0.5 }}>—</span>
+                <span>{locationImages.length}</span>
+              </div>
+
+              {/* Right Navigation Arrow Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button
+                  onClick={handlePrevLocation}
+                  aria-label="Previous location"
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#21201E',
+                    padding: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'opacity 0.2s ease'
+                  }}
+                >
+                  <ChevronLeft size={20} color="#21201E" />
+                </button>
+
+                <button
+                  onClick={handleNextLocation}
+                  aria-label="Next location"
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#21201E',
+                    padding: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'opacity 0.2s ease'
+                  }}
+                >
+                  <ChevronRight size={20} color="#21201E" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Subtitle, Main Headline & 2-Column Location List */}
+          <div>
+            <span
+              style={{
+                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                fontSize: '11.5px',
+                fontWeight: 800,
+                letterSpacing: '0.14em',
+                color: '#944426',
+                textTransform: 'uppercase',
+                display: 'block',
+                marginBottom: '14px'
+              }}
+            >
+              EXPLORE OUR SANCTUARY LOCATIONS
+            </span>
+
+            <h2
+              style={{
+                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                fontSize: 'clamp(32px, 4.2vw, 52px)',
+                fontWeight: 700,
+                color: '#21201E',
+                lineHeight: 1.1,
+                letterSpacing: '-0.02em',
+                margin: '0 0 24px 0'
+              }}
+            >
+              Discover Our Locations
+            </h2>
+
+            {/* Light horizontal divider line matching reference */}
+            <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(33, 32, 30, 0.15)', marginBottom: '32px' }} />
+
+            {/* 2-Column Location Bullet Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px 32px' }}>
+              <div>
+                <h4 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', fontWeight: 800, color: '#21201E', margin: '0 0 4px 0' }}>
+                  Central Studio Sanctuary
+                </h4>
+                <span style={{ fontSize: '13px', color: '#6B655F' }}>Sheung Wan, Central HK</span>
+              </div>
+
+              <div>
+                <h4 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', fontWeight: 800, color: '#21201E', margin: '0 0 4px 0' }}>
+                  Oceanfront Reset Lawn
+                </h4>
+                <span style={{ fontSize: '13px', color: '#6B655F' }}>Repulse Bay Beach, HK</span>
+              </div>
+
+              <div>
+                <h4 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', fontWeight: 800, color: '#21201E', margin: '0 0 4px 0' }}>
+                  Pokhara Mountain Base
+                </h4>
+                <span style={{ fontSize: '13px', color: '#6B655F' }}>Annapurna Range, Nepal</span>
+              </div>
+
+              <div>
+                <h4 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', fontWeight: 800, color: '#21201E', margin: '0 0 4px 0' }}>
+                  Pragya Academy Center
+                </h4>
+                <span style={{ fontSize: '13px', color: '#6B655F' }}>Kowloon Bay, Hong Kong</span>
+              </div>
+
+              <div>
+                <h4 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', fontWeight: 800, color: '#21201E', margin: '0 0 4px 0' }}>
+                  Private Wellness Suites
+                </h4>
+                <span style={{ fontSize: '13px', color: '#6B655F' }}>Victoria Harbour View</span>
+              </div>
+
+              <div>
+                <h4 style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', fontWeight: 800, color: '#21201E', margin: '0 0 4px 0' }}>
+                  Hydrotherapy & Sound Deck
+                </h4>
+                <span style={{ fontSize: '13px', color: '#6B655F' }}>Main Sanctuary Center</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* SECTION 6: Explore Classes (Infinite Automatic Horizontal Carousel matching Reference Screenshot) */}
+      <section
+        className="about-explore-classes-section"
+        style={{
+          backgroundColor: '#FFFFFF',
+          padding: '96px 0 100px 0',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header Block */}
+        <div style={{ maxWidth: '1280px', margin: '0 auto 44px auto', padding: '0 32px' }}>
+          <span
+            style={{
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+              fontSize: '11.5px',
+              fontWeight: 800,
+              letterSpacing: '0.14em',
+              color: '#944426',
+              textTransform: 'uppercase',
+              display: 'block',
+              marginBottom: '10px'
+            }}
+          >
+            DISCOVER YOUR YOGA STYLE
+          </span>
+
+          <h2
+            style={{
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+              fontSize: 'clamp(34px, 4.5vw, 56px)',
+              fontWeight: 700,
+              color: '#21201E',
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em',
+              margin: '0 0 14px 0'
+            }}
+          >
+            Explore Classes
+          </h2>
+
+          <p
+            style={{
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+              fontSize: '15px',
+              color: '#6B655F',
+              lineHeight: 1.6,
+              margin: 0,
+              maxWidth: '600px'
+            }}
+          >
+            Whatever your intention or level, Pragya Yog School offers a variety of classes to give you the ultimate yoga experience.
+          </p>
+        </div>
+
+        {/* Automatic Infinite Horizontal Carousel Track */}
+        <div
+          ref={classScrollRef}
+          onMouseEnter={() => setIsClassCarouselHovered(true)}
+          onMouseLeave={() => setIsClassCarouselHovered(false)}
+          onTouchStart={() => setIsClassCarouselHovered(true)}
+          onTouchEnd={() => setIsClassCarouselHovered(false)}
+          style={{
+            width: '100%',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            padding: '12px 0 24px 0'
+          }}
+        >
+          <div style={{ display: 'flex', width: 'max-content' }}>
+            {quadrupledClassStyles.map((item, idx) => (
+              <div
+                key={idx}
+                onClick={() => onOpenBooking('class', item.title)}
+                style={{
+                  width: '580px',
+                  height: '380px',
+                  flexShrink: 0,
+                  marginRight: '24px',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
+                  transition: 'transform 0.35s ease, box-shadow 0.35s ease'
+                }}
+              >
+                {/* Background Image */}
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    display: 'block'
+                  }}
+                />
+
+                {/* Dark Gradient Overlay for High Contrast Text (Matching Reference Image) */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(to top, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.25) 55%, transparent 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-end',
+                    padding: '36px 36px'
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      letterSpacing: '0.12em',
+                      color: 'rgba(255, 255, 255, 0.85)',
+                      textTransform: 'uppercase',
+                      marginBottom: '8px'
+                    }}
+                  >
+                    {item.tag}
+                  </span>
+
+                  <h3
+                    style={{
+                      fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                      fontSize: '36px',
+                      fontWeight: 700,
+                      color: '#FFFFFF',
+                      lineHeight: 1.15,
+                      margin: '0 0 10px 0',
+                      letterSpacing: '-0.01em'
+                    }}
+                  >
+                    {item.title}
+                  </h3>
+
+                  <p
+                    style={{
+                      fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                      fontSize: '14px',
+                      color: 'rgba(255, 255, 255, 0.88)',
+                      lineHeight: 1.5,
+                      margin: '0 0 20px 0',
+                      maxWidth: '480px',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 1,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {item.subtitle}
+                  </p>
+
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                      fontSize: '12.5px',
+                      fontWeight: 800,
+                      letterSpacing: '0.08em',
+                      color: '#FFFFFF',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    <span>LEARN MORE</span>
+                    <ArrowRight size={15} color="#FFFFFF" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Bottom CTA Banner with Rich Serene Background Image */}
       <section className="about-bottom-cta">
         <div className="about-bottom-cta-overlay" />
@@ -615,7 +1336,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           background-position: center center;
           background-repeat: no-repeat;
           padding: 120px 32px;
-          margin-top: 64px;
+          margin-top: 0;
           overflow: hidden;
         }
         .about-bottom-cta-overlay {
@@ -762,7 +1483,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
           }
           .about-bottom-cta {
             padding: 56px 20px !important;
-            margin-top: 48px !important;
+            margin-top: 0 !important;
           }
           .about-bottom-cta h2 {
             font-size: 32px !important;
@@ -778,6 +1499,30 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking }) => {
             width: 100% !important;
             padding: 16px 24px !important;
             font-size: 14px !important;
+          }
+          @media (max-width: 900px) {
+            .about-instructors-feature-section {
+              padding: 60px 20px 80px 20px !important;
+            }
+            .about-instructors-grid {
+              grid-template-columns: 1fr !important;
+              gap: 40px !important;
+            }
+            .about-stat-badges-row {
+              position: static !important;
+              max-width: 100% !important;
+              margin-top: 16px !important;
+            }
+            .about-locations-section {
+              padding: 60px 20px !important;
+            }
+            .about-locations-grid {
+              grid-template-columns: 1fr !important;
+              gap: 40px !important;
+            }
+            .about-explore-classes-section {
+              padding: 60px 0 70px 0 !important;
+            }
           }
         }
       `}</style>
