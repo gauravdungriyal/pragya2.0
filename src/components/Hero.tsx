@@ -335,8 +335,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          backgroundColor: '#1C1917',
-          color: '#F5EFE5',
+          backgroundColor: '#F5EFE5',
+          color: '#21201E',
           padding: '20px 24px',
           display: 'flex',
           flexDirection: 'column',
@@ -344,7 +344,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
           justifyContent: 'center',
           textAlign: 'center',
           marginTop: '36px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+          borderTop: '1px solid rgba(0, 0, 0, 0.08)'
         }}
       >
         {/* 5 Star Rating */}
@@ -363,7 +363,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
             fontStyle: 'italic',
             fontSize: '17px',
             letterSpacing: '0.01em',
-            color: '#F5EFE5',
+            color: '#21201E',
             maxWidth: '780px',
             margin: '0 0 6px 0',
             lineHeight: 1.4,
@@ -378,7 +378,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
           style={{
             fontFamily: "'Neue Montreal', -apple-system, sans-serif",
             fontSize: '12px',
-            color: '#B5AFA6',
+            color: '#6B655D',
             letterSpacing: '0.04em',
             margin: 0,
             fontWeight: 400
