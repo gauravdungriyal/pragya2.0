@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Pragya Yog School — Widget Demo (how the chatbot appears on pyshk.com)</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+  <style>
+    /* Palette pulled from the live pyshk.com site */
+    :root { --brown:#23130e; --brown2:#3a2318; --green:#356938; --green-l:#89c461; --orange:#ff6600; --cream:#f3efe9; --gold:#C49A2A; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:"Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:#fff; color:#2d2d2d; }
+
+    .demo-note { background:var(--green); color:#fff; text-align:center; font-size:12.5px; padding:8px 14px; }
+    .demo-note strong { color:#ffe9a8; }
+
+    /* top contact bar */
+    .topbar { background:var(--brown); color:#e8dfd8; font-size:12px; }
+    .topbar .in { max-width:1140px; margin:0 auto; display:flex; justify-content:space-between; padding:7px 20px; gap:10px; flex-wrap:wrap; }
+    .topbar a { color:#e8dfd8; text-decoration:none; }
+    .topbar a:hover { color:var(--green-l); }
+
+    /* header */
+    header { background:#fff; border-bottom:1px solid #eee; position:sticky; top:0; z-index:50; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+    .nav { max-width:1140px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:11px 20px; }
+    .nav .brand img { height:52px; width:auto; display:block; }
+    .nav ul { display:flex; gap:24px; list-style:none; font-size:14px; font-weight:500; color:#3a3a3a; }
+    .nav ul li { cursor:pointer; transition:color .15s; }
+    .nav ul li:hover { color:var(--green); }
+    .nav .cta { background:var(--brown); color:#fff; border:none; padding:11px 22px; border-radius:4px; font-weight:600; font-size:13.5px; cursor:pointer; transition:background .15s; }
+    .nav .cta:hover { background:var(--green); }
+    @media (max-width:820px){ .nav ul{ display:none; } }
+
+    /* hero */
+    .hero { position:relative; background:var(--brown); color:#fff; text-align:center; padding:92px 20px 100px; overflow:hidden; }
+    .hero::before { content:""; position:absolute; inset:0; background:url("https://pyshk.com/wp-content/uploads/2024/06/background-header.jpg") center/cover; opacity:.22; }
+    .hero > * { position:relative; }
+    .hero .eyebrow { color:var(--green-l); font-weight:700; letter-spacing:3px; text-transform:uppercase; font-size:12.5px; margin-bottom:16px; }
+    .hero h1 { font-size:clamp(30px,5.5vw,50px); margin-bottom:16px; line-height:1.18; }
+    .hero h1 span { color:var(--green-l); }
+    .hero p { font-size:clamp(15px,2.2vw,17px); color:#e6ded7; margin:0 auto 30px; max-width:600px; line-height:1.6; }
+    .hero .btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+    .hero .btn { padding:14px 28px; border-radius:4px; font-weight:600; font-size:14px; cursor:pointer; border:none; }
+    .hero .btn-green { background:var(--green); color:#fff; }
+    .hero .btn-green:hover { background:var(--green-l); color:var(--brown); }
+    .hero .btn-line { background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,.55); }
+
+    /* sections */
+    section { max-width:1140px; margin:0 auto; padding:66px 20px; }
+    .eyebrow-c { text-align:center; color:var(--green); font-weight:700; letter-spacing:2px; text-transform:uppercase; font-size:12.5px; margin-bottom:8px; }
+    section h2 { text-align:center; font-size:clamp(24px,3.6vw,33px); color:var(--brown); margin-bottom:10px; }
+    section .sub { text-align:center; color:#777; font-size:14.5px; margin:0 auto 42px; max-width:560px; line-height:1.6; }
+    .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:22px; }
+    .card { background:#fff; border:1px solid #eee; border-radius:10px; padding:26px 22px; transition:transform .2s, box-shadow .2s; }
+    .card:hover { transform:translateY(-4px); box-shadow:0 12px 30px rgba(35,19,14,.10); }
+    .card .ico { width:52px; height:52px; border-radius:50%; background:var(--cream); display:flex; align-items:center; justify-content:center; font-size:25px; margin-bottom:15px; }
+    .card h3 { font-size:17px; color:var(--brown); margin-bottom:8px; }
+    .card p { font-size:13.5px; color:#666; line-height:1.6; }
+    .card .price { margin-top:11px; color:var(--green); font-weight:700; font-size:14px; }
+
+    /* teachers */
+    .teachers { background:var(--cream); }
+    .tgrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:20px; }
+    .tcard { background:#fff; border-radius:10px; overflow:hidden; text-align:center; padding-bottom:16px; box-shadow:0 4px 16px rgba(35,19,14,.05); }
+    .tcard .ph { width:100%; height:170px; object-fit:cover; display:flex; align-items:center; justify-content:center; font-size:44px; font-weight:700; color:#fff; }
+    .tcard h4 { font-size:15.5px; color:var(--brown); margin:13px 0 3px; }
+    .tcard span { font-size:12.5px; color:#8a8a8a; }
+
+    /* offer strip */
+    .strip { background:var(--green); text-align:center; padding:52px 20px; color:#fff; }
+    .strip h2 { font-size:clamp(22px,3vw,27px); margin-bottom:10px; }
+    .strip p { font-size:14.5px; max-width:640px; margin:0 auto 22px; opacity:.95; line-height:1.6; }
+    .strip .btn { background:#fff; color:var(--green); border:none; padding:13px 30px; border-radius:4px; font-weight:700; cursor:pointer; }
+
+    /* footer */
+    footer { background:var(--brown); color:#b7a89e; padding:46px 20px 26px; font-size:13px; }
+    .fwrap { max-width:1140px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:28px; }
+    footer h5 { color:#fff; font-size:14px; margin-bottom:12px; letter-spacing:.5px; }
+    footer p { line-height:1.7; }
+    footer a { color:#b7a89e; text-decoration:none; display:block; margin-bottom:6px; }
+    footer a:hover { color:var(--green-l); }
+    .fbottom { max-width:1140px; margin:26px auto 0; padding-top:18px; border-top:1px solid rgba(255,255,255,.1); text-align:center; color:#8a7a6f; font-size:12.5px; }
+    .fbottom .gold { color:var(--gold); font-weight:700; }
+  </style>
+</head>
+<body>
+
+  <div class="demo-note">🖥️ <strong>DEMO PREVIEW</strong> — this simulates the pyshk.com website. Pragya, your AI host, waves from the bottom-right — click her to chat!</div>
+
+  <!-- ══ MOCK WEBSITE (styled to match the live pyshk.com) ══ -->
+  <div class="topbar"><div class="in">
+    <span>📍 Central, Hong Kong · Open Mon–Sun</span>
+    <span>📞 <a href="tel:+85267082503">+852 6708 2503</a> &nbsp;·&nbsp; ✉️ <a href="mailto:info@pyshk.com">info@pyshk.com</a></span>
+  </div></div>
+
+  <header>
+    <div class="nav">
+      <div class="brand"><img src="logo.png" alt="Pragya Yog School"></div>
+      <ul>
+        <li>Home</li><li>About</li><li>Classes</li><li>Teacher Training</li><li>Events</li><li>Contact</li>
+      </ul>
+      <button class="cta">Book a Class</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="eyebrow">Where Science Meets Spirituality</div>
+    <h1>Begin Your <span>Transformative</span><br>Yoga Journey</h1>
+    <p>Hong Kong's most authentic yog school, in the heart of Central. Programs created for every level of practice — from your very first class to 200-hour teacher training.</p>
+    <div class="btns">
+      <button class="btn btn-green">Start 3-Class Trial — HK$450</button>
+      <button class="btn btn-line">Explore Classes</button>
+    </div>
+  </div>
+
+  <section>
+    <div class="eyebrow-c">Why Choose Us</div>
+    <h2>Rooted in Tradition, Guided by Science</h2>
+    <p class="sub">Authentic yog taught by highly qualified teachers, in a warm and welcoming Central studio.</p>
+    <div class="cards">
+      <div class="card"><div class="ico">🧘</div><h3>9 Group Classes</h3><p>Advanced, Balance, Flow, our signature Pragya sequence, Restorative, Strength, Pregnancy-friendly & more — a class for every level.</p></div>
+      <div class="card"><div class="ico">🎓</div><h3>200-Hr Teacher Training</h3><p>The only university-affiliated Teacher Training Course in Hong Kong. April–May 2026 intake.</p><div class="price">from HK$38,000</div></div>
+      <div class="card"><div class="ico">🌅</div><h3>Morning Intensive</h3><p>Deepen your practice with focused early-morning sessions guided by our master teachers.</p></div>
+      <div class="card"><div class="ico">🌿</div><h3>Weekend Immersion</h3><p>Restorative weekend programs to reset body and mind — open to all experience levels.</p></div>
+    </div>
+  </section>
+
+  <div class="teachers">
+    <section>
+      <div class="eyebrow-c">Our Teachers</div>
+      <h2>Learn From the Best</h2>
+      <p class="sub">A faculty of PhD scholars and master teachers devoted to authentic yog.</p>
+      <div class="tgrid">
+        <div class="tcard"><img class="ph" src="https://pyshk.com/wp-content/uploads/2024/06/team_0000_aarya-300x300.jpg" alt="Aarya Kuldeep"><h4>Aarya Kuldeep</h4><span>Founder · PhD Scholar</span></div>
+        <div class="tcard"><div class="ph" style="background:linear-gradient(135deg,#356938,#89c461)">YD</div><h4>Dr. Yatendra Dutt</h4><span>Master Teacher</span></div>
+        <div class="tcard"><div class="ph" style="background:linear-gradient(135deg,#8a5a2b,#c99b53)">UJ</div><h4>Dr. Usha Jaiswal</h4><span>Master Teacher</span></div>
+        <div class="tcard"><div class="ph" style="background:linear-gradient(135deg,#23130e,#5a4030)">RJ</div><h4>Dr. Rakesh Jaiswal</h4><span>Master Teacher</span></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="strip">
+    <h2>🎉 Anniversary Celebration — up to 25% OFF</h2>
+    <p>Regular packages, workshops &amp; retreats for a limited time. Ask Pragya (bottom-right) about the current offers!</p>
+    <button class="btn">View Offers</button>
+  </div>
+
+  <footer>
+    <div class="fwrap">
+      <div><h5>Pragya Yog School</h5><p>Where Science Meets Spirituality. Hong Kong's most authentic yog school, in the heart of Central.</p></div>
+      <div><h5>Explore</h5><a>Classes</a><a>Teacher Training</a><a>Schedule</a><a>Events</a></div>
+      <div><h5>Visit Us</h5><a>1303-04, 13/F Tak Woo House,<br>1-3 Wo On Lane, Central, Hong Kong</a></div>
+      <div><h5>Contact</h5><a href="tel:+85267082503">+852 6708 2503</a><a href="mailto:info@pyshk.com">info@pyshk.com</a><a>pyshk.com</a></div>
+    </div>
+    <div class="fbottom">© 2026 <span class="gold">Pragya Yog School</span> · demo preview for the AI assistant</div>
+  </footer>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       PRAGYA AI ASSISTANT — CHAT WIDGET
+       This exact snippet is what gets pasted into pyshk.com (WPCode
+       footer). Only the iframe/logo URLs change to the deployed URL.
+       ══════════════════════════════════════════════════════════════ -->
+  <style>
+    /* Widget attention animations */
+    @keyframes pw-bounce { 0%,100%{transform:translateY(0)} 25%{transform:translateY(-14px)} 50%{transform:translateY(0)} 65%{transform:translateY(-7px)} 80%{transform:translateY(0)} }
+    @keyframes pw-wiggle { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-12deg)} 40%{transform:rotate(10deg)} 60%{transform:rotate(-8deg)} 80%{transform:rotate(6deg)} }
+    @keyframes pw-heartbeat { 0%,100%{transform:scale(1)} 15%{transform:scale(1.14)} 30%{transform:scale(1)} 45%{transform:scale(1.1)} 60%{transform:scale(1)} }
+    @keyframes pw-ring { 0%{box-shadow:0 4px 20px rgba(0,0,0,.25),0 0 0 0 rgba(196,154,42,.55)} 100%{box-shadow:0 4px 20px rgba(0,0,0,.25),0 0 0 22px rgba(196,154,42,0)} }
+    @keyframes pw-tease-in { from{opacity:0;transform:translateY(8px) scale(.96)} to{opacity:1;transform:translateY(0) scale(1)} }
+    /* Constant gentle float so the bubble is always subtly alive */
+    @keyframes pw-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    /* Dramatic entrance: the bubble flies in from the corner and pops into
+       place ~0.4s after the page loads, pulling the visitor's eye to it. */
+    @keyframes pw-enter {
+      0%   { opacity:0; transform:translate(70px,90px) scale(0.2) rotate(25deg); }
+      55%  { opacity:1; transform:translate(-7px,-12px) scale(1.14) rotate(-7deg); }
+      75%  { transform:translate(3px,4px) scale(0.96) rotate(3deg); }
+      100% { opacity:1; transform:translate(0,0) scale(1) rotate(0); }
+    }
+    /* Entrance plays once, then the gentle float loop takes over. */
+    #pragya-bubble { animation: pw-enter 0.95s cubic-bezier(.2,.85,.25,1) 0.4s both, pw-float 3.4s ease-in-out 1.5s infinite; }
+    /* Always-on "radar" halo so the eye keeps returning to the bubble. */
+    #pragya-bubble::before {
+      content:""; position:absolute; inset:0; border-radius:50%; z-index:-1;
+      animation: pw-halo 2.4s ease-out infinite;
+    }
+    @keyframes pw-halo { 0%{box-shadow:0 0 0 0 rgba(196,154,42,.55)} 100%{box-shadow:0 0 0 20px rgba(196,154,42,0)} }
+    /* Periodic light sweep across the logo, like a glint of sunlight. */
+    #pragya-toggle { position:relative; }
+    #pragya-toggle::after {
+      content:""; position:absolute; top:0; bottom:0; width:42%; left:-60%;
+      transform:skewX(-20deg); pointer-events:none; z-index:3;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);
+      animation: pw-shine 4.5s ease-in-out infinite;
+    }
+    @keyframes pw-shine { 0%,72%{left:-60%} 88%{left:135%} 100%{left:135%} }
+    /* The mascot gently "breathes" — a slow inhale/exhale scale, like a calm
+       meditator — so the icon always feels alive even while sitting idle. */
+    @keyframes pw-breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+    #pragya-logo { animation: pw-breathe 4.2s ease-in-out infinite; transform-origin:center 60%; }
+    @media (prefers-reduced-motion: reduce) { #pragya-logo { animation:none; } }
+
+    /* ── Chat panel — MOBILE-FIRST. It never covers the whole screen. ──
+         Mobile (priority): a bottom panel using ~70% of the screen height,
+         anchored to the bottom above the bubble. The TOP of the phone stays
+         visible (website shows through) so it never feels claustrophobic,
+         and it always clears the notch + home bar via safe-area insets.
+         Desktop: a small fixed card in the bottom-right corner. */
+    #pragya-frame {
+      position:fixed;
+      left:calc(8px + env(safe-area-inset-left, 0px));
+      right:calc(8px + env(safe-area-inset-right, 0px));
+      /* Tall bottom panel: a small strip of the website stays visible at the
+         very top (clears the notch), and it stops just above the bubble so
+         the ✕ close button is always reachable. Anchoring top+bottom means
+         the height auto-fits every phone with no notch/home-bar overlap. */
+      top:calc(12px + env(safe-area-inset-top, 0px));
+      bottom:calc(84px + env(safe-area-inset-bottom, 0px));
+      width:auto; height:auto;
+      z-index:99999; border-radius:20px; overflow:hidden;
+      box-shadow:0 12px 48px rgba(0,0,0,0.35);
+    }
+    /* Desktop / larger screens: compact corner card instead of a full-width panel. */
+    @media (min-width:481px) {
+      #pragya-frame {
+        top:auto; left:auto; right:24px;
+        bottom:calc(96px + env(safe-area-inset-bottom, 0px));
+        width:380px; height:min(600px, calc(100dvh - 128px));
+      }
+    }
+    #pragya-frame iframe { width:100%; height:100%; border:none; display:block; }
+    .pw-anim-bounce { animation:pw-bounce 0.9s ease; }
+    .pw-anim-wiggle { animation:pw-wiggle 0.8s ease; }
+    .pw-anim-heartbeat { animation:pw-heartbeat 0.9s ease; }
+    #pragya-toggle.pw-ring { animation:pw-ring 1.4s ease-out; }
+    #pragya-hello { animation:pw-tease-in 0.35s ease; }
+  </style>
+
+  <div id="pragya-bubble" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom, 0px));right:calc(20px + env(safe-area-inset-right, 0px));z-index:99999;">
+    <div id="pragya-hello" style="display:none;position:absolute;bottom:88px;right:0;background:#fff;color:#1A1A2E;font-size:13px;font-weight:600;padding:11px 15px;border-radius:14px 14px 4px 14px;box-shadow:0 6px 24px rgba(0,0,0,0.18);white-space:nowrap;cursor:pointer;"></div>
+    <span id="pragya-badge" style="position:absolute;top:-3px;right:-3px;background:#e11d48;color:#fff;font-size:11px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:2;font-family:Arial,sans-serif;">1</span>
+    <button id="pragya-toggle" aria-label="Chat with Pragya" style="width:74px;height:74px;border-radius:50%;border:3px solid #C49A2A;cursor:pointer;background:#FBB534;box-shadow:0 4px 20px rgba(0,0,0,0.25);padding:0;overflow:hidden;transition:transform .15s;display:flex;align-items:center;justify-content:center;">
+      <img id="pragya-logo" src="mascot.png" alt="Chat with Pragya" style="width:100%;height:100%;object-fit:cover;pointer-events:none;">
+      <span id="pragya-close" style="display:none;font-size:26px;color:#1A1A2E;font-weight:700;">✕</span>
+    </button>
+  </div>
+  <div id="pragya-frame" style="display:none;">
+    <!-- allow="microphone" is REQUIRED for the live voice-chat feature to work
+         inside the embedded iframe. On pyshk.com the WPCode snippet's <iframe>
+         must include the same allow="microphone; autoplay" attribute. -->
+    <iframe src="/" title="Pragya AI Assistant" allow="microphone; autoplay"></iframe>
+  </div>
+  <script src="js/demo-widget.js"></script>
+  <!-- End Pragya AI Assistant -->
+
+</body>
+</html>

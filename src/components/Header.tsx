@@ -6,7 +6,7 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onNavigateSection: (sectionId: string) => void;
   currentView?: string;
-  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers' | 'membership' | 'events') => void;
+  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers' | 'membership' | 'events' | 'ai-assistant') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   onViewChange
 }) => {
   const [activeTab, setActiveTab] = useState(
-    currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : currentView === 'membership' ? 'Membership & Packages' : currentView === 'events' ? 'Events' : 'Home'
+    currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : currentView === 'membership' ? 'Membership & Packages' : currentView === 'events' ? 'Events' : currentView === 'ai-assistant' ? 'AI Assistant' : 'Home'
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -33,6 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
       setActiveTab('Membership & Packages');
     } else if (currentView === 'events') {
       setActiveTab('Events');
+    } else if (currentView === 'ai-assistant') {
+      setActiveTab('AI Assistant');
     } else if (currentView === 'home') {
       setActiveTab('Home');
     }
@@ -45,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Classes', id: 'classes', type: 'page' },
     { label: 'Teachers', id: 'teachers', type: 'page' },
     { label: 'Membership & Packages', id: 'membership', type: 'page' },
+    { label: 'AI Assistant', id: 'ai-assistant', type: 'page' },
     { label: 'Login', id: 'login', type: 'action' }
   ];
 
@@ -81,6 +84,9 @@ export const Header: React.FC<HeaderProps> = ({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item.label === 'Events' || item.id === 'events' || item.id === 'programs') {
       if (onViewChange) onViewChange('events');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (item.label === 'AI Assistant' || item.id === 'ai-assistant') {
+      if (onViewChange) onViewChange('ai-assistant');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item.label === 'Home') {
       if (onViewChange) onViewChange('home');

@@ -34,6 +34,86 @@ export interface Instructor {
   experience?: string;
 }
 
+export type PackageType = 
+  | 'teacher_training' 
+  | 'workshop' 
+  | 'event' 
+  | 'retreat' 
+  | 'regular' 
+  | 'private' 
+  | 'free_class';
+
+export interface ItineraryItem {
+  day: string;
+  title: string;
+  detail: string;
+}
+
+export interface SyllabusModule {
+  moduleTitle: string;
+  topics: string[];
+}
+
+export interface RoomOption {
+  name: string;
+  price: number;
+}
+
+export interface PackageMetadata {
+  // Teacher Training
+  certification?: string; // e.g. "200-Hour RYT"
+  totalHours?: number;
+  syllabus?: SyllabusModule[];
+  batchDates?: string;
+
+  // Retreat
+  location?: string;
+  itinerary?: ItineraryItem[];
+  roomOptions?: RoomOption[];
+
+  // Workshop & Event
+  eventDate?: string;
+  eventTime?: string;
+  venue?: string;
+  totalSeats?: number;
+  bookedSeats?: number;
+  instructorName?: string;
+  instructorRole?: string;
+
+  // Regular Package
+  validityPeriod?: string;
+  classCount?: number | string;
+
+  // Private Session
+  sessionDuration?: string;
+  focusAreas?: string[];
+  assignedInstructor?: string;
+
+  // Free Class
+  eligibilityText?: string;
+  validForDays?: number;
+}
+
+export interface DynamicPackage {
+  id: string;
+  type: PackageType;
+  title: string;
+  subtitle?: string;
+  price: number;
+  discountPrice?: number;
+  currency: string;
+  badge?: string;
+  badgeColor?: string;
+  coverImage?: string;
+  gallery?: string[];
+  description: string;
+  features: string[];
+  isActive: boolean;
+  isFeatured?: boolean;
+  displayOrder: number;
+  metadata: PackageMetadata;
+}
+
 export interface PackageItem {
   id: number;
   packageID: string | null;
@@ -52,6 +132,8 @@ export interface PackageItem {
   category?: 'Private' | 'Group' | 'Retreat' | 'Membership';
   description?: string;
   features?: string[];
+  type?: PackageType;
+  metadata?: PackageMetadata;
 }
 
 export interface UpcomingEvent {

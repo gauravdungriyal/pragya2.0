@@ -1,4 +1,4 @@
-import { ClassScheduleItem, Instructor, PackageItem, UpcomingEvent, DailyQuote, FaqItem, FilterOptions } from '../types';
+import { ClassScheduleItem, Instructor, PackageItem, UpcomingEvent, DailyQuote, FaqItem, FilterOptions, DynamicPackage, PackageType } from '../types';
 
 const API_BASE_URL = 'https://pragya-yog.com/api.php';
 
@@ -570,3 +570,471 @@ export async function getFilters(): Promise<FilterOptions> {
     ]
   };
 }
+
+// ---------------------------------------------------------------------------
+// Dynamic 7-Package System (API Integration + LocalStorage Fallback)
+// ---------------------------------------------------------------------------
+
+const LOCAL_STORAGE_PACKAGES_KEY = 'pragyayog_dynamic_packages_v1';
+
+export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
+  // 1. TEACHER TRAINING
+  {
+    id: 'ttc-200hr',
+    type: 'teacher_training',
+    title: '200-Hour Master Yoga Teacher Training',
+    subtitle: 'Yoga Alliance USA Certified Immersion Program',
+    price: 185000,
+    discountPrice: 165000,
+    currency: '₹',
+    badge: 'Yoga Alliance Certified',
+    badgeColor: 'amber',
+    coverImage: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
+    description: 'Transform your practice and become an internationally accredited yoga teacher. Comprehensive curriculum covering Hatha, Vinyasa, Anatomy, Pranayama, and Yogic Philosophy.',
+    features: [
+      '200 Hours Yoga Alliance USA Certification',
+      'Comprehensive Printed & Digital Study Manual',
+      'Hands-on Anatomy & Biomechanics Labs',
+      'Teaching Methodology & Micro-practicum',
+      'Lifetime Alumni Mentorship Community Access'
+    ],
+    isActive: true,
+    isFeatured: true,
+    displayOrder: 1,
+    metadata: {
+      certification: '200-Hour RYT (Yoga Alliance)',
+      totalHours: 200,
+      batchDates: 'Oct 15 - Nov 12, 2026',
+      syllabus: [
+        { moduleTitle: 'Module 1: Asana Alignment & Kinesiology', topics: ['Biomechanical Principles', 'Structural Adjustments', 'Injury Prevention'] },
+        { moduleTitle: 'Module 2: Pranayama & Subtle Energy Science', topics: ['Nadi Shodhana & Bandhas', 'Kriya Practices', 'Chakra Anatomy'] },
+        { moduleTitle: 'Module 3: Philosophy & Patanjali Yoga Sutras', topics: ['Classical Texts Analysis', 'Yama & Niyama Integration', 'Ethics for Teachers'] }
+      ]
+    }
+  },
+  // 2. WORKSHOP
+  {
+    id: 'ws-yog-therapy',
+    type: 'workshop',
+    title: 'Yog Therapy 2.0 – Realign Your Foundation',
+    subtitle: 'Intensive Structural Alignment & Rehabilitation Masterclass',
+    price: 6000,
+    currency: '₹',
+    badge: 'Popular Workshop',
+    badgeColor: 'emerald',
+    coverImage: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80',
+    description: 'Deconstruct structural imbalances. Learn spine rehab, pelvis alignment, core activation, and personalized therapy protocols guided by Master Shoaib.',
+    features: [
+      'Interactive Clinical Therapy Session',
+      'Personalized Biomechanical Assessment',
+      'Postural Realignment & Neuropathy Drills',
+      'Take-home Practice Routine PDF'
+    ],
+    isActive: true,
+    isFeatured: true,
+    displayOrder: 2,
+    metadata: {
+      eventDate: 'Saturday, Sept 12, 2026',
+      eventTime: '02:00 PM - 05:00 PM',
+      venue: 'Pragya Main Sanctuary Studio A',
+      totalSeats: 20,
+      bookedSeats: 14,
+      instructorName: 'Master Shoaib M'
+    }
+  },
+  {
+    id: 'ws-sacred-sound',
+    type: 'workshop',
+    title: 'Sacred Soundscapes: CET-Certified Chanting & Kirtan',
+    subtitle: 'Acoustic Sound Therapy & Vocal Resonance Immersion',
+    price: 8600,
+    currency: '₹',
+    badge: 'CET Certified',
+    badgeColor: 'amber',
+    coverImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80',
+    description: 'Immerse in ancient Vedic mantras, Himalayan singing bowl acoustics, and vocal resonance techniques for emotional clearing and nervous system regulation.',
+    features: [
+      'CET Certification of Completion',
+      'Tibetan Bowl & Gong Acoustic Meditation',
+      'Sanskrit Pronunciation & Chanting Guide',
+      'Herbal Tea & Closing Circle'
+    ],
+    isActive: true,
+    isFeatured: true,
+    displayOrder: 3,
+    metadata: {
+      eventDate: 'Sunday, Sept 20, 2026',
+      eventTime: '10:00 AM - 04:00 PM',
+      venue: 'Pragya Acoustic Sanctuary',
+      totalSeats: 15,
+      bookedSeats: 11,
+      instructorName: 'Charlotte Chiu'
+    }
+  },
+  // 3. EVENT
+  {
+    id: 'ev-backbend-intensive',
+    type: 'event',
+    title: 'Back Bend Intensive 2026',
+    subtitle: '21-Day Guided Heart-Opening & Mobility Series',
+    price: 6500,
+    discountPrice: 5500,
+    currency: '₹',
+    badge: 'Early Bird Special',
+    coverImage: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=1200&q=80',
+    description: 'A 21-day structured journey to safely open thoracic spine mobility, strengthen posterior chain, and master deep backbends without lower back compression.',
+    features: [
+      '7 Dedicated In-person Sessions',
+      'Thoracic Mobility & Shoulder Stacking',
+      'Safe Wheel & Camel Pose Conditioning',
+      'Daily Practice Tracker'
+    ],
+    isActive: true,
+    isFeatured: true,
+    displayOrder: 4,
+    metadata: {
+      eventDate: 'Aug 9 - Aug 30, 2026',
+      eventTime: '07:00 AM - 08:30 AM',
+      venue: 'Pragya Main Hall',
+      totalSeats: 25,
+      bookedSeats: 18,
+      instructorName: 'Master Aarya Kuldeep'
+    }
+  },
+  {
+    id: 'ev-boat-trip',
+    type: 'event',
+    title: 'Pragya Boat Trip 2.0',
+    subtitle: 'Ganga Sunrise River Meditative Experience',
+    price: 1500,
+    currency: '₹',
+    badge: 'Popular Event',
+    coverImage: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
+    description: 'Sail down the sacred Ganges at dawn. Includes river pranayama, acoustic chanting, organic sattvic breakfast, and silent meditation.',
+    features: [
+      'Private Boat Cruise on the River Ganges',
+      'Guided Dawn Meditation & Breathwork',
+      'Organic Herbal Tea & Breakfast Box',
+      'Sacred Ganga Aarti Ceremony'
+    ],
+    isActive: true,
+    isFeatured: false,
+    displayOrder: 5,
+    metadata: {
+      eventDate: 'Saturday, Sept 12, 2026',
+      eventTime: '05:30 AM - 08:30 AM',
+      venue: 'Rishikesh Ghat Pier',
+      totalSeats: 30,
+      bookedSeats: 22,
+      instructorName: 'Pragya Faculty Team'
+    }
+  },
+  // 4. RETREAT
+  {
+    id: 'ret-nepal-single',
+    type: 'retreat',
+    title: 'Nepal Himalayan Sanctuary Retreat (Single Suite)',
+    subtitle: '9-Day Luxury Mountain Meditation & Renewal Journey',
+    price: 24375,
+    currency: '₹',
+    badge: 'Limited Availability',
+    coverImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80',
+    description: 'Immerse yourself in pristine Himalayan mountain air. Includes private luxury suite, daily organic sattvic dining, guided morning flow, and Buddhist monastery visits.',
+    features: [
+      '9 Days / 8 Nights Private Luxury Suite Accommodation',
+      '3 Daily Gourmet Organic Sattvic Meals & Fresh Juices',
+      'Daily Morning Hatha & Evening Yin Sound Healing',
+      'Guided Monastery Tours & Mountain Treks',
+      'Roundtrip Airport & Sanctuary Transfers'
+    ],
+    isActive: true,
+    isFeatured: true,
+    displayOrder: 6,
+    metadata: {
+      location: 'Pokhara Valley, Nepal',
+      eventDate: 'Sept 25 - Oct 04, 2026',
+      roomOptions: [
+        { name: 'Private Suite', price: 24375 },
+        { name: 'Shared Twin Suite', price: 19125 }
+      ],
+      itinerary: [
+        { day: 'Day 1', title: 'Arrival & Welcome Dinner', detail: 'Sanctuary orientation, herbal tea tasting, and evening sound bath.' },
+        { day: 'Day 2', title: 'Dawn Mountain Flow & Temple Trek', detail: 'Sunrise pranayama over the Himalayas followed by World Peace Pagoda hike.' },
+        { day: 'Day 3-8', title: 'Deep Practice & Silent Reflection', detail: 'Asana labs, Ayurveda consultations, and monastery acoustic meditation.' },
+        { day: 'Day 9', title: 'Closing Circle & Departure', detail: 'Sattvic farewell brunch and airport transfers.' }
+      ]
+    }
+  },
+  // 5. MEMBERSHIP
+  {
+    id: 'mem-unlim-12m',
+    type: 'regular',
+    title: 'Unlimited Membership (12 Months)',
+    subtitle: 'Full Year All-Access Sanctuary Pass',
+    price: 21292,
+    currency: '₹',
+    badge: 'Best Value',
+    coverImage: 'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?auto=format&fit=crop&w=1200&q=80',
+    description: 'Complete 365-day unlimited access to all daily group classes, sound healing sessions, reformer pilates, and member-only events.',
+    features: [
+      'Unlimited Access to 45+ Weekly Classes',
+      'Free Mat Storage & Towel Service',
+      '2 Complimentary Guest Passes per Month',
+      '15% Off All Workshops & Retreats',
+      'Free Access to Digital On-Demand Library'
+    ],
+    isActive: true,
+    isFeatured: true,
+    displayOrder: 7,
+    metadata: {
+      validityPeriod: '12 Months (365 Days)',
+      classCount: 'Unlimited Classes'
+    }
+  },
+  {
+    id: 'mem-8class',
+    type: 'regular',
+    title: '8 Class / Month Membership',
+    subtitle: 'Flexible Semi-Private Practice Pass',
+    price: 8498,
+    currency: '₹',
+    badge: 'Most Popular',
+    coverImage: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
+    description: 'Ideal for practitioners attending twice a week. Unused class credits roll over for up to 30 days.',
+    features: [
+      '8 Class Credits per Month',
+      'Valid for Hatha, Vinyasa & Yin Sessions',
+      'Complimentary Mat & Prop Usage',
+      '10% Discount on Studio Boutique'
+    ],
+    isActive: true,
+    isFeatured: false,
+    displayOrder: 8,
+    metadata: {
+      validityPeriod: '1 Month (30 Days)',
+      classCount: '8 Classes'
+    }
+  },
+  // 6. PRIVATE
+  {
+    id: 'priv-shoaib-consult',
+    type: 'private',
+    title: 'Professional 1-1 Health Consultation with Master Shoaib',
+    subtitle: 'Personalized Neuro-Therapy & Spine Rehabilitation',
+    price: 1250,
+    currency: '₹',
+    badge: 'Therapy Special',
+    coverImage: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=1200&q=80',
+    description: 'One-on-one diagnostic consultation focused on back pain recovery, spinal alignment, posture correction, and custom neuro-therapy protocols.',
+    features: [
+      '60-Minute Comprehensive Assessment',
+      'Spinal Alignment & Postural Scan',
+      'Custom Home Exercise & Kriya Routine',
+      'Direct Guidance by Master Shoaib'
+    ],
+    isActive: true,
+    isFeatured: true,
+    displayOrder: 9,
+    metadata: {
+      sessionDuration: '60 Minutes',
+      focusAreas: ['Spine Alignment', 'Back Pain Recovery', 'Neuropathy'],
+      assignedInstructor: 'Master Shoaib M'
+    }
+  },
+  {
+    id: 'priv-aarya-1on1',
+    type: 'private',
+    title: '1-on-1 Private Session with Master Aarya',
+    subtitle: 'Bespoke Asana Alignment & Subtle Energy Mastery',
+    price: 1500,
+    currency: '₹',
+    badge: 'Master Guide',
+    coverImage: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
+    description: 'Private immersion tailored to your personal goals. Includes advanced posture adjustments, personalized pranayama, and meditation instruction.',
+    features: [
+      '75-Minute Customized Private Session',
+      'Advanced Postural Adjustments',
+      'Personalized Pranayama & Meditation',
+      'Exclusive Private Studio Access'
+    ],
+    isActive: true,
+    isFeatured: false,
+    displayOrder: 10,
+    metadata: {
+      sessionDuration: '75 Minutes',
+      focusAreas: ['Classical Hatha', 'Pranayama Science', 'Meditation'],
+      assignedInstructor: 'Master Aarya Kuldeep'
+    }
+  }
+];
+
+function mapPhpPackageToDynamicPackage(item: any, catName: string): DynamicPackage {
+  let pType: PackageType = 'regular';
+  const c = (catName || item.category || '').toLowerCase();
+  if (c.includes('retreat')) pType = 'retreat';
+  else if (c.includes('event')) pType = 'event';
+  else if (c.includes('workshop')) pType = 'workshop';
+  else if (c.includes('private')) pType = 'private';
+  else if (c.includes('ttc') || c.includes('teacher')) pType = 'teacher_training';
+
+  const origPrice = Number(item.original_amount || item.price || item.amount || 0);
+  const currentPrice = Number(item.amount || item.price || origPrice);
+  const hasDiscount = item.discount_active || (origPrice > currentPrice && currentPrice > 0);
+  const discountPrice = hasDiscount ? currentPrice : undefined;
+  const basePrice = discountPrice ? origPrice : currentPrice;
+
+  const covers: Record<PackageType, string> = {
+    teacher_training: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
+    workshop: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80',
+    event: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80',
+    retreat: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=1200&q=80',
+    regular: 'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?auto=format&fit=crop&w=1200&q=80',
+    private: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=1200&q=80',
+    free_class: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
+  };
+
+  return {
+    id: String(item.id || item.packageID || 'pkg-' + Math.random()),
+    type: pType,
+    title: item.title ? item.title.trim() : 'Pragya Offering',
+    subtitle: item.duration_label ? `${item.duration_label} · ${item.access_label || 'Sanctuary Pass'}` : (item.class_access || ''),
+    price: basePrice || 1000,
+    discountPrice: discountPrice,
+    currency: '₹',
+    badge: item.discount_type ? 'Special Offer' : (item.promo_active ? 'Promo Deal' : undefined),
+    coverImage: covers[pType],
+    description: item.description || (item.benefit ? `Sanctuary Access: ${item.benefit} (${item.access_label || ''})` : 'Experience authentic traditional practice at Pragya Yog School Sanctuary.'),
+    features: [
+      item.benefit ? `Access: ${item.benefit}` : 'Sanctuary Access',
+      item.duration_label ? `Duration: ${item.duration_label}` : 'Flexible Schedule',
+      item.class_access ? `Access Code: ${item.class_access}` : 'All Props Included'
+    ],
+    isActive: item.status !== 0,
+    isFeatured: true,
+    displayOrder: 1,
+    metadata: {
+      location: pType === 'retreat' ? 'Nepal Sanctuary & Resort' : 'Rishikesh Main Studio',
+      eventDate: item.periods_start_date ? `Starts: ${item.periods_start_date}` : undefined,
+      totalSeats: item.total_access_sessions || 20,
+      bookedSeats: Math.floor((item.total_access_sessions || 20) * 0.5),
+      instructorName: pType === 'private' ? 'Master Shoaib M / Master Aarya' : 'Senior Faculty',
+      validityPeriod: item.duration_label || '30 Days',
+      classCount: item.benefit || 'Unlimited Sessions',
+      certification: pType === 'teacher_training' ? '200-Hour RYT (Yoga Alliance)' : undefined,
+    }
+  };
+}
+
+export async function getDynamicPackages(typeFilter?: PackageType | 'all'): Promise<DynamicPackage[]> {
+  let liveList: DynamicPackage[] = [];
+
+  try {
+    const res = await fetchFromApi<any>('get-packages');
+    if (res && res.data && typeof res.data === 'object') {
+      const allApiItems: DynamicPackage[] = [];
+      for (const catName in res.data) {
+        if (Array.isArray(res.data[catName])) {
+          res.data[catName].forEach((item: any) => {
+            allApiItems.push(mapPhpPackageToDynamicPackage(item, catName));
+          });
+        }
+      }
+      if (allApiItems.length > 0) {
+        liveList = allApiItems;
+      }
+    }
+  } catch (err) {
+    console.warn('Live API get-packages fetch error, using cache:', err);
+  }
+
+  // Combine live API results with local modifications or fallbacks
+  let finalList: DynamicPackage[] = liveList.length > 0 ? liveList : INITIAL_DYNAMIC_PACKAGES;
+
+  try {
+    const stored = localStorage.getItem(LOCAL_STORAGE_PACKAGES_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Merge custom/updated items from local storage with liveList
+        const mergedMap = new Map<string, DynamicPackage>();
+        finalList.forEach(p => mergedMap.set(p.id, p));
+        parsed.forEach(p => mergedMap.set(p.id, p));
+        finalList = Array.from(mergedMap.values());
+      }
+    } else {
+      localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(finalList));
+    }
+  } catch (e) {
+    console.warn('LocalStorage merge error:', e);
+  }
+
+  if (typeFilter && typeFilter !== 'all') {
+    return finalList.filter(p => p.type === typeFilter);
+  }
+  return finalList;
+}
+
+export async function saveDynamicPackage(pkg: DynamicPackage): Promise<{ success: boolean; package: DynamicPackage }> {
+  let savedPkg = { ...pkg };
+  if (!savedPkg.id) {
+    savedPkg.id = 'pkg-' + Date.now();
+  }
+
+  // Send request to API
+  try {
+    const res = await fetchFromApi<any>('save-dynamic-package', { package: savedPkg });
+    if (res && res.status && res.data) {
+      savedPkg = res.data;
+    }
+  } catch (err) {
+    console.warn('API save-dynamic-package failed, saving locally:', err);
+  }
+
+  // Save in LocalStorage
+  try {
+    const currentList = await getDynamicPackages('all');
+    const existingIndex = currentList.findIndex(p => p.id === savedPkg.id);
+    let updatedList: DynamicPackage[];
+    if (existingIndex >= 0) {
+      updatedList = [...currentList];
+      updatedList[existingIndex] = savedPkg;
+    } else {
+      updatedList = [savedPkg, ...currentList];
+    }
+    localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(updatedList));
+  } catch (e) {
+    console.warn('LocalStorage save error:', e);
+  }
+
+  return { success: true, package: savedPkg };
+}
+
+export async function deleteDynamicPackage(id: string): Promise<boolean> {
+  try {
+    await fetchFromApi<any>('delete-dynamic-package', { id });
+  } catch (err) {
+    console.warn('API delete-dynamic-package failed, deleting locally:', err);
+  }
+
+  try {
+    const currentList = await getDynamicPackages('all');
+    const updatedList = currentList.filter(p => p.id !== id);
+    localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(updatedList));
+  } catch (e) {
+    console.warn('LocalStorage delete error:', e);
+  }
+
+  return true;
+}
+
+export async function toggleDynamicPackageActive(id: string, isActive: boolean): Promise<boolean> {
+  const currentList = await getDynamicPackages('all');
+  const pkg = currentList.find(p => p.id === id);
+  if (pkg) {
+    pkg.isActive = isActive;
+    await saveDynamicPackage(pkg);
+    return true;
+  }
+  return false;
+}
+

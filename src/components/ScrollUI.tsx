@@ -93,7 +93,7 @@ export const BackToTopButton: React.FC = () => {
         className="back-to-top-btn"
         style={{
           position: 'fixed',
-          bottom: '16px',
+          bottom: '90px',
           right: '20px',
           zIndex: 1000,
           width: '44px',

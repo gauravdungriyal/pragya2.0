@@ -1,0 +1,33 @@
+# ════════════════════════════════════════════════════════════════
+# NEVER commit these to GitHub
+# ════════════════════════════════════════════════════════════════
+
+# Secrets — CRITICAL: never commit your real API keys
+.env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Build output
+dist/
+build/
+
+# Claude Code local tooling
+.claude/
+
+# Internal planning docs (not needed in the deployed repo)
+*.docx

@@ -21,11 +21,14 @@ import { TeacherDetailPage } from './components/TeacherDetailPage';
 import { MembershipPage } from './components/MembershipPage';
 import { EventsPage } from './components/EventsPage';
 import { EventDetailPage } from './components/EventDetailPage';
-import { ScrollProgressBar, BackToTopButton } from './components/ScrollUI';
+import { ScrollProgressBar } from './components/ScrollUI';
+import { AdminStandalonePage } from './components/admin/AdminStandalonePage';
+import { AIChatWidget } from './components/AIChatWidget';
+import { AiAssistantPage } from './components/AiAssistantPage';
 import { Instructor, UpcomingEvent } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'admin' | 'ai-assistant'>('home');
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingType, setBookingType] = useState('class');
   const [bookingTitle, setBookingTitle] = useState('Book a Class');
@@ -188,13 +191,33 @@ export const App: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+    const search = window.location.search;
+    if (path.includes('pragya-admin') || hash.includes('pragya-admin') || search.includes('admin=true')) {
+      setCurrentView('admin');
+    }
+  }, []);
+
+  if (currentView === 'admin') {
+    return (
+      <AdminStandalonePage
+        onBackToSite={() => {
+          setCurrentView('home');
+          window.history.pushState(null, '', '/');
+        }}
+      />
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F5EFE5' }}>
       {/* Scroll progress bar — fixed at very top */}
       <ScrollProgressBar />
 
       {/* Back-to-top floating button */}
-      <BackToTopButton />
+
 
       {/* Sticky Navigation Header */}
       <Header
@@ -261,6 +284,11 @@ export const App: React.FC = () => {
             }}
             onOpenBooking={handleOpenBooking}
           />
+        ) : currentView === 'ai-assistant' ? (
+          <AiAssistantPage
+            onBackToHome={() => handleViewChange('home')}
+            onOpenBooking={handleOpenBooking}
+          />
         ) : (
           <>
             <Hero
@@ -287,6 +315,12 @@ export const App: React.FC = () => {
       {/* Footer */}
       <NewsletterFooter
         onNavigateSection={handleNavigateSection}
+        onOpenBooking={handleOpenBooking}
+      />
+
+      {/* Floating AI Chatbot Widget (Always visible on all pages) */}
+      <AIChatWidget
+        onOpenFullPage={() => handleViewChange('ai-assistant')}
         onOpenBooking={handleOpenBooking}
       />
 
