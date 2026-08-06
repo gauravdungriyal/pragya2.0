@@ -47,7 +47,6 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Classes', id: 'classes', type: 'page' },
     { label: 'Teachers', id: 'teachers', type: 'page' },
     { label: 'Membership & Packages', id: 'membership', type: 'page' },
-    { label: 'AI Assistant', id: 'ai-assistant', type: 'page' },
     { label: 'Login', id: 'login', type: 'action' }
   ];
 
