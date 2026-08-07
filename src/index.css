@@ -466,9 +466,23 @@ h1, h2, h3, h4, .font-serif {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
   position: relative;
   border: 1px solid var(--color-border-subtle);
+}
+
+.modal-content::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 /* Input Fields & Forms */

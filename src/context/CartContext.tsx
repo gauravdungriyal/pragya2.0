@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
+import { CartOtpModal } from '../components/CartOtpModal';
 
 export interface CartItem {
   id: number | string;
@@ -30,6 +32,8 @@ const STORAGE_KEY = 'pragyayog_cart_items_v1';
 const CartContext = createContext<CartContextValue | null>(null);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -41,6 +45,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // OTP Verification before adding to cart for unauthenticated users
+  const [pendingItem, setPendingItem] = useState<{ item: Omit<CartItem, 'quantity'>; quantity: number } | null>(null);
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
@@ -48,6 +56,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [items]);
 
   const addToCart = useCallback((item: Omit<CartItem, 'quantity'>, quantity = 1) => {
+    if (!user) {
+      // Require OTP verification & guest login first before adding anything to cart!
+      setPendingItem({ item, quantity });
+      setOtpModalOpen(true);
+      return;
+    }
+
     setItems((prev) => {
       const existingIdx = prev.findIndex((i) => String(i.id) === String(item.id));
       if (existingIdx > -1) {
@@ -57,7 +72,24 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return [...prev, { ...item, quantity }];
     });
-  }, []);
+  }, [user]);
+
+  const handleOtpSuccess = () => {
+    if (pendingItem) {
+      const { item, quantity } = pendingItem;
+      setItems((prev) => {
+        const existingIdx = prev.findIndex((i) => String(i.id) === String(item.id));
+        if (existingIdx > -1) {
+          const updated = [...prev];
+          updated[existingIdx].quantity += quantity;
+          return updated;
+        }
+        return [...prev, { ...item, quantity }];
+      });
+      setPendingItem(null);
+    }
+    setOtpModalOpen(false);
+  };
 
   const removeFromCart = useCallback((id: number | string) => {
     setItems((prev) => prev.filter((i) => String(i.id) !== String(id)));
@@ -101,6 +133,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }}
     >
       {children}
+
+      {/* Mandatory OTP & Guest Verification Modal before adding item to cart */}
+      <CartOtpModal
+        isOpen={otpModalOpen}
+        onClose={() => { setOtpModalOpen(false); setPendingItem(null); }}
+        item={pendingItem?.item}
+        onSuccess={handleOtpSuccess}
+      />
     </CartContext.Provider>
   );
 };

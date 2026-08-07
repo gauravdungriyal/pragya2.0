@@ -1193,13 +1193,66 @@ export async function bookClass(token: string, scheduleId: string | number, pack
   return { success: false, message: res?.message || 'Booking failed.' };
 }
 
-/** Book a drop-in class (JWT) */
 export async function bookDropIn(token: string, scheduleId: string | number): Promise<{ success: boolean; message: string }> {
   const res = await fetchFromApi<any>('book_dropin', { token, event_id: scheduleId, schedule_id: scheduleId });
   if (res?.status === true || res?.success === true) {
     return { success: true, message: res.message || 'Drop-in booking request submitted successfully!' };
   }
   return { success: false, message: res?.message || 'Drop-in booking failed.' };
+}
+
+// ─── Guest Booking & OTP APIs ─────────────────────────────────────────────
+
+/** Guest Booking Check Email & Send OTP */
+export async function guestBookingCheckEmail(email: string): Promise<{ fname?: string; phone?: string; hongkong_id?: string; error?: string }> {
+  return fetchFromApi<any>('guestBookingCheckEmail', { email });
+}
+
+/** Guest Class Booking with OTP Verification */
+export async function guestBooking(payload: {
+  event_id: number | string;
+  otp: string;
+  name: string;
+  email: string;
+  phone?: string;
+  country_code?: string;
+  hongkong_id?: string;
+}): Promise<any> {
+  return fetchFromApi<any>('guestBooking', payload);
+}
+
+/** Guest Reserve Package with OTP Verification & Auth Token Issuance */
+export async function guestReservePackage(payload: {
+  package_id: number | string;
+  otp: string;
+  email: string;
+  name: string;
+  phone?: string;
+  country_code?: string;
+  hongkong_id?: string;
+}): Promise<any> {
+  return fetchFromApi<any>('guest_reserve_package', {
+    ...payload,
+    package_id: Number(payload.package_id),
+  });
+}
+
+/** Guest Reserve Bundle with OTP Verification & Auth Token Issuance */
+export async function guestReserveBundle(payload: {
+  bundle_id?: number | string;
+  package_ids: (number | string)[];
+  otp: string;
+  email: string;
+  name: string;
+  phone?: string;
+  country_code?: string;
+  hongkong_id?: string;
+}): Promise<any> {
+  return fetchFromApi<any>('guest_reserve_bundle', {
+    ...payload,
+    bundle_id: payload.bundle_id ? Number(payload.bundle_id) : undefined,
+    package_ids: payload.package_ids.map((id) => Number(id)),
+  });
 }
 
 /** Get upcoming or single booking details (JWT) */

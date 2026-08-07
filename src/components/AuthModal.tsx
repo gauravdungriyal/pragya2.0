@@ -10,23 +10,66 @@ interface AuthModalProps {
   initialTab?: 'login' | 'reset';
 }
 
-type Tab = 'login' | 'reset' | 'reset-sent';
+type Tab = 'login' | 'otp' | 'reset' | 'reset-sent';
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initialTab = 'login' }) => {
-  const { login, resetPassword } = useAuth();
+  const { login, sendOtp, verifyOtp, resetPassword } = useAuth();
 
   const [tab, setTab] = useState<Tab>(initialTab);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successInfo, setSuccessInfo] = useState('');
 
   // Login form
   const [loginData, setLoginData] = useState({ email: '', password: '' });
+
+  // OTP Login form
+  const [otpTarget, setOtpTarget] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
 
   // Reset form
   const [resetEmail, setResetEmail] = useState('');
 
   if (!isOpen) return null;
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccessInfo('');
+    if (!otpTarget) {
+      setError('Please enter your email or phone number.');
+      return;
+    }
+    setIsLoading(true);
+    const res = await sendOtp(otpTarget);
+    setIsLoading(false);
+    if (res.success) {
+      setOtpSent(true);
+      setSuccessInfo(res.message || 'OTP code sent! Check your inbox/phone.');
+    } else {
+      setError(res.message);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!otpCode) {
+      setError('Please enter the 6-digit OTP code.');
+      return;
+    }
+    setIsLoading(true);
+    const res = await verifyOtp(otpTarget, otpCode);
+    setIsLoading(false);
+    if (res.success) {
+      onSuccess?.();
+      onClose();
+    } else {
+      setError(res.message);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,11 +218,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <button
                   type="button"
-                  onClick={() => { setTab('reset'); setError(''); }}
-                  style={{ background: 'none', border: 'none', fontSize: '12px', color: '#944426', cursor: 'pointer', fontWeight: 600 }}
+                  onClick={() => { setTab('otp'); setError(''); setSuccessInfo(''); }}
+                  style={{ background: 'none', border: 'none', fontSize: '12px', color: '#944426', cursor: 'pointer', fontWeight: 700 }}
+                >
+                  Sign In via OTP →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setTab('reset'); setError(''); setSuccessInfo(''); }}
+                  style={{ background: 'none', border: 'none', fontSize: '12px', color: '#8A8580', cursor: 'pointer', fontWeight: 600 }}
                 >
                   Forgot password?
                 </button>
@@ -201,6 +251,93 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 )}
               </button>
             </form>
+          </>
+        )}
+
+        {/* ── OTP LOGIN TAB ───────────────────────────────────── */}
+        {tab === 'otp' && (
+          <>
+            <button
+              onClick={() => { setTab('login'); setError(''); setSuccessInfo(''); }}
+              style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '6px', color: '#944426', fontSize: '13px', fontWeight: 600, cursor: 'pointer', marginBottom: '20px', padding: 0 }}
+            >
+              <ArrowLeft size={14} /> Back to Password Sign In
+            </button>
+
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '26px', color: '#272727', marginBottom: '6px' }}>
+              Instant OTP Login
+            </h2>
+            <p style={{ fontSize: '13px', color: '#8A8580', marginBottom: '24px' }}>
+              Enter your email or phone to receive a 6-digit verification code.
+            </p>
+
+            {error && (
+              <div style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
+                {error}
+              </div>
+            )}
+            {successInfo && (
+              <div style={{ background: 'rgba(0,181,148,0.08)', border: '1px solid rgba(0,181,148,0.2)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#00B594', marginBottom: '16px' }}>
+                {successInfo}
+              </div>
+            )}
+
+            {!otpSent ? (
+              <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={labelStyle}>Email Address or Mobile Number</label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail size={16} color="#8A8580" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                    <input
+                      type="text"
+                      placeholder="you@example.com or +852..."
+                      value={otpTarget}
+                      onChange={(e) => setOtpTarget(e.target.value)}
+                      style={inputStyle}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="btn btn-primary-hero"
+                  style={{ width: '100%', padding: '14px', fontSize: '14px', fontWeight: 700, opacity: isLoading ? 0.7 : 1 }}
+                >
+                  {isLoading ? 'Sending OTP…' : 'Send Verification OTP'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={labelStyle}>Enter 6-Digit OTP Code</label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="123456"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    style={{ ...inputStyle, paddingLeft: '16px', letterSpacing: '0.2em', textAlign: 'center', fontSize: '18px', fontWeight: 700 }}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="btn btn-primary-hero"
+                  style={{ width: '100%', padding: '14px', fontSize: '14px', fontWeight: 700, opacity: isLoading ? 0.7 : 1 }}
+                >
+                  {isLoading ? 'Verifying…' : 'Verify & Auto Login'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setOtpSent(false); setOtpCode(''); }}
+                  style={{ background: 'none', border: 'none', color: '#944426', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', textAlign: 'center', marginTop: '4px' }}
+                >
+                  Resend OTP Code
+                </button>
+              </form>
+            )}
           </>
         )}
 
