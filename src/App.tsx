@@ -27,14 +27,25 @@ import { AIChatWidget } from './components/AIChatWidget';
 import { AiAssistantPage } from './components/AiAssistantPage';
 import { PackageDetailPage } from './components/PackageDetailPage';
 import { PragyaConnectPage } from './components/PragyaConnectPage';
+import { PackageReserveModal } from './components/PackageReserveModal';
+import { GuestBookingModal } from './components/GuestBookingModal';
+import { CartPage } from './components/CartPage';
 import { Instructor, UpcomingEvent, DynamicPackage } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'admin' | 'ai-assistant' | 'community'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'admin' | 'ai-assistant' | 'community' | 'cart'>('home');
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingType, setBookingType] = useState('class');
   const [bookingTitle, setBookingTitle] = useState('Book a Class');
   const [bookingDetails, setBookingDetails] = useState<any>(null);
+
+  // Package Reserve Modal state
+  const [packageReserveOpen, setPackageReserveOpen] = useState(false);
+  const [reservePackageData, setReservePackageData] = useState<{ id: string | number; title: string; price?: number } | null>(null);
+
+  // Guest Class Booking Modal state
+  const [guestBookingOpen, setGuestBookingOpen] = useState(false);
+  const [guestBookingData, setGuestBookingData] = useState<{ scheduleId: string | number; title: string; timing?: string; classDetails?: any } | null>(null);
 
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<Instructor | null>(null);
@@ -137,7 +148,59 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const handleOpenBooking = () => {
+  const handleOpenBooking = (type?: string, title?: string, details?: any) => {
+    const pkgTypes = [
+      'package', 'membership', 'private', 'journey', 'experience', 'consultation',
+      'teacher_training', 'workshop', 'retreat', 'regular', 'free_class', 'event'
+    ];
+
+    // 1. Explicit Class Schedule (has schedule_id or type === 'class' with timing)
+    if (details?.schedule_id || (type === 'class' && (details?.timing || details?.instructor))) {
+      setGuestBookingData({
+        scheduleId: details.schedule_id || details.id,
+        title: title || details.title || 'Book a Class',
+        timing: details.timing,
+        classDetails: details,
+      });
+      setGuestBookingOpen(true);
+      return;
+    }
+
+    // 2. Package / Consultation / Membership / Private Pass (has packageID, category, amount, or package type)
+    if (
+      details?.packageID ||
+      details?.category ||
+      details?.amount !== undefined ||
+      (type && pkgTypes.includes(type)) ||
+      (details?.id && !details?.schedule_id && !details?.timing)
+    ) {
+      if (details?.id) {
+        setReservePackageData({
+          id: details.id,
+          title: title || details.title || 'Reserve Package',
+          price: details.price || details.discountPrice || details.amount,
+        });
+        setPackageReserveOpen(true);
+        return;
+      }
+    }
+
+    // 3. Fallback: If details has scheduleId or id for class
+    if (details?.scheduleId || details?.id) {
+      setGuestBookingData({
+        scheduleId: details.scheduleId || details.id,
+        title: title || details.title || 'Book a Class',
+        timing: details.timing,
+        classDetails: details,
+      });
+      setGuestBookingOpen(true);
+      return;
+    }
+
+    // Fallback generic modal
+    if (type) setBookingType(type);
+    if (title) setBookingTitle(title);
+    if (details) setBookingDetails(details);
     if (currentView !== 'home') {
       setCurrentView('home');
     }
@@ -303,6 +366,11 @@ export const App: React.FC = () => {
           />
         ) : currentView === 'community' ? (
           <PragyaConnectPage onOpenBooking={handleOpenBooking} />
+        ) : currentView === 'cart' ? (
+          <CartPage
+            onViewChange={(view) => handleViewChange(view as any)}
+            onOpenBooking={handleOpenBooking}
+          />
         ) : (
           <>
             <Hero
@@ -352,6 +420,29 @@ export const App: React.FC = () => {
         onClose={() => setSelectedTeacher(null)}
         onOpenBooking={handleOpenBooking}
       />
+
+      {/* Package Reserve Modal */}
+      {reservePackageData && (
+        <PackageReserveModal
+          isOpen={packageReserveOpen}
+          onClose={() => { setPackageReserveOpen(false); setReservePackageData(null); }}
+          packageId={reservePackageData.id}
+          packageTitle={reservePackageData.title}
+          packagePrice={reservePackageData.price}
+        />
+      )}
+
+      {/* Guest Class Booking Modal */}
+      {guestBookingData && (
+        <GuestBookingModal
+          isOpen={guestBookingOpen}
+          onClose={() => { setGuestBookingOpen(false); setGuestBookingData(null); }}
+          scheduleId={guestBookingData.scheduleId}
+          classTitle={guestBookingData.title}
+          classTiming={guestBookingData.timing}
+          classDetails={guestBookingData.classDetails}
+        />
+      )}
     </div>
   );
 };

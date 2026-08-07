@@ -1,6 +1,5 @@
 import { ClassScheduleItem, Instructor, PackageItem, UpcomingEvent, DailyQuote, FaqItem, FilterOptions, DynamicPackage, PackageType } from '../types';
-
-const API_BASE_URL = 'https://pragya-yog.com/api.php';
+import { API_BASE_URL } from '../config/apiConfig';
 
 async function fetchFromApi<T>(action: string, payload: Record<string, any> = {}): Promise<T | null> {
   try {
@@ -371,7 +370,7 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
 }
 
 // 6. Schedule List by Date
-export async function getScheduleByDate(dateStr?: string, instructorId?: string): Promise<{ today: string; schedules: ClassScheduleItem[] }> {
+export async function getScheduleByDate(dateStr?: string, instructorIdOrToken?: string, token?: string): Promise<{ today: string; schedules: ClassScheduleItem[] }> {
   const payload: any = {};
   if (dateStr) {
     if (dateStr.includes('-')) {
@@ -386,9 +385,19 @@ export async function getScheduleByDate(dateStr?: string, instructorId?: string)
       payload.date = dateStr;
     }
   }
-  if (instructorId) payload.instructor = instructorId;
 
-  const res = await fetchFromApi<any>('publicClassByDate', payload);
+  // If instructorIdOrToken looks like a JWT (long string), treat it as auth token
+  const isToken = instructorIdOrToken && instructorIdOrToken.length > 20;
+  if (isToken) {
+    payload.token = instructorIdOrToken;
+  } else if (instructorIdOrToken) {
+    payload.instructor = instructorIdOrToken;
+  }
+  if (token) payload.token = token;
+
+  // Use the JWT-gated endpoint for richer data when token is provided
+  const action = payload.token ? 'getClassByDate' : 'publicClassByDate';
+  const res = await fetchFromApi<any>(action, payload);
   if (res && res.status && Array.isArray(res.todaySchedules)) {
     return {
       today: res.today || 'Schedule',
@@ -580,7 +589,7 @@ const LOCAL_STORAGE_PACKAGES_KEY = 'pragyayog_dynamic_packages_v1';
 export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
   // 1. TEACHER TRAINING
   {
-    id: 'ttc-200hr',
+    id: '12760',
     type: 'teacher_training',
     title: '200-Hour Master Yoga Teacher Training',
     subtitle: 'Yoga Alliance USA Certified Immersion Program',
@@ -614,7 +623,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
   },
   // 2. WORKSHOP
   {
-    id: 'ws-yog-therapy',
+    id: '12794',
     type: 'workshop',
     title: 'Yog Therapy 2.0 – Realign Your Foundation',
     subtitle: 'Intensive Structural Alignment & Rehabilitation Masterclass',
@@ -643,7 +652,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     }
   },
   {
-    id: 'ws-sacred-sound',
+    id: '12798',
     type: 'workshop',
     title: 'Sacred Soundscapes: CET-Certified Chanting & Kirtan',
     subtitle: 'Acoustic Sound Therapy & Vocal Resonance Immersion',
@@ -673,7 +682,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
   },
   // 3. EVENT
   {
-    id: 'ev-backbend-intensive',
+    id: '12791',
     type: 'event',
     title: 'Back Bend Intensive 2026',
     subtitle: '21-Day Guided Heart-Opening & Mobility Series',
@@ -702,7 +711,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     }
   },
   {
-    id: 'ev-boat-trip',
+    id: '12792',
     type: 'event',
     title: 'Pragya Boat Trip 2.0',
     subtitle: 'Ganga Sunrise River Meditative Experience',
@@ -731,7 +740,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
   },
   // 4. RETREAT
   {
-    id: 'ret-nepal-single',
+    id: '12725',
     type: 'retreat',
     title: 'Nepal Himalayan Sanctuary Retreat (Single Suite)',
     subtitle: '9-Day Luxury Mountain Meditation & Renewal Journey',
@@ -1038,3 +1047,507 @@ export async function toggleDynamicPackageActive(id: string, isActive: boolean):
   return false;
 }
 
+// ─── HELPER: multipart form-data fetch (for file upload endpoints) ────────────
+
+export async function fetchFormData(action: string, formData: FormData, token?: string): Promise<any> {
+  try {
+    formData.append('action', action);
+    if (token) formData.append('token', token);
+    const response = await fetch(API_BASE_URL, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (err) {
+    console.warn(`fetchFormData error (${action}):`, err);
+    return null;
+  }
+}
+
+// ─── FCM Push Device Tokens ──────────────────────────────────────────────────
+
+/** Register FCM push token for authenticated device */
+export async function registerDeviceToken(
+  token: string,
+  fcmToken: string,
+  platform: 'android' | 'ios' | 'web' = 'web'
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetchFromApi<any>('register-device-token', {
+    token,
+    fcm_token: fcmToken,
+    platform,
+  });
+  return {
+    success: res?.status === true,
+    message: res?.message || (res?.status ? 'Token registered' : 'Registration failed'),
+  };
+}
+
+/** Unregister FCM push token */
+export async function unregisterDeviceToken(
+  token: string,
+  fcmToken: string
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetchFromApi<any>('unregister-device-token', {
+    token,
+    fcm_token: fcmToken,
+  });
+  return {
+    success: res?.status === true,
+    message: res?.message || (res?.status ? 'Token removed' : 'Unregistration failed'),
+  };
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+
+/** Toggle favorite on an event (requires JWT token) */
+export async function toggleEventFavorite(token: string, eventId: string | number): Promise<{ success: boolean; favorited?: boolean; likesCount?: number }> {
+  const res = await fetchFromApi<any>('event-toggle-favorite', { token, event_id: Number(eventId) });
+  return {
+    success: res?.status === true,
+    favorited: res?.favorited,
+    likesCount: res?.likes_count,
+  };
+}
+
+/** Get the authenticated user's favorited events */
+export async function getEventFavorites(token: string): Promise<UpcomingEvent[]> {
+  const res = await fetchFromApi<any>('event-favorites', { token });
+  if (res?.status && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
+/** Get detail for a single upcoming event */
+export async function getUpcomingEventDetail(eventId: string | number, token?: string): Promise<any> {
+  const payload: any = { event_id: Number(eventId), id: Number(eventId) };
+  if (token) payload.token = token;
+  const res = await fetchFromApi<any>('upcoming-event-detail', payload);
+  return res?.data || res || null;
+}
+
+/** Fetch public list of teachers/instructors */
+export async function getTeachersList(): Promise<any[]> {
+  const res = await fetchFromApi<any>('teachers');
+  if (res?.status && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
+// ─── Bundles ──────────────────────────────────────────────────────────────────
+
+/** Get list of bundles (optional auth token) */
+export async function getBundleList(token?: string): Promise<any[]> {
+  const payload = token ? { token } : {};
+  const res = await fetchFromApi<any>('bundle-list', payload);
+  if (res?.status && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
+/** Get a single bundle's details */
+export async function getBundleDetail(bundleId: string | number, token?: string): Promise<any> {
+  const payload: any = { bundle_id: bundleId };
+  if (token) payload.token = token;
+  const res = await fetchFromApi<any>('bundle-detail', payload);
+  return res?.data || null;
+}
+
+/** Get a single package's details */
+export async function getPackageDetail(packageId: string | number): Promise<any> {
+  const res = await fetchFromApi<any>('get-package-detail', { package_id: packageId });
+  return res?.data || null;
+}
+
+/** Manually renew an active membership (JWT) */
+export async function renewPackage(token: string, userPackageId: number | string): Promise<{ success: boolean; message: string }> {
+  const res = await fetchFromApi<any>('renew-package', { token, user_package_id: Number(userPackageId) });
+  if (res?.status === true || res?.success === true) {
+    return { success: true, message: res.message || 'Membership renewed successfully!' };
+  }
+  return { success: false, message: res?.message || 'Failed to renew membership.' };
+}
+
+/** Toggle auto-renew status on a membership (JWT) */
+export async function toggleAutoRenew(token: string, userPackageId: number | string, autoRenew: boolean | number): Promise<{ success: boolean; message: string; autoRenew: number }> {
+  const val = autoRenew === true || autoRenew === 1 ? 1 : 0;
+  const res = await fetchFromApi<any>('toggle-auto-renew', { token, user_package_id: Number(userPackageId), auto_renew: val });
+  if (res?.status === true) {
+    return { success: true, message: res.message || (val === 1 ? 'Auto renew enabled' : 'Auto renew disabled'), autoRenew: res.auto_renew ?? val };
+  }
+  return { success: false, message: res?.message || 'Failed to update auto renew.', autoRenew: val };
+}
+
+// ─── Bookings ─────────────────────────────────────────────────────────────────
+
+/** Book a class slot (JWT) */
+export async function bookClass(token: string, scheduleId: string | number, packageId?: string | number, waitlist?: string | number): Promise<{ success: boolean; message: string; offerDropin?: boolean; dropinData?: any }> {
+  const payload: any = { token, event_id: scheduleId, schedule_id: scheduleId };
+  if (packageId) payload.package_id = packageId;
+  if (waitlist !== undefined) payload.waitlist = waitlist;
+  const res = await fetchFromApi<any>('book', payload);
+  if (res?.status === true || res?.success === true) {
+    if (res.offer_dropin) {
+      return { success: false, offerDropin: true, dropinData: res, message: res.message || 'No membership valid for this class. You can book as a drop-in.' };
+    }
+    return { success: true, message: res.message || 'Booking confirmed!' };
+  }
+  return { success: false, message: res?.message || 'Booking failed.' };
+}
+
+/** Book a drop-in class (JWT) */
+export async function bookDropIn(token: string, scheduleId: string | number): Promise<{ success: boolean; message: string }> {
+  const res = await fetchFromApi<any>('book_dropin', { token, event_id: scheduleId, schedule_id: scheduleId });
+  if (res?.status === true || res?.success === true) {
+    return { success: true, message: res.message || 'Drop-in booking request submitted successfully!' };
+  }
+  return { success: false, message: res?.message || 'Drop-in booking failed.' };
+}
+
+/** Get upcoming or single booking details (JWT) */
+export async function getUpcomingBookings(token: string, bookingId?: string | number): Promise<any> {
+  const payload: any = { token, action_type: 'upcoming' };
+  if (bookingId) payload.id = bookingId;
+  const res = await fetchFromApi<any>('bookings', payload);
+  if (res?.status === true || res?.status === 'true') {
+    return res.data;
+  }
+  return bookingId ? null : [];
+}
+
+/** Get past booking history (JWT) */
+export async function getPastBookings(token: string, startDate?: string, endDate?: string, limit = 10, offset = 0): Promise<{ data: any[]; sessions: number; hours: number }> {
+  const payload: any = { token, action_type: 'past-with-limit-offset', limit, offset };
+  if (startDate && endDate) {
+    payload.start_date = startDate;
+    payload.end_date = endDate;
+  }
+  const res = await fetchFromApi<any>('bookings', payload);
+  if (res?.status === true || res?.status === 'true') {
+    return {
+      data: Array.isArray(res.data) ? res.data : [],
+      sessions: res.sessions || 0,
+      hours: res.hours || 0,
+    };
+  }
+  return { data: [], sessions: 0, hours: 0 };
+}
+
+/** Cancel a class booking (JWT) */
+export async function cancelBooking(token: string, bookingId: string | number): Promise<{ success: boolean; message: string }> {
+  const res = await fetchFromApi<any>('bookings', { token, action_type: 'cancel', id: bookingId });
+  const isSuccess = res?.status === true || res?.status === 'true';
+  return {
+    success: isSuccess,
+    message: typeof res?.data === 'string' ? res.data : (res?.message || (isSuccess ? 'Booking cancelled successfully' : 'Failed to cancel booking')),
+  };
+}
+
+// ─── Policies & Misc ──────────────────────────────────────────────────────────
+
+/** Get all policies */
+export async function getPolicies(): Promise<any[]> {
+  const res = await fetchFromApi<any>('policies');
+  if (res?.status && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
+/** Get a single policy by title */
+export async function getPolicyByTitle(title: string): Promise<any> {
+  const res = await fetchFromApi<any>('classesTypeDetail', { title });
+  return res?.data || null;
+}
+
+/** List bookings associated with a given package (JWT) */
+export async function getBookedClasses(
+  token: string,
+  packageId: number | string,
+  limit = 10,
+  offset = 0
+): Promise<any[]> {
+  const res = await fetchFromApi<any>('get-booked-classes', {
+    token,
+    package_id: Number(packageId),
+    limit,
+    offset,
+  });
+  if (res?.status && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
+/** Get yoga poses */
+export async function getYogaPoses(): Promise<any[]> {
+  const res = await fetchFromApi<any>('get-yoga-poses');
+  if (Array.isArray(res?.poses)) return res.poses;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res)) return res;
+  return [];
+}
+
+/** Check app version */
+export async function getAppVersion(): Promise<{ version?: string; updateRequired?: boolean } | null> {
+  return fetchFromApi<any>('app-version');
+}
+
+/** Submit a support ticket/enquiry (JWT, multipart) */
+export async function submitSupportTicket(
+  token: string,
+  subject: string,
+  messageHtml: string,
+  ticketCode?: string,
+  screenshotFile?: File
+): Promise<{ success: boolean; message: string }> {
+  const formData = new FormData();
+  formData.append('subject', subject);
+  formData.append('summernote', messageHtml);
+  if (ticketCode) formData.append('ticket-code', ticketCode);
+  if (screenshotFile) formData.append('screenshot', screenshotFile);
+
+  const res = await fetchFormData('ticketSubmit', formData, token);
+  if (res?.status === true) {
+    return { success: true, message: res.message || 'Query submitted successfully' };
+  }
+  return { success: false, message: res?.message || 'Failed to submit query' };
+}
+
+/** Get user's open and closed support tickets (JWT) */
+export async function getSupportTickets(token: string): Promise<{ openTicket: any[]; closedTicket: any[] }> {
+  const res = await fetchFromApi<any>('get-ticket', { token });
+  if (res?.status === true) {
+    return {
+      openTicket: Array.isArray(res.openTicket) ? res.openTicket : [],
+      closedTicket: Array.isArray(res.closedTicket) ? res.closedTicket : [],
+    };
+  }
+  return { openTicket: [], closedTicket: [] };
+}
+
+// ─── Check-in ─────────────────────────────────────────────────────────────────
+
+/** Check if user is eligible to check in */
+export async function checkInEligible(token: string): Promise<any[]> {
+  const res = await fetchFromApi<any>('check-in-eligible', { token });
+  if (res?.status && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
+/** Perform user check-in with scanned venue QR code (JWT) */
+export async function userCheckIn(token: string, bookingId: string | number, code: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetchFromApi<any>('user-check-in', { token, id: bookingId, code, schedule_id: bookingId });
+  const isSuccess = res?.status === true || res?.success === true;
+  return {
+    success: isSuccess,
+    message: res?.message || (isSuccess ? 'Successfully checked in!' : 'Check-in failed.'),
+  };
+}
+
+/** Issue a fresh short-lived check-in token for QR display (JWT) */
+export async function getUserCheckInQr(token: string): Promise<{ success: boolean; token?: string; expiresIn?: number; message?: string }> {
+  const res = await fetchFromApi<any>('get-user-checkin-qr', { token });
+  if (res?.status === true && res?.token) {
+    return { success: true, token: res.token, expiresIn: res.expires_in || 10 };
+  }
+  return { success: false, message: res?.message || 'Front desk scanning is currently disabled.' };
+}
+
+/** Poll front desk check-in status (JWT) */
+export async function getCheckInStatus(token: string): Promise<{ status: 'pending' | 'success' | 'error'; message?: string; classTitle?: string }> {
+  const res = await fetchFromApi<any>('check-in-status', { token });
+  return {
+    status: res?.status || 'pending',
+    message: res?.message,
+    classTitle: res?.class_title,
+  };
+}
+
+/** Get check-in config (public) */
+export async function getCheckInConfig(): Promise<{ checkin_mode: 'user_qr' | 'venue_qr'; pre_checkin_minute: number; qr_refresh_seconds: number }> {
+  const res = await fetchFromApi<any>('checkin-config');
+  return {
+    checkin_mode: res?.checkin_mode || 'venue_qr',
+    pre_checkin_minute: res?.pre_checkin_minute || 30,
+    qr_refresh_seconds: res?.qr_refresh_seconds || 10,
+  };
+}
+
+// ─── Billing & Payments ────────────────────────────────────────────────────────
+
+/** Fetch full details for a single invoice */
+export async function getBillingDetails(invoiceId: string | number): Promise<any> {
+  const res = await fetchFromApi<any>('billing-details', { invoice_id: String(invoiceId) });
+  return res?.status ? res.data : null;
+}
+
+/** Upload manual payment receipt for an invoice (multipart) */
+export async function uploadBillingReceipt(
+  token: string,
+  invoiceId: number | string,
+  amount: number,
+  paymentDate: string,
+  paymentMethod: 'Bank Transfer' | 'Payme',
+  receiptFile: File
+): Promise<{ success: boolean; message: string }> {
+  const formData = new FormData();
+  formData.append('invoice_id', String(invoiceId));
+  formData.append('amount', String(amount));
+  formData.append('payment_date', paymentDate);
+  formData.append('payment_method', paymentMethod);
+  formData.append('receipt', receiptFile);
+
+  const res = await fetchFormData('billing-upload-receipt', formData, token);
+  if (res?.status === true) {
+    return { success: true, message: res.message || 'Receipt uploaded successfully' };
+  }
+  return { success: false, message: res?.message || 'Failed to upload receipt' };
+}
+
+/** Pay an invoice due balance using user's wallet balance (JWT) */
+export async function payBillingWithWallet(token: string, invoiceId: number | string): Promise<{ success: boolean; message: string; paidAmount?: number; walletBalance?: number }> {
+  const res = await fetchFromApi<any>('billing-wallet-payment', { token, invoice_id: Number(invoiceId) });
+  if (res?.status === true) {
+    return {
+      success: true,
+      message: res.message || 'Wallet payment completed successfully',
+      paidAmount: res.paid_amount,
+      walletBalance: res.wallet_balance,
+    };
+  }
+  return { success: false, message: res?.message || 'Wallet payment failed.' };
+}
+
+/** Create pending payment record and return hosted payment URL (JWT) */
+export async function createPayment(
+  token: string,
+  options: { packageId?: number | string; bundleId?: number | string; packageIds?: (number | string)[] }
+): Promise<{ success: boolean; paymentUrl?: string; paymentId?: string; message?: string }> {
+  const payload: any = { token };
+  if (options.bundleId && options.packageIds && options.packageIds.length > 0) {
+    payload.bundle_id = Number(options.bundleId);
+    payload.package_ids = options.packageIds.map(Number);
+  } else if (options.packageId) {
+    payload.package_id = Number(options.packageId);
+  }
+  const res = await fetchFromApi<any>('create_payment', payload);
+  const isSuccess = res?.success === 'true' || res?.success === true;
+  if (isSuccess && res?.payment_url) {
+    return { success: true, paymentUrl: res.payment_url, paymentId: res.payment_id };
+  }
+  return { success: false, message: res?.message || 'Failed to create payment' };
+}
+
+// ─── Media Gallery ─────────────────────────────────────────────────────────────
+
+/** Get media gallery home (featured albums, videos, audio, documents, categories) */
+export async function getMediaGalleryHome(token?: string, mediaType?: 'image' | 'video' | 'audio' | 'document'): Promise<any> {
+  const payload: any = {};
+  if (token) payload.token = token;
+  if (mediaType) payload.media_type = mediaType;
+  const res = await fetchFromApi<any>('media-gallery-home', payload);
+  return res?.status ? res : null;
+}
+
+/** Get media category detail and category items */
+export async function getMediaCategoryDetail(categoryId: number | string, token?: string): Promise<any> {
+  const payload: any = { category_id: Number(categoryId) };
+  if (token) payload.token = token;
+  const res = await fetchFromApi<any>('media-category-detail', payload);
+  return res?.status ? res : null;
+}
+
+/** Get paginated media photo albums */
+export async function getMediaAlbums(options?: { categoryId?: number | string; page?: number; limit?: number; token?: string }): Promise<{ data: any[]; total: number; page: number; limit: number }> {
+  const payload: any = { page: options?.page || 1, limit: options?.limit || 20 };
+  if (options?.categoryId) payload.category_id = Number(options.categoryId);
+  if (options?.token) payload.token = options.token;
+  const res = await fetchFromApi<any>('media-albums', payload);
+  return {
+    data: res?.status && Array.isArray(res.data) ? res.data : [],
+    total: res?.total || 0,
+    page: res?.page || 1,
+    limit: res?.limit || 20,
+  };
+}
+
+/** Get detail of single album with images */
+export async function getMediaAlbumDetail(albumId: number | string, token?: string): Promise<any> {
+  const payload: any = { id: Number(albumId) };
+  if (token) payload.token = token;
+  const res = await fetchFromApi<any>('media-album-detail', payload);
+  return res?.status ? res.data : null;
+}
+
+/** Get paginated media videos */
+export async function getMediaVideos(options?: { categoryId?: number | string; page?: number; limit?: number; id?: number | string; token?: string }): Promise<{ data: any[]; total: number; page: number; limit: number }> {
+  const payload: any = { page: options?.page || 1, limit: options?.limit || 20 };
+  if (options?.categoryId) payload.category_id = Number(options.categoryId);
+  if (options?.id) payload.id = Number(options.id);
+  if (options?.token) payload.token = options.token;
+  const res = await fetchFromApi<any>('media-videos', payload);
+  return {
+    data: res?.status && Array.isArray(res.data) ? res.data : [],
+    total: res?.total || 0,
+    page: res?.page || 1,
+    limit: res?.limit || 20,
+  };
+}
+
+/** Get paginated media audio tracks */
+export async function getMediaAudio(options?: { categoryId?: number | string; page?: number; limit?: number; token?: string }): Promise<{ data: any[]; total: number; page: number; limit: number }> {
+  const payload: any = { page: options?.page || 1, limit: options?.limit || 20 };
+  if (options?.categoryId) payload.category_id = Number(options.categoryId);
+  if (options?.token) payload.token = options.token;
+  const res = await fetchFromApi<any>('media-audio', payload);
+  return {
+    data: res?.status && Array.isArray(res.data) ? res.data : [],
+    total: res?.total || 0,
+    page: res?.page || 1,
+    limit: res?.limit || 20,
+  };
+}
+
+/** Get paginated media documents (PDFs) */
+export async function getMediaDocuments(options?: { categoryId?: number | string; page?: number; limit?: number; id?: number | string; token?: string }): Promise<{ data: any[]; total: number; page: number; limit: number }> {
+  const payload: any = { page: options?.page || 1, limit: options?.limit || 20 };
+  if (options?.categoryId) payload.category_id = Number(options.categoryId);
+  if (options?.id) payload.id = Number(options.id);
+  if (options?.token) payload.token = options.token;
+  const res = await fetchFromApi<any>('media-documents', payload);
+  return {
+    data: res?.status && Array.isArray(res.data) ? res.data : [],
+    total: res?.total || 0,
+    page: res?.page || 1,
+    limit: res?.limit || 20,
+  };
+}
+
+/** Search media items across types */
+export async function searchMedia(query: string, mediaType?: 'image' | 'video' | 'audio' | 'document', token?: string): Promise<any> {
+  const payload: any = { q: query };
+  if (mediaType) payload.media_type = mediaType;
+  if (token) payload.token = token;
+  const res = await fetchFromApi<any>('media-search', payload);
+  return res?.status ? res : null;
+}
+
+/** Record audio track play count (JWT) */
+export async function trackMediaAudioPlay(token: string, audioId: number | string): Promise<boolean> {
+  const res = await fetchFromApi<any>('media-track-play', { token, id: Number(audioId) });
+  return res?.status === true;
+}
+
+/** Toggle favorite status on a media item (JWT) */
+export async function toggleMediaFavorite(token: string, mediaType: 'album' | 'video' | 'audio' | 'document', mediaId: number | string): Promise<{ success: boolean; favorited?: boolean }> {
+  const res = await fetchFromApi<any>('media-toggle-favorite', { token, media_type: mediaType, media_id: Number(mediaId) });
+  return { success: res?.status === true, favorited: res?.favorited };
+}
+
+/** Get authenticated user's favorited media items (JWT) */
+export async function getMediaFavorites(token: string): Promise<{ albums: any[]; videos: any[]; audio: any[] }> {
+  const res = await fetchFromApi<any>('media-favorites', { token });
+  if (res?.status) {
+    return {
+      albums: Array.isArray(res.albums) ? res.albums : [],
+      videos: Array.isArray(res.videos) ? res.videos : [],
+      audio: Array.isArray(res.audio) ? res.audio : [],
+    };
+  }
+  return { albums: [], videos: [], audio: [] };
+}

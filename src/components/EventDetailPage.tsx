@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Calendar, Check, ArrowRight, ShieldCheck, Sparkles, Clock, BarChart2, MapPin } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, ArrowRight, ShieldCheck, Sparkles, Clock, BarChart2, MapPin, Heart } from 'lucide-react';
 import { UpcomingEvent } from '../types';
-import { getUpcomingEvents } from '../services/api';
+import { getUpcomingEvents, toggleEventFavorite } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 interface EventDetailPageProps {
   event: UpcomingEvent;
@@ -24,6 +26,10 @@ const splitEventTitle = (fullTitle: string) => {
 
 export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack, onOpenBooking, onSelectEvent }) => {
   const [otherEvents, setOtherEvents] = useState<UpcomingEvent[]>([]);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
+  const { user } = useAuth();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     let isMounted = true;
@@ -51,6 +57,20 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
   const displayFocus = event.focus || event.category || 'Mindful Movement & Posture';
   const displayPrice = event.price || 'HK$ 680';
   const displayLocation = event.location || 'Pragya Yog Studio';
+
+  const numericPrice = typeof event.amount === 'number' && event.amount > 0 
+    ? event.amount 
+    : parseFloat(String(displayPrice).replace(/[^0-9.]/g, '')) || 680;
+
+  const handleReserveNow = () => {
+    addToCart({
+      id: event.id,
+      title,
+      price: numericPrice,
+      category: event.category || 'Event',
+      coverImage
+    });
+  };
 
   const cleanDescText = (event.description || '')
     .replace(/<[^>]*>?/gm, '')
@@ -195,13 +215,53 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             {heroSummary}
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '48px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '24px' }}>
             <span style={{ fontSize: '18px', color: '#8A857F', textDecoration: 'line-through' }}>
               HK$ 1,200
             </span>
             <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '36px', fontWeight: 800, color: '#944426' }}>
               {displayPrice}
             </span>
+          </div>
+
+          {/* CTA Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '40px', flexWrap: 'wrap' }}>
+            <button
+              onClick={handleReserveNow}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: 'linear-gradient(135deg, #944426, #C05F2F)', color: '#fff',
+                border: 'none', borderRadius: '999px', padding: '14px 28px',
+                fontSize: '14px', fontWeight: 700, letterSpacing: '0.05em', cursor: 'pointer',
+                boxShadow: '0 6px 24px rgba(148,68,38,0.3)', transition: 'all 0.2s',
+              }}
+            >
+              <Sparkles size={15} />
+              Reserve Now
+            </button>
+            {user && (
+              <button
+                onClick={async () => {
+                  if (favLoading) return;
+                  setFavLoading(true);
+                  const toggled = await toggleEventFavorite(user.access_token, event.id);
+                  if (toggled) setIsFavorited((prev) => !prev);
+                  setFavLoading(false);
+                }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  background: isFavorited ? 'rgba(148,68,38,0.12)' : '#fff',
+                  color: isFavorited ? '#944426' : '#5A5854',
+                  border: `1.5px solid ${isFavorited ? 'rgba(148,68,38,0.35)' : 'rgba(0,0,0,0.15)'}`,
+                  borderRadius: '999px', padding: '13px 20px',
+                  fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                  opacity: favLoading ? 0.7 : 1,
+                }}
+              >
+                <Heart size={15} fill={isFavorited ? '#944426' : 'none'} />
+                {isFavorited ? 'Saved' : 'Save Event'}
+              </button>
+            )}
           </div>
 
           <div
@@ -334,7 +394,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             <span style={{ fontSize: '18px', color: '#8A857F', textDecoration: 'line-through' }}>HK$ 1,200</span>
             <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '36px', fontWeight: 800, color: '#944426' }}>{displayPrice}</span>
           </div>
-          <button onClick={() => onOpenBooking('event', title, event)} style={{ backgroundColor: '#944426', color: '#FFFFFF', border: 'none', borderRadius: '999px', padding: '18px 48px', fontSize: '14px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 10px 28px rgba(148, 68, 38, 0.35)', transition: 'all 0.3s ease' }}>BOOK SESSION NOW</button>
+          <button onClick={handleReserveNow} style={{ backgroundColor: '#944426', color: '#FFFFFF', border: 'none', borderRadius: '999px', padding: '18px 48px', fontSize: '14px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 10px 28px rgba(148, 68, 38, 0.35)', transition: 'all 0.3s ease' }}>RESERVE NOW</button>
         </section>
 
         {/* Other Events */}
@@ -360,8 +420,8 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
       </div>
 
       <div className="edp-sticky-bottom-bar" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 99, backgroundColor: 'rgba(245, 239, 229, 0.96)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderTop: '1px solid rgba(0, 0, 0, 0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.08)' }}>
-        <button onClick={() => onOpenBooking('event', title, event)} style={{ backgroundColor: '#944426', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '14px 48px', fontSize: '14px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', maxWidth: '640px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 6px 20px rgba(148, 68, 38, 0.35)', transition: 'all 0.25s ease' }}>
-          <span>Enroll</span>
+        <button onClick={handleReserveNow} style={{ backgroundColor: '#944426', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '14px 48px', fontSize: '14px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', maxWidth: '640px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 6px 20px rgba(148, 68, 38, 0.35)', transition: 'all 0.25s ease' }}>
+          <span>Reserve Now</span>
           <span style={{ opacity: 0.5, textDecoration: 'line-through', fontSize: '13px' }}>HK$ 1,200</span>
           <span>{displayPrice}</span>
         </button>

@@ -20,7 +20,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
   // Helper to format date for display and API
   const generateUpcomingDays = () => {
     const dates = [];
-    const today = new Date('2026-08-01');
+    const today = new Date();
     for (let i = 0; i < 4; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() + i);

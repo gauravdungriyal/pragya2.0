@@ -517,7 +517,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                         e.currentTarget.style.backgroundColor = '#944426';
                       }}
                     >
-                      VIEW DETAILS & APPLY →
+                      VIEW DETAILS & RESERVE →
                     </button>
                   </div>
                 </div>

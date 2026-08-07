@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Sparkles, RefreshCw, Zap, ShieldCheck, Heart, Award, ArrowUpRight, Calendar, Tag, Info } from 'lucide-react';
+import { Check, Sparkles, RefreshCw, Zap, ShieldCheck, Heart, Award, ArrowUpRight, Calendar, Tag, Info, ShoppingBag } from 'lucide-react';
 import { getPackages, getDynamicPackages } from '../services/api';
 import { PackageItem, DynamicPackage } from '../types';
+import { useCart } from '../context/CartContext';
 
 interface MembershipPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
@@ -9,6 +10,7 @@ interface MembershipPageProps {
 }
 
 export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking }) => {
+  const { addToCart } = useCart();
   const [packagesData, setPackagesData] = useState<Record<string, PackageItem[]>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
@@ -165,7 +167,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
     : allFlattenedPackages.filter((p) => p.groupCategory === activeCategory);
 
   // Live currentDate string formatted from local date
-  const currentDateStr = new Date('2026-08-01').toLocaleDateString('en-US', {
+  const currentDateStr = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -553,15 +555,15 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
                   {/* Action Button */}
                   <div className="package-card-button-box" style={{ padding: '0 24px 24px 24px' }}>
                     <button
-                      onClick={() => onOpenBooking('package', pkg.title, pkg)}
+                      onClick={() => addToCart({ id: pkg.id, title: pkg.title, price: pkg.amount, category: pkg.category || pkg.groupCategory })}
                       style={{
                         width: '100%',
-                        backgroundColor: isPopular ? '#21201E' : '#21201E',
+                        backgroundColor: '#21201E',
                         color: '#FFFFFF',
                         border: 'none',
                         borderRadius: '999px',
-                        padding: '13px 26px',
-                        fontSize: '13.5px',
+                        padding: '13px 18px',
+                        fontSize: '12.5px',
                         fontWeight: 700,
                         letterSpacing: '0.02em',
                         cursor: 'pointer',
@@ -572,15 +574,11 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
                         boxShadow: '0 4px 16px rgba(33, 32, 30, 0.12)',
                         transition: 'all 0.25s ease'
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#944426';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#21201E';
-                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#944426'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#21201E'; }}
                     >
-                      <span>Select {pkg.groupCategory === 'Membership' ? 'Membership' : 'Package'}</span>
-                      <ArrowUpRight size={16} />
+                      <ShoppingBag size={15} />
+                      <span>Add To Cart</span>
                     </button>
                   </div>
                 </div>

@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { ArrowUpRight, ChevronLeft, ChevronRight, RefreshCw, Calendar, SlidersHorizontal, Check } from 'lucide-react';
 import { getScheduleByDate } from '../services/api';
 import { ClassScheduleItem } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface InteractiveScheduleProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
 }
 
 export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpenBooking }) => {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date('2026-08-01'));
+  const { user } = useAuth();
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [levelFilter, setLevelFilter] = useState<string>('ALL');
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -68,10 +70,24 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
     setLoading(true);
     const dateStr = selectedDate.toISOString().split('T')[0];
 
-    getScheduleByDate(dateStr).then((data) => {
+    // Use JWT endpoint when user is logged in for richer data (spots remaining, user booking status)
+    const fetchFn = user
+      ? getScheduleByDate(dateStr, user.access_token)
+      : getScheduleByDate(dateStr);
+
+    fetchFn.then((data) => {
       if (!isMounted) return;
+      const formattedDate = selectedDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
       if (data && Array.isArray(data.schedules) && data.schedules.length > 0) {
-        setScheduleItems(data.schedules);
+        setScheduleItems(data.schedules.map((s: any) => ({
+          ...s,
+          date: s.date && s.date !== 'Today' ? s.date : formattedDate
+        })));
       } else {
         setScheduleItems([]);
       }
@@ -266,7 +282,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
             {/* TODAY Pill Button */}
             <button
               className="schedule-today-btn"
-              onClick={() => setSelectedDate(new Date('2026-08-01'))}
+              onClick={() => setSelectedDate(new Date())}
               style={{
                 fontFamily: "'Neue Montreal', sans-serif",
                 backgroundColor: 'transparent',
@@ -461,7 +477,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                       gap: '6px'
                     }}
                   >
-                    <span>BOOK SESSION</span>
+                    <span>Book Class</span>
                     <ArrowUpRight size={15} />
                   </button>
                 </div>
@@ -571,7 +587,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
             display: none !important;
           }
           .sch-row-btn::after {
-            content: "BOOK";
+            content: "BOOK CLASS";
             font-size: 11px;
             font-weight: 800;
           }

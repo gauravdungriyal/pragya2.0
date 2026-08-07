@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Signal, Clock, Calendar, Zap, Sparkles, Heart, Users, MapPin, User, ChevronRight, ChevronLeft, RefreshCw, SlidersHorizontal, Check, ArrowUpRight } from 'lucide-react';
 import { getScheduleByDate } from '../services/api';
 import { ClassScheduleItem } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface ClassesPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
@@ -9,9 +10,10 @@ interface ClassesPageProps {
 }
 
 export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState<ClassScheduleItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date('2026-08-01'));
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [levelFilter, setLevelFilter] = useState<string>('ALL');
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
 
@@ -115,7 +117,11 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
     setLoading(true);
     const dateStr = selectedDate.toISOString().split('T')[0];
 
-    getScheduleByDate(dateStr).then((data) => {
+    const fetchFn = user
+      ? getScheduleByDate(dateStr, user.access_token)
+      : getScheduleByDate(dateStr);
+
+    fetchFn.then((data) => {
       if (!isMounted) return;
       if (data && Array.isArray(data.schedules) && data.schedules.length > 0) {
         setSchedules(data.schedules);
@@ -128,12 +134,18 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
     return () => {
       isMounted = false;
     };
-  }, [selectedDate]);
+  }, [selectedDate, user]);
 
   // Format display classes list
   const displayClasses = (schedules.length > 0 ? schedules : fallbackClasses).map((item, idx) => {
     const rawDesc = (item as any).description || '';
     const cleanDesc = rawDesc.replace(/<[^>]*>?/gm, '').trim();
+    const formattedDate = selectedDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
     return {
       id: String(idx + 1).padStart(2, '0'),
       schedule_id: (item as any).schedule_id || item.id || String(idx + 100),
@@ -144,6 +156,8 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
       instructor: item.instructor || 'Master Teacher',
       room: (item as any).room || 'Woo House',
       schedule: (item as any).date || (fallbackClasses[idx % fallbackClasses.length]?.schedule) || 'Mon, Wed, Fri',
+      date: (item as any).date && (item as any).date !== 'Today' ? (item as any).date : formattedDate,
+      price: (item as any).book_cost || (item as any).price || (item as any).amount,
       description: cleanDesc || 'Experience traditional yoga practice combining breath, movement, and alignment.',
       image: classImages[idx % classImages.length]
     };
@@ -587,7 +601,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             {/* TODAY Pill Button */}
             <button
               className="classes-today-btn"
-              onClick={() => setSelectedDate(new Date('2026-08-01'))}
+              onClick={() => setSelectedDate(new Date())}
               style={{
                 fontFamily: "var(--font-sans)",
                 backgroundColor: 'transparent',
@@ -796,7 +810,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                       e.currentTarget.style.backgroundColor = '#21201E';
                     }}
                   >
-                    <span>BOOK SESSION</span>
+                    <span>Book Class</span>
                     <ChevronRight size={14} />
                   </button>
                 </div>
@@ -1247,7 +1261,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             display: none !important;
           }
           .cls-sch-btn::after {
-            content: "BOOK";
+            content: "BOOK CLASS";
             font-size: 11px;
             font-weight: 800;
           }

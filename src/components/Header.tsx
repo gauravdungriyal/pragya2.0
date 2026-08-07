@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
-import { Calendar, User, Menu, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, User, Menu, X, LogIn, Bell, ShoppingBag } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { AuthModal } from './AuthModal';
+import { UserProfileDrawer } from './UserProfileDrawer';
 
 interface HeaderProps {
   onOpenBooking: (type?: string, title?: string) => void;
   onOpenSearch: () => void;
   onNavigateSection: (sectionId: string) => void;
   currentView?: string;
-  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers' | 'membership' | 'events' | 'ai-assistant') => void;
+  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers' | 'membership' | 'events' | 'ai-assistant' | 'cart') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,10 +20,21 @@ export const Header: React.FC<HeaderProps> = ({
   currentView = 'home',
   onViewChange
 }) => {
+  const { user, profile } = useAuth();
+  const { cartCount, openCart } = useCart();
   const [activeTab, setActiveTab] = useState(
     currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : currentView === 'membership' ? 'Membership & Packages' : currentView === 'events' ? 'Events' : currentView === 'community' ? 'Community' : 'Home'
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
+
+  // Listen for the global "open auth" event (triggered by PackageReserveModal's sign-in link)
+  useEffect(() => {
+    const handler = () => setAuthModalOpen(true);
+    window.addEventListener('pragya-open-auth', handler);
+    return () => window.removeEventListener('pragya-open-auth', handler);
+  }, []);
 
   // Synchronize active tab with currentView prop
   React.useEffect(() => {
@@ -47,8 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Classes', id: 'classes', type: 'page' },
     { label: 'Teachers', id: 'teachers', type: 'page' },
     { label: 'Membership & Packages', id: 'membership', type: 'page' },
-    { label: 'Community', id: 'community', type: 'page' },
-    { label: 'Login', id: 'login', type: 'action' }
+    { label: 'Community', id: 'community', type: 'page' }
   ];
 
   const handleScheduleRedirect = () => {
@@ -232,30 +246,104 @@ export const Header: React.FC<HeaderProps> = ({
           <span>SCHEDULE</span>
         </button>
 
+        {/* Shopping Cart Button */}
         <button
-          onClick={() => {
-            if (onViewChange) onViewChange('home');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          aria-label="User Account"
+          onClick={() => onViewChange && onViewChange('cart')}
+          aria-label="Sanctuary Cart"
           className="hdr-icon-btn"
           style={{
-            background: 'rgba(255, 255, 255, 0.65)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: 'rgba(255, 255, 255, 0.65)',
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(33, 32, 30, 0.25)',
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
             color: '#21201E',
-            transition: 'all 0.2s ease'
+            borderRadius: '999px',
+            padding: '0 12px',
+            height: '36px',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            whiteSpace: 'nowrap',
+            position: 'relative',
           }}
         >
-          <User size={16} />
+          <ShoppingBag size={14} color="#944426" />
+          {cartCount > 0 && (
+            <span
+              style={{
+                backgroundColor: '#C85A32',
+                color: '#FFFFFF',
+                borderRadius: '999px',
+                padding: '2px 6px',
+                fontSize: '10px',
+                fontWeight: 800,
+                lineHeight: 1,
+              }}
+            >
+              {cartCount}
+            </span>
+          )}
         </button>
+
+        {/* Auth Button — Login or Avatar */}
+        {user ? (
+          <button
+            onClick={() => setProfileDrawerOpen(true)}
+            aria-label="My Profile"
+            className="hdr-icon-btn"
+            style={{
+              background: 'rgba(148, 68, 38, 0.12)',
+              backdropFilter: 'blur(8px)',
+              border: '1.5px solid rgba(148, 68, 38, 0.35)',
+              height: '36px',
+              width: '36px',
+              borderRadius: '999px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#944426',
+              transition: 'all 0.2s ease',
+              position: 'relative',
+              padding: 0,
+            }}
+          >
+            {profile?.profile ? (
+              <img src={profile.profile} alt="avatar" style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            ) : (
+              <User size={16} />
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={() => setAuthModalOpen(true)}
+            aria-label="Login"
+            className="hdr-action-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: '#944426',
+              border: 'none',
+              color: '#fff',
+              borderRadius: '999px',
+              padding: '0 16px',
+              height: '36px',
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <LogIn size={13} />
+            <span>LOGIN</span>
+          </button>
+        )}
 
         <button
           className="mobile-menu-toggle"
@@ -315,6 +403,19 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       )}
 
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={() => setProfileDrawerOpen(true)}
+      />
+
+      {/* Profile Drawer */}
+      <UserProfileDrawer
+        isOpen={profileDrawerOpen}
+        onClose={() => setProfileDrawerOpen(false)}
+      />
+
       <style>{`
         .nav-pill-button:not(.active):hover {
           background-color: rgba(255, 255, 255, 0.5) !important;
@@ -323,9 +424,13 @@ export const Header: React.FC<HeaderProps> = ({
         .brand-logo-img:hover {
           transform: scale(1.03);
         }
-        .hdr-action-btn:hover, .hdr-icon-btn:hover {
-          background-color: #FFFFFF !important;
-          border-color: #21201E !important;
+        .hdr-action-btn:hover {
+          background-color: #7a3620 !important;
+          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+          transform: translateY(-1px);
+        }
+        .hdr-icon-btn:hover {
+          background-color: rgba(148, 68, 38, 0.2) !important;
           box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
           transform: translateY(-1px);
         }
