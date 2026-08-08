@@ -395,6 +395,7 @@ export const App: React.FC = () => {
             <Hero
               onOpenBooking={handleOpenBooking}
               onNavigateSection={handleNavigateSection}
+              onViewChange={handleViewChange}
             />
 
             <WhyChooseUs />

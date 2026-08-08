@@ -1292,6 +1292,7 @@ export async function guestBookingCheckEmail(email: string): Promise<{ fname?: s
 /** Guest Class Booking with OTP Verification */
 export async function guestBooking(payload: {
   event_id: number | string;
+  schedule_id?: number | string;
   otp: string;
   name: string;
   email: string;

@@ -720,22 +720,37 @@ export const CartPage: React.FC<CartPageProps> = ({ onViewChange }) => {
               <div style={{ marginBottom: 16 }}>
                 <label className={labelCls}>Enter Phone Number *</label>
                 <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className={inputCls} style={{ appearance: 'auto', marginBottom: 8, display: 'block', width: '100%', boxSizing: 'border-box', padding: '14px 14px', fontSize: 13, border: '1px solid #d0cac4', borderRadius: 2, outline: 'none', backgroundColor: '#f6f2ee' }}>
-                  <option value="852">(+852) Hongkong</option>
-                  <option value="91">(+91) India</option>
-                  <option value="1">(+1) United States</option>
-                  <option value="44">(+44) United Kingdom</option>
-                  <option value="49">(+49) Germany</option>
-                  <option value="33">(+33) France</option>
-                  <option value="86">(+86) China</option>
-                  <option value="81">(+81) Japan</option>
-                  <option value="32">(+32) Belgium</option>
-                  <option value="61">(+61) Australia</option>
-                  <option value="886">(+886) Taiwan</option>
-                  <option value="84">(+84) Vietnam</option>
-                  <option value="63">(+63) Philippines</option>
-                  <option value="31">(+31) Netherlands</option>
-                  <option value="65">(+65) Singapore</option>
-                  <option value="1-ca">(+1) Canada</option>
+                  <option value="852">+852 Hong Kong</option>
+                  <option value="91">+91 India</option>
+                  <option value="86">+86 China</option>
+                  <option value="853">+853 Macau</option>
+                  <option value="1">+1 USA / Canada</option>
+                  <option value="44">+44 UK (United Kingdom)</option>
+                  <option value="65">+65 Singapore</option>
+                  <option value="61">+61 Australia</option>
+                  <option value="64">+64 New Zealand</option>
+                  <option value="81">+81 Japan</option>
+                  <option value="82">+82 South Korea</option>
+                  <option value="49">+49 Germany</option>
+                  <option value="33">+33 France</option>
+                  <option value="39">+39 Italy</option>
+                  <option value="34">+34 Spain</option>
+                  <option value="41">+41 Switzerland</option>
+                  <option value="31">+31 Netherlands</option>
+                  <option value="32">+32 Belgium</option>
+                  <option value="43">+43 Austria</option>
+                  <option value="46">+46 Sweden</option>
+                  <option value="47">+47 Norway</option>
+                  <option value="45">+45 Denmark</option>
+                  <option value="353">+353 Ireland</option>
+                  <option value="971">+971 UAE (Dubai)</option>
+                  <option value="966">+966 Saudi Arabia</option>
+                  <option value="60">+60 Malaysia</option>
+                  <option value="66">+66 Thailand</option>
+                  <option value="62">+62 Indonesia</option>
+                  <option value="63">+63 Philippines</option>
+                  <option value="84">+84 Vietnam</option>
+                  <option value="886">+886 Taiwan</option>
                 </select>
                 <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)}
                   placeholder="Phone Number" className={inputCls} style={{ padding: '14px 14px' }} />

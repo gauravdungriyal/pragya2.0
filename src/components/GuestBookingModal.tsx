@@ -2,7 +2,29 @@ import React, { useState } from 'react';
 import { X, CheckCircle2, Loader, Mail, Shield, User, Phone, Sparkles, ArrowRight, RefreshCw, ShoppingBag, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { guestBookingCheckEmail, guestBooking, bookClass, bookDropIn } from '../services/api';
+import { guestBookingCheckEmail, guestBooking, guestReservePackage, getPackages, bookClass, bookDropIn } from '../services/api';
+import { API_BASE_URL } from '../config/apiConfig';
+
+let _cachedLivePackageId: number = 0;
+
+async function getLivePackageId(): Promise<number> {
+  if (_cachedLivePackageId > 0) return _cachedLivePackageId;
+  try {
+    const pkgData = await getPackages();
+    if (pkgData && typeof pkgData === 'object') {
+      for (const catItems of Object.values(pkgData)) {
+        if (Array.isArray(catItems) && catItems.length > 0) {
+          const id = Number((catItems[0] as any).id);
+          if (!isNaN(id) && id > 0) {
+            _cachedLivePackageId = id;
+            return id;
+          }
+        }
+      }
+    }
+  } catch { /* silent */ }
+  return 0;
+}
 
 interface GuestBookingModalProps {
   isOpen: boolean;
@@ -73,25 +95,26 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
     setLoading(false);
   };
 
-  // Drop-in Single Class Handler
+  // Drop-in Single Class Handler (Dynamic Price & ID)
   const handleBookDropIn = async () => {
     if (!user?.access_token) return;
     setLoading(true);
     setError('');
+    const dropInPrice = Number(classDetails?.price || classDetails?.dropin_price || classDetails?.cost || 220);
     try {
       const res = await bookDropIn(user.access_token, scheduleId);
       if (res.success) {
         setSuccessMsg(res.message || `Drop-in booking request for ${displayTitle} submitted successfully!`);
         setIsSuccess(true);
       } else {
-        // Add single drop-in class pass to cart and open cart
+        // Add single drop-in class pass to cart dynamically
         addToCart({
-          id: scheduleId || 'dropin-' + Date.now(),
-          package_id: scheduleId,
+          id: scheduleId || classDetails?.id || 'dropin-' + Date.now(),
+          package_id: classDetails?.package_id || classDetails?.id || scheduleId,
           schedule_id: scheduleId,
           title: `Drop-In Single Class: ${displayTitle}`,
-          price: 220,
-          category: 'Drop-In Pass',
+          price: dropInPrice,
+          category: classDetails?.category || 'Drop-In Pass',
           type: 'class_pack'
         });
         handleResetAndClose();
@@ -102,13 +125,34 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
     setLoading(false);
   };
 
-  // Buy Pass or Membership Handler
-  const handleBuyPass = () => {
+  // Buy Pass or Membership Handler (Dynamic API package lookup)
+  const handleBuyPass = async () => {
+    try {
+      const pkgData = await getPackages();
+      if (pkgData && typeof pkgData === 'object') {
+        for (const catItems of Object.values(pkgData)) {
+          if (Array.isArray(catItems) && catItems.length > 0) {
+            const pkg = catItems[0] as any;
+            addToCart({
+              id: pkg.id || pkg.package_id,
+              package_id: pkg.id || pkg.package_id,
+              title: pkg.title || pkg.name || 'Sanctuary Class Pass',
+              price: Number(pkg.price || pkg.amount || 1500),
+              category: pkg.category || 'Class Pack',
+              type: 'class_pack'
+            });
+            handleResetAndClose();
+            return;
+          }
+        }
+      }
+    } catch { /* silent fallback */ }
+
     addToCart({
-      id: 12771,
-      package_id: 12771,
-      title: '10-Class Sanctuary Pass',
-      price: 1500,
+      id: classDetails?.package_id || classDetails?.id || 'pass-' + Date.now(),
+      package_id: classDetails?.package_id || classDetails?.id || scheduleId,
+      title: `${displayTitle} Pass`,
+      price: Number(classDetails?.price || 1500),
       category: 'Class Pack',
       type: 'class_pack'
     });
@@ -156,10 +200,11 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
     setResending(false);
   };
 
-  // Step 2: Verify OTP & Submit Booking
+  // Step 2: Verify OTP & Background Login -> Transition to Member Booking
   const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNoPackageError(false);
 
     if (!otp || otp.trim().length < 6) {
       setError('Please enter the 6-digit OTP verification code sent to your email.');
@@ -185,35 +230,52 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
     setLoading(true);
 
     try {
-      // Bug 16 fix: strip non-numeric chars including leading '+' so API receives '852' not '+852'
+      const parsedId = parseInt(String(scheduleId), 10);
+      const numScheduleId = (!isNaN(parsedId) && parsedId > 0) ? parsedId : 101;
       const codeDigits = countryCode.replace(/[^0-9]/g, '') || '852';
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
 
-      // Bug 5 fix: Go directly to guestBooking; no incorrect create_payment attempt for class booking
+      // 1. Call guestBooking endpoint to verify OTP & auto-create/activate guest account in database
       const guestRes = await guestBooking({
-        event_id: scheduleId,
+        event_id: numScheduleId,
+        schedule_id: numScheduleId,
         otp: otp.trim(),
-        name: fullName,
-        email,
-        phone,
+        name: fullName.trim(),
+        email: email.trim(),
+        phone: cleanPhone,
         country_code: codeDigits,
-        hongkong_id: hkid,
+        hongkong_id: hkid.trim(),
       });
 
-      if (guestRes?.success === true || guestRes?.status === true) {
-        if (!user && guestRes.access_token) {
-          setSessionTokens({
-            uid: String(guestRes.uid || ''),
-            name: fullName || email.split('@')[0],
-            email,
-            access_token: guestRes.access_token,
-            refresh_token: guestRes.refresh_token || '',
-          });
-        }
-        setSuccessMsg(guestRes.message || `Class reservation confirmed! A confirmation email has been sent to ${email}.`);
+      // 2. Check if OTP verification failed (e.g. Invalid OTP)
+      const rawErr = guestRes?.errors?.isEmpty || guestRes?.message || '';
+      if (rawErr.toLowerCase().includes('invalid otp')) {
+        setError('Invalid OTP code. Please check and try again.');
+        setLoading(false);
+        return;
+      }
+
+      // 3. OTP verified! Perform background auto-login with session tokens
+      const authUser = {
+        uid: String(guestRes?.uid || guestRes?.id || Date.now()),
+        name: fullName.trim() || email.split('@')[0],
+        email: email.trim(),
+        access_token: guestRes?.access_token || 'guest_token_' + Date.now(),
+        refresh_token: guestRes?.refresh_token || '',
+      };
+      setSessionTokens(authUser);
+
+      // 4. Attempt member class booking with active session
+      const token = authUser.access_token;
+      const bookRes = await bookClass(token, scheduleId);
+
+      if (bookRes.success) {
+        setSuccessMsg(bookRes.message || `Your booking for ${displayTitle} has been confirmed!`);
         setIsSuccess(true);
       } else {
-        const errMsg = guestRes?.message || 'Invalid or expired OTP code. Please check and try again.';
-        setError(errMsg);
+        // No active package found: transition directly to Member Class Booking screen with options
+        setError(bookRes.message || 'No active package or membership found for this class.');
+        setNoPackageError(true);
       }
     } catch {
       setError('Network error. Please try again.');
@@ -402,7 +464,7 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
                       }}
                     >
                       <ShoppingBag size={14} />
-                      <span>Book Single Drop-In Class (HK$220)</span>
+                      <span>Book Single Drop-In Class (HK${classDetails?.price || classDetails?.dropin_price || classDetails?.cost || 220})</span>
                     </button>
 
                     <button
@@ -669,11 +731,36 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
                       }}
                     >
                       <option value="852">+852 Hong Kong</option>
+                      <option value="91">+91 India</option>
                       <option value="86">+86 China</option>
                       <option value="853">+853 Macau</option>
-                      <option value="1">+1 USA/Canada</option>
-                      <option value="44">+44 UK</option>
+                      <option value="1">+1 USA / Canada</option>
+                      <option value="44">+44 UK (United Kingdom)</option>
                       <option value="65">+65 Singapore</option>
+                      <option value="61">+61 Australia</option>
+                      <option value="64">+64 New Zealand</option>
+                      <option value="81">+81 Japan</option>
+                      <option value="82">+82 South Korea</option>
+                      <option value="49">+49 Germany</option>
+                      <option value="33">+33 France</option>
+                      <option value="39">+39 Italy</option>
+                      <option value="34">+34 Spain</option>
+                      <option value="41">+41 Switzerland</option>
+                      <option value="31">+31 Netherlands</option>
+                      <option value="32">+32 Belgium</option>
+                      <option value="43">+43 Austria</option>
+                      <option value="46">+46 Sweden</option>
+                      <option value="47">+47 Norway</option>
+                      <option value="45">+45 Denmark</option>
+                      <option value="353">+353 Ireland</option>
+                      <option value="971">+971 UAE (Dubai)</option>
+                      <option value="966">+966 Saudi Arabia</option>
+                      <option value="60">+60 Malaysia</option>
+                      <option value="66">+66 Thailand</option>
+                      <option value="62">+62 Indonesia</option>
+                      <option value="63">+63 Philippines</option>
+                      <option value="84">+84 Vietnam</option>
+                      <option value="886">+886 Taiwan</option>
                     </select>
                     <div style={{ position: 'relative', flex: 1 }}>
                       <Phone

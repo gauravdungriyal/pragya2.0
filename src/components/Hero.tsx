@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 interface HeroProps {
   onOpenBooking: (type?: string, title?: string) => void;
-  onNavigateSection: (sectionId: string) => void;
+  onNavigateSection?: (sectionId: string) => void;
+  onViewChange?: (view: any) => void;
 }
 
 const HERO_DESKTOP_IMAGES = [
@@ -11,7 +12,7 @@ const HERO_DESKTOP_IMAGES = [
   '/hero3.webp?v=2'
 ];
 
-export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
+export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, onViewChange }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -138,7 +139,15 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
         {/* CTA Button */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
           <button
-            onClick={() => onOpenBooking('class', 'Book Your Session')}
+            onClick={() => {
+              if (onViewChange) {
+                onViewChange('classes');
+              } else if (onNavigateSection) {
+                onNavigateSection('classes');
+              } else {
+                onOpenBooking('class', 'Book Your Session');
+              }
+            }}
             className="hero-cta-btn"
             style={{
               backgroundColor: '#944426',
