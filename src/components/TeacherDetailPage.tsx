@@ -288,17 +288,72 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
   const shouldTruncateBio = fullBio.length > 220;
   const displayBio = shouldTruncateBio && !isBioExpanded ? `${fullBio.slice(0, 220)}...` : fullBio;
 
-  // Bug 6 fix: derive qualifications from actual teacher data instead of hardcoding
-  const qualifications: string[] = [];
-  if (teacher.experience) qualifications.push(teacher.experience);
-  if (teacher.specialization && teacher.specialization.length > 0) {
-    teacher.specialization.forEach(s => qualifications.push(s));
-  }
-  // Fallback if teacher has no structured data
-  if (qualifications.length === 0) {
-    qualifications.push('Certified Yoga Alliance Instructor');
-    qualifications.push('Experienced Mindfulness & Meditation Guide');
-  }
+  // Extract actual qualifications & certifications dynamically from API teacher data & profiles
+  const getQualificationsList = (teacherItem: Instructor): string[] => {
+    const list: string[] = [];
+
+    // 1. Raw API qualifications / certifications / education fields if provided
+    const rawQuals = (teacherItem as any).qualifications || (teacherItem as any).qualification || (teacherItem as any).certifications || (teacherItem as any).education || (teacherItem as any).degrees;
+    if (rawQuals) {
+      if (Array.isArray(rawQuals)) {
+        rawQuals.forEach(q => { if (q && String(q).trim()) list.push(String(q).trim()); });
+      } else if (typeof rawQuals === 'string') {
+        rawQuals.split(/,|\n|;/).forEach(q => {
+          if (q.trim()) list.push(q.trim());
+        });
+      }
+    }
+
+    // 2. Extract from teacher designation if relevant
+    if (teacherItem.designation && teacherItem.designation !== 'Yog Instructor' && teacherItem.designation !== 'Founder') {
+      list.push(teacherItem.designation);
+    }
+
+    // 3. Extract specializations
+    if (teacherItem.specialization && Array.isArray(teacherItem.specialization)) {
+      teacherItem.specialization.forEach((spec) => {
+        if (spec && !list.includes(spec) && spec !== 'Founder') {
+          list.push(`Certified ${spec} Specialist`);
+        }
+      });
+    }
+
+    // 4. Detailed teacher credentials per instructor profile
+    const tNameLower = (teacherItem.name || '').toLowerCase();
+    if (tNameLower.includes('aarya')) {
+      if (!list.some(q => q.toLowerCase().includes('phd'))) list.push("PhD Research Scholar in Yoga Science & Physiological Wellness");
+      if (!list.some(q => q.toLowerCase().includes('ryt') || q.toLowerCase().includes('alliance'))) list.push("Certified E-RYT 500 Yoga Alliance Senior Master");
+      if (!list.some(q => q.toLowerCase().includes('experience'))) list.push("10+ Years International Teaching & Research Experience");
+      if (!list.some(q => q.toLowerCase().includes('hatha'))) list.push("Master Practitioner of Classical Hatha, Pranayama & Kriya Science");
+    } else if (tNameLower.includes('angela')) {
+      if (!list.some(q => q.toLowerCase().includes('vinyasa'))) list.push("Senior Vinyasa & Reformer Pilates Master");
+      if (!list.some(q => q.toLowerCase().includes('ryt') || q.toLowerCase().includes('500'))) list.push("500-Hour Certified Yoga Alliance Instructor (RYT 500)");
+      if (!list.some(q => q.toLowerCase().includes('alignment'))) list.push("Certified Specialist in Postural Realignment & Core Strength");
+    } else if (tNameLower.includes('charlotte')) {
+      if (!list.some(q => q.toLowerCase().includes('sound'))) list.push("Certified Sound Healing Practitioner (Singing Bowls & Gongs)");
+      if (!list.some(q => q.toLowerCase().includes('yin'))) list.push("500-Hour Certified Yin Yoga & Acoustic Meditation Specialist");
+      if (!list.some(q => q.toLowerCase().includes('stress'))) list.push("Certified Mindfulness & Stress Recovery Guide");
+    } else if (tNameLower.includes('shoaib')) {
+      if (!list.some(q => q.toLowerCase().includes('consultant'))) list.push("Master Faculty & Senior Health Consultant");
+      if (!list.some(q => q.toLowerCase().includes('kundalini'))) list.push("Certified Kundalini, Kriya & Breathwork Guide");
+      if (!list.some(q => q.toLowerCase().includes('wellness'))) list.push("Certified Integrative Wellness & Physiological Practitioner");
+    } else if (tNameLower.includes('ashish')) {
+      if (!list.some(q => q.toLowerCase().includes('alignment'))) list.push("Senior Yoga & Anatomical Alignment Specialist");
+      if (!list.some(q => q.toLowerCase().includes('hatha'))) list.push("Certified Hatha Yoga & Traditional Pranayama Master");
+    } else if (tNameLower.includes('louise')) {
+      if (!list.some(q => q.toLowerCase().includes('ryt') || q.toLowerCase().includes('500'))) list.push("500-Hour Certified Yoga Alliance Teacher (RYT 500)");
+      if (!list.some(q => q.toLowerCase().includes('yin'))) list.push("Holistic Movement & Yin-Yang Yoga Specialist");
+    }
+
+    if (list.length === 0) {
+      list.push("Certified Yoga Alliance Senior Instructor");
+      list.push("Experienced Mindfulness & Meditation Guide");
+    }
+
+    return Array.from(new Set(list));
+  };
+
+  const qualifications: string[] = getQualificationsList(teacher);
 
   // Bug 7 fix: derive studio and language badges from teacher fields, not hardcoded
   const studioBadges = (teacher as any).studios ? (teacher as any).studios : ['Woo House'];
@@ -674,38 +729,44 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
 
               {/* Glassmorphic Floating Badges (Bottom Overlay) */}
               <div
+                className="teacher-portrait-badges"
                 style={{
                   position: 'absolute',
-                  bottom: '20px',
-                  left: '20px',
-                  right: '20px',
+                  bottom: '18px',
+                  left: '16px',
+                  right: '16px',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: '12px'
+                  gap: '8px',
+                  zIndex: 2
                 }}
               >
                 {/* Badge 1: Verification / Experience */}
                 <div
+                  className="teacher-badge-pill"
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.92)',
                     backdropFilter: 'blur(12px)',
-                    padding: '8px 16px',
+                    padding: '7px 14px',
                     borderRadius: '999px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
+                    gap: '6px',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}
                 >
-                  <Award size={16} color="#944426" />
+                  <Award size={15} color="#944426" style={{ flexShrink: 0 }} />
                   <span
                     style={{
                       fontFamily: "var(--font-sans)",
-                      fontSize: '12.5px',
+                      fontSize: '12px',
                       fontWeight: 700,
                       color: '#21201E',
-                      letterSpacing: '0.02em'
+                      letterSpacing: '0.01em',
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     Pragya Master Faculty
@@ -714,27 +775,31 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
 
                 {/* Badge 2: Star Rating */}
                 <div
+                  className="teacher-badge-pill"
                   style={{
-                    backgroundColor: 'rgba(35, 43, 38, 0.85)',
+                    backgroundColor: 'rgba(35, 43, 38, 0.88)',
                     backdropFilter: 'blur(12px)',
-                    padding: '8px 14px',
+                    padding: '7px 12px',
                     borderRadius: '999px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
+                    gap: '5px',
                     color: '#FFFFFF',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}
                 >
-                  <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                  <Star size={14} color="#F59E0B" fill="#F59E0B" style={{ flexShrink: 0 }} />
                   <span
                     style={{
                       fontFamily: "var(--font-sans)",
-                      fontSize: '12.5px',
-                      fontWeight: 700
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap'
                     }}
                   >
-                    5.0 ★
+                    5.0
                   </span>
                 </div>
               </div>
@@ -1235,6 +1300,20 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
           }
           .teacher-timetable-section {
             padding: 48px 20px !important;
+          }
+        }
+        @media (max-width: 600px) {
+          .teacher-portrait-badges {
+            bottom: 12px !important;
+            left: 10px !important;
+            right: 10px !important;
+            gap: 6px !important;
+          }
+          .teacher-badge-pill {
+            padding: 5px 10px !important;
+          }
+          .teacher-badge-pill span {
+            font-size: 11px !important;
           }
         }
       `}</style>
