@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Sparkles, RefreshCw, Zap, ShieldCheck, Heart, Award, ArrowUpRight, Calendar, Tag, Info, ShoppingBag, ArrowRight } from 'lucide-react';
-import { getPackages, getBundleList, trackBundleEvent } from '../services/api';
-import { PackageItem, BundleItem } from '../types';
+import { getPackages, getBundleList, trackBundleEvent, getDailyQuote } from '../services/api';
+import { PackageItem, BundleItem, DailyQuote } from '../types';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,6 +22,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
   const [bundlesList, setBundlesList] = useState<BundleItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
+  const [dailyQuote, setDailyQuote] = useState<DailyQuote | null>(null);
 
   useEffect(() => {
     if (initialCategory) {
@@ -144,6 +145,10 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
+
+    getDailyQuote().then((q) => {
+      if (isMounted && q) setDailyQuote(q);
+    });
 
     Promise.all([
       getPackages().catch(() => ({})),
@@ -381,22 +386,37 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', color: '#944426' }}>
             <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 16px auto', display: 'block' }} />
-            <p
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontStyle: 'italic',
-                fontSize: '20px',
-                color: '#6B655F',
-                maxWidth: '560px',
-                margin: '0 auto 8px auto',
-                lineHeight: 1.45
-              }}
-            >
-              “Yog is the journey of the self, through the self, to the self.”
-            </p>
-            <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13px', color: '#944426', fontWeight: 700, letterSpacing: '0.04em' }}>
-              — The Bhagavad Gita
-            </span>
+            {dailyQuote ? (
+              <>
+                <p
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontStyle: 'italic',
+                    fontSize: '20px',
+                    color: '#6B655F',
+                    maxWidth: '560px',
+                    margin: '0 auto 8px auto',
+                    lineHeight: 1.45
+                  }}
+                >
+                  “{dailyQuote.q}”
+                </p>
+                <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13px', color: '#944426', fontWeight: 700, letterSpacing: '0.04em' }}>
+                  — {dailyQuote.a}
+                </span>
+              </>
+            ) : (
+              <p
+                style={{
+                  fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                  fontSize: '15px',
+                  color: '#6B655F',
+                  margin: '0 auto'
+                }}
+              >
+                Loading membership packages...
+              </p>
+            )}
           </div>
         ) : activeCategory === 'Special Bundles' ? (
           <div>

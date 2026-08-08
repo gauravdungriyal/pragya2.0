@@ -31,7 +31,7 @@ export const WhyChooseUs: React.FC = () => {
       className="why-us-section"
       style={{
         backgroundColor: '#F5EFE5',
-        padding: '64px 0 72px 0',
+        padding: '52px 0 60px 0',
         color: '#272727',
         borderTop: '1px solid rgba(0, 0, 0, 0.05)'
       }}
@@ -69,6 +69,10 @@ export const WhyChooseUs: React.FC = () => {
               alt="Pragya Yog School About Us Practitioner Image"
               className="why-us-img"
             />
+            <div className="why-us-img-badge">
+              <span className="badge-dot" />
+              <span>Mind-Body Alignment</span>
+            </div>
           </div>
 
           {/* Accent Divider Line (Visible in Mobile Layout) */}
@@ -107,62 +111,87 @@ export const WhyChooseUs: React.FC = () => {
           justify-content: space-between;
           align-items: flex-end;
           gap: 32px;
-          margin-bottom: 40px;
+          margin-bottom: 18px;
           flex-wrap: wrap;
         }
         .why-us-title-group {
-          max-width: 640px;
+          max-width: 600px;
         }
         .why-us-subtitle {
-          font-size: 12px;
+          font-size: 11.5px;
           font-weight: 700;
           letter-spacing: 0.14em;
-          color: #4A4640;
+          color: #944426;
           text-transform: uppercase;
           display: block;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
         .why-us-heading {
           font-family: var(--font-serif);
-          font-size: clamp(30px, 3.6vw, 44px);
+          font-size: clamp(28px, 3.2vw, 40px);
           font-weight: 400;
           color: #21201E;
-          line-height: 1.12;
+          line-height: 1.14;
           margin: 0;
         }
         .why-us-description {
           font-family: var(--font-sans);
-          max-width: 380px;
-          font-size: 14.5px;
-          color: #757069;
-          line-height: 1.55;
+          max-width: 360px;
+          font-size: 14px;
+          color: #6B655F;
+          line-height: 1.5;
           margin: 0;
-          padding-bottom: 4px;
+          padding-bottom: 2px;
         }
         .why-us-content-grid {
           display: grid;
-          grid-template-columns: 1fr 1.1fr;
-          gap: 48px;
+          grid-template-columns: 0.95fr 1.05fr;
+          gap: 36px;
           align-items: stretch;
         }
         .why-us-image-wrapper {
           position: relative;
-          border-radius: 24px;
+          border-radius: 20px;
           overflow: hidden;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-          height: 100%;
-          min-height: 440px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+          height: 290px;
         }
         .why-us-img {
           width: 100%;
           height: 100%;
           object-fit: cover;
           display: block;
-          border-radius: 24px;
-          transition: transform 0.4s ease;
+          border-radius: 20px;
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .why-us-img:hover {
-          transform: scale(1.02);
+          transform: scale(1.025);
+        }
+        .why-us-img-badge {
+          position: absolute;
+          bottom: 16px;
+          left: 16px;
+          background: rgba(255, 255, 255, 0.88);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.6);
+          border-radius: 999px;
+          padding: 6px 14px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #21201E;
+          letter-spacing: 0.02em;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          z-index: 2;
+        }
+        .badge-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background-color: #944426;
+          display: inline-block;
         }
         .mobile-accent-divider {
           display: none;
@@ -170,20 +199,38 @@ export const WhyChooseUs: React.FC = () => {
         .why-us-feature-list {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 24px 32px;
+          gap: 16px 28px;
           align-content: space-between;
+          position: relative;
+        }
+        .why-us-feature-list::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 50%;
+          width: 1px;
+          background-color: #DFD9CF;
+          transform: translateX(-50%);
+          pointer-events: none;
         }
         .why-us-card {
           border-top: 1px solid #DFD9CF;
-          padding-top: 16px;
+          padding-top: 12px;
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 8px;
           transition: transform 0.25s ease;
         }
+        .why-us-card:nth-child(odd) {
+          padding-right: 16px;
+        }
+        .why-us-card:nth-child(even) {
+          padding-left: 16px;
+        }
         .icon-badge {
-          width: 42px;
-          height: 42px;
+          width: 38px;
+          height: 38px;
           border-radius: 50%;
           background-color: #ECE6DC;
           display: flex;
@@ -200,17 +247,17 @@ export const WhyChooseUs: React.FC = () => {
         }
         .card-title {
           font-family: var(--font-sans);
-          font-size: 17px;
+          font-size: 16px;
           font-weight: 700;
           color: #21201E;
-          margin-bottom: 6px;
+          margin-bottom: 4px;
           line-height: 1.25;
         }
         .card-desc {
           font-family: 'Neue Montreal', sans-serif;
-          font-size: 13.5px;
-          color: #757069;
-          line-height: 1.5;
+          font-size: 13px;
+          color: #706B64;
+          line-height: 1.48;
           margin: 0;
         }
 
@@ -283,11 +330,16 @@ export const WhyChooseUs: React.FC = () => {
             flex-direction: column !important;
             gap: 24px !important;
           }
+          .why-us-feature-list::before {
+            display: none !important;
+          }
           .why-us-card {
             border-top: none !important;
             border-bottom: 1px solid #DFD9CF !important;
             padding-top: 0 !important;
             padding-bottom: 24px !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
             gap: 16px !important;
           }
           .icon-badge {

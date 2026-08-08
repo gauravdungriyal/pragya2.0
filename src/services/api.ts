@@ -28,18 +28,54 @@ async function fetchFromApi<T>(action: string, payload: Record<string, any> = {}
   }
 }
 
-// 1. Daily Quote
+// 1. Daily Quote (API ONLY - No hardcoded fallbacks)
 export async function getDailyQuote(): Promise<DailyQuote | null> {
-  const res = await fetchFromApi<any>('get-daily-quote');
-  if (res && Array.isArray(res.data) && res.data.length > 0) {
-    return res.data[0];
+  try {
+    const res = await fetchFromApi<any>('get-daily-quote');
+    if (!res) return null;
+
+    let quoteObj: any = null;
+
+    if (Array.isArray(res.data) && res.data.length > 0) {
+      quoteObj = res.data[0];
+    } else if (res.data && typeof res.data === 'object') {
+      quoteObj = res.data;
+    } else if (Array.isArray(res.quote) && res.quote.length > 0) {
+      quoteObj = res.quote[0];
+    } else if (res.quote && typeof res.quote === 'object') {
+      quoteObj = res.quote;
+    } else if (Array.isArray(res) && res.length > 0) {
+      quoteObj = res[0];
+    } else if (typeof res === 'object') {
+      quoteObj = res;
+    }
+
+    if (quoteObj && typeof quoteObj === 'object') {
+      const q = String(
+        quoteObj.q || quoteObj.quote || quoteObj.text || quoteObj.content || quoteObj.statement || quoteObj.title || ''
+      ).trim();
+
+      const a = String(
+        quoteObj.a || quoteObj.author || quoteObj.by || quoteObj.speaker || quoteObj.source || ''
+      ).trim();
+
+      const h = String(
+        quoteObj.h || quoteObj.html || (q ? `<blockquote>&ldquo;${q}&rdquo;${a ? ` &mdash; <footer>${a}</footer>` : ''}</blockquote>` : '')
+      ).trim();
+
+      if (q) {
+        return {
+          q,
+          a: a || 'Pragya Yog',
+          h
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to fetch daily quote from API:', error);
   }
-  // Fallback quote
-  return {
-    q: "Yog is the journey of the self, through the self, to the self.",
-    a: "The Bhagavad Gita",
-    h: "<blockquote>&ldquo;Yog is the journey of the self, through the self, to the self.&rdquo; &mdash; <footer>The Bhagavad Gita</footer></blockquote>"
-  };
+
+  return null;
 }
 
 // 2. FAQs (API ONLY - No hardcoded fallbacks)

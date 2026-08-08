@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, MapPin, Tag, ArrowUpRight, RefreshCw, Sparkles, Filter, Search, Check } from 'lucide-react';
-import { getUpcomingEvents } from '../services/api';
-import { UpcomingEvent } from '../types';
+import { getUpcomingEvents, getDailyQuote } from '../services/api';
+import { UpcomingEvent, DailyQuote } from '../types';
 
 interface EventsPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
@@ -14,6 +14,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
   const [loading, setLoading] = useState<boolean>(true);
   const [activeMonth, setActiveMonth] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [dailyQuote, setDailyQuote] = useState<DailyQuote | null>(null);
 
   const eventImages: Record<string, string> = {
     "1": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1200&auto=format&fit=crop",
@@ -73,6 +74,10 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
+
+    getDailyQuote().then((q) => {
+      if (isMounted && q) setDailyQuote(q);
+    });
 
     getUpcomingEvents().then((data) => {
       if (!isMounted) return;
@@ -282,22 +287,37 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', color: '#944426' }}>
             <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 16px auto', display: 'block' }} />
-            <p
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontStyle: 'italic',
-                fontSize: '20px',
-                color: '#6B655F',
-                maxWidth: '560px',
-                margin: '0 auto 8px auto',
-                lineHeight: 1.45
-              }}
-            >
-              “Yoga is the artwork of awareness on the canvas of body, mind and soul.”
-            </p>
-            <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13px', color: '#944426', fontWeight: 700, letterSpacing: '0.04em' }}>
-              — B.K.S. Iyengar
-            </span>
+            {dailyQuote ? (
+              <>
+                <p
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontStyle: 'italic',
+                    fontSize: '20px',
+                    color: '#6B655F',
+                    maxWidth: '560px',
+                    margin: '0 auto 8px auto',
+                    lineHeight: 1.45
+                  }}
+                >
+                  “{dailyQuote.q}”
+                </p>
+                <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13px', color: '#944426', fontWeight: 700, letterSpacing: '0.04em' }}>
+                  — {dailyQuote.a}
+                </span>
+              </>
+            ) : (
+              <p
+                style={{
+                  fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                  fontSize: '15px',
+                  color: '#6B655F',
+                  margin: '0 auto'
+                }}
+              >
+                Loading upcoming events...
+              </p>
+            )}
           </div>
         ) : filteredEvents.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '56px 24px', backgroundColor: '#FFFFFF', borderRadius: '24px', color: '#7A756F' }}>

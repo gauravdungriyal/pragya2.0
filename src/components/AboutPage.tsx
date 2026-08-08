@@ -31,7 +31,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
     'Balances the nervous system for better sleep and calmness'
   ];
 
-  const defaultCoaches = [
+  const defaultInstructors = [
     {
       name: 'Master Aarya Kuldeep',
       role: 'Founder & PhD Research Scholar',
@@ -51,10 +51,30 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
       name: 'Charlotte Chiu',
       role: 'Sound Healing & Yin Yoga Guide',
       avatar: 'https://pragya-yog.com/uploads/teachers/1744359589.webp'
+    },
+    {
+      name: 'Ashish P',
+      role: 'Senior Yog & Alignment Specialist',
+      avatar: 'https://pragya-yog.com/uploads/teachers/1768183299.webp'
+    },
+    {
+      name: 'Louise Vance',
+      role: 'Holistic Movement & Yin-Yang Specialist',
+      avatar: 'https://pragya-yog.com/uploads/teachers/1779244503.webp'
+    },
+    {
+      name: 'Marcus Chan',
+      role: 'Mindfulness & Tibetan Sound Healer',
+      avatar: 'https://pragya-yog.com/uploads/teachers/1779244590.webp'
+    },
+    {
+      name: 'Dr. Yatendra Amoli',
+      role: 'Director of Teaching & Research Scholar',
+      avatar: 'https://pragya-yog.com/uploads/teachers/1781458525.webp'
     }
   ];
 
-  const [coaches, setCoaches] = useState(defaultCoaches);
+  const [instructors, setInstructors] = useState(defaultInstructors);
 
   const locationImages = [
     {
@@ -197,12 +217,12 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
   useEffect(() => {
     getTeachers().then((data) => {
       if (data && data.length > 0) {
-        const mapped = data.slice(0, 4).map((t) => ({
+        const mapped = data.map((t) => ({
           name: t.name,
           role: t.designation || 'Yog Instructor',
-          avatar: t.image || defaultCoaches[0].avatar
+          avatar: t.image || defaultInstructors[0].avatar
         }));
-        setCoaches(mapped);
+        setInstructors(mapped);
       }
     });
   }, []);
@@ -356,14 +376,14 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
               <div className="spec-value">60 – 90 minutes</div>
 
               <div className="spec-label">Type</div>
-              <div className="spec-value">Classical Hatha, Vinyasa, Yin & Sound</div>
+              <div className="spec-value">Classical Hatha, Vinyasa Flow, Yin Yoga, Ashtanga, Pranayama & Sound Healing, Reformer Pilates</div>
 
-              <div className="spec-label label-coaches">Coaches</div>
-              <div className="coaches-pills-list">
-                {coaches.map((coach, idx) => (
-                  <div key={idx} className="coach-pill">
-                    <img src={coach.avatar} alt={coach.name} className="coach-avatar" />
-                    <span className="coach-name">{coach.name}</span>
+              <div className="spec-label label-instructors">Instructors</div>
+              <div className="instructors-pills-list">
+                {instructors.map((instructor, idx) => (
+                  <div key={idx} className="instructor-pill">
+                    <img src={instructor.avatar} alt={instructor.name} className="instructor-avatar" />
+                    <span className="instructor-name">{instructor.name}</span>
                   </div>
                 ))}
               </div>
@@ -371,10 +391,16 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
 
             {/* CTA Button */}
             <button
-              onClick={() => onOpenBooking('class', 'Pragya Yog Session')}
+              onClick={() => {
+                if (onNavigateSection) {
+                  onNavigateSection('classes');
+                } else {
+                  onOpenBooking('class', 'Book a Class Now');
+                }
+              }}
               className="about-book-btn"
             >
-              <span>BOOK THIS CLASS</span>
+              <span>Book a Class Now</span>
               <ArrowRight size={16} />
             </button>
           </div>
@@ -590,7 +616,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <span style={{ fontSize: '20px', fontWeight: 600, color: '#21201E' }}>+</span>
                 <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15.5px', fontWeight: 700, color: '#21201E' }}>
-                  World-Class Coaches, Real Results
+                  World-Class Instructors, Real Results
                 </span>
               </div>
 
@@ -1113,7 +1139,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
           </p>
 
           <button
-            onClick={() => onOpenBooking('class', 'Book Your Spot - Pragya Yog School')}
+            onClick={() => {
+              if (onNavigateSection) {
+                onNavigateSection('classes');
+              } else {
+                onOpenBooking('class', 'Book Your Spot - Pragya Yog School');
+              }
+            }}
             className="cta-book-btn"
           >
             <span>Book Your Spot</span>
@@ -1240,7 +1272,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
           color: #7A756F;
           font-weight: 500;
         }
-        .label-coaches {
+        .label-coaches, .label-instructors {
           align-self: start;
           padding-top: 6px;
         }
@@ -1249,13 +1281,15 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
           font-weight: 500;
           color: #21201E;
         }
-        .coaches-pills-list {
+        .coaches-pills-list, .instructors-pills-list {
           display: flex;
-          flex-direction: column;
-          gap: 8px;
-          align-items: flex-start;
+          flex-direction: row;
+          flex-wrap: wrap;
+          gap: 8px 10px;
+          align-items: center;
+          max-width: 100%;
         }
-        .coach-pill {
+        .coach-pill, .instructor-pill {
           display: inline-flex;
           align-items: center;
           gap: 8px;
@@ -1263,14 +1297,21 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
           border-radius: 999px;
           padding: 4px 14px 4px 4px;
           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+          transition: all 0.2s ease;
+          white-space: nowrap;
         }
-        .coach-avatar {
+        .coach-pill:hover, .instructor-pill:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+        .coach-avatar, .instructor-avatar {
           width: 24px;
           height: 24px;
           border-radius: 50%;
           object-fit: cover;
+          flex-shrink: 0;
         }
-        .coach-name {
+        .coach-name, .instructor-name {
           font-size: 13.5px;
           font-weight: 500;
           color: #21201E;
@@ -1457,6 +1498,23 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
           }
           .spec-value {
             font-size: 14px !important;
+          }
+          .coaches-pills-list, .instructors-pills-list {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 6px 8px !important;
+            align-items: center !important;
+          }
+          .coach-pill, .instructor-pill {
+            padding: 3px 10px 3px 3px !important;
+          }
+          .coach-avatar, .instructor-avatar {
+            width: 22px !important;
+            height: 22px !important;
+          }
+          .coach-name, .instructor-name {
+            font-size: 12.5px !important;
           }
           .about-elements-section, .about-pillars-section {
             padding: 0 20px !important;

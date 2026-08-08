@@ -344,65 +344,67 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
         </div>
       </div>
 
-      {/* Bottom Quote Banner (Desktop Only - Matching Reference Design) */}
-      <div
-        className="hero-quote-banner-desktop"
-        style={{
-          position: 'relative',
-          zIndex: 10,
-          width: '100%',
-          backgroundColor: '#F5EFE5',
-          color: '#21201E',
-          padding: '20px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          marginTop: '36px',
-          borderTop: '1px solid rgba(0, 0, 0, 0.08)'
-        }}
-      >
-        {/* 5 Star Rating */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', color: '#E5A93B' }}>
-          {[...Array(5)].map((_, i) => (
-            <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-          ))}
-        </div>
-
-        {/* Quote Text */}
-        <p
+      {/* Bottom Quote Banner (Desktop Only - Rendered ONLY if quote from API is available) */}
+      {dailyQuote && (
+        <div
+          className="hero-quote-banner-desktop"
           style={{
-            fontFamily: "var(--font-serif)",
-            fontStyle: 'italic',
-            fontSize: '17px',
-            letterSpacing: '0.01em',
+            position: 'relative',
+            zIndex: 10,
+            width: '100%',
+            backgroundColor: '#F5EFE5',
             color: '#21201E',
-            maxWidth: '780px',
-            margin: '0 0 6px 0',
-            lineHeight: 1.4,
-            fontWeight: 400
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            marginTop: '36px',
+            borderTop: '1px solid rgba(0, 0, 0, 0.08)'
           }}
         >
-          "{dailyQuote ? dailyQuote.q : 'Pragya Yog is THE guide in the journey of core strength, mindfulness & graceful movement.'}"
-        </p>
+          {/* 5 Star Rating */}
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', color: '#E5A93B' }}>
+            {[...Array(5)].map((_, i) => (
+              <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            ))}
+          </div>
 
-        {/* Author / Location Attribution */}
-        <p
-          style={{
-            fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-            fontSize: '12px',
-            color: '#6B655D',
-            letterSpacing: '0.04em',
-            margin: 0,
-            fontWeight: 400
-          }}
-        >
-          — {dailyQuote ? dailyQuote.a : 'Ananya Sharma · New Delhi'}
-        </p>
-      </div>
+          {/* Quote Text */}
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontStyle: 'italic',
+              fontSize: '17px',
+              letterSpacing: '0.01em',
+              color: '#21201E',
+              maxWidth: '780px',
+              margin: '0 0 6px 0',
+              lineHeight: 1.4,
+              fontWeight: 400
+            }}
+          >
+            "{dailyQuote.q}"
+          </p>
+
+          {/* Author / Location Attribution */}
+          <p
+            style={{
+              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+              fontSize: '12px',
+              color: '#6B655D',
+              letterSpacing: '0.04em',
+              margin: 0,
+              fontWeight: 400
+            }}
+          >
+            — {dailyQuote.a}
+          </p>
+        </div>
+      )}
 
       {/* Responsive Styles for Mobile Reference UI */}
       <style>{`
