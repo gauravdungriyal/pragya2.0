@@ -765,6 +765,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
                   backgroundColor: 'rgba(33, 32, 30, 0.85)',
                   color: '#FFFFFF',
                   backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
                   borderRadius: '999px',
                   padding: '6px 16px',
                   fontFamily: "'Neue Montreal', -apple-system, sans-serif",

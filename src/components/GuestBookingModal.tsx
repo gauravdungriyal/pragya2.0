@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Loader, ArrowLeft } from 'lucide-react';
+import { X, CheckCircle2, Loader, Mail, Shield, User, Phone, Sparkles, ArrowRight, RefreshCw, ShoppingBag, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { API_BASE_URL } from '../config/apiConfig';
+import { useCart } from '../context/CartContext';
+import { guestBookingCheckEmail, guestBooking, bookClass, bookDropIn } from '../services/api';
 
 interface GuestBookingModalProps {
   isOpen: boolean;
@@ -16,90 +17,154 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
   isOpen, onClose, scheduleId, classTitle, classTiming, classDetails
 }) => {
   const { user, setSessionTokens } = useAuth();
+  const { addToCart } = useCart();
 
+  const [step, setStep] = useState<'email' | 'otp'>('email');
   const [email, setEmail] = useState(user?.email || '');
+  const [otp, setOtp] = useState('');
   const [fullName, setFullName] = useState(user?.name || '');
   const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState('+852 Hong Kong');
+  const [countryCode, setCountryCode] = useState('852');
   const [hkid, setHkid] = useState('');
   const [notes, setNotes] = useState('');
-  const [termsAgreed, setTermsAgreed] = useState(false);
-  const [showFullDesc, setShowFullDesc] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(true);
 
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [noPackageError, setNoPackageError] = useState(false);
 
   if (!isOpen) return null;
 
-  // Format display fields based on classDetails or fallback data matching reference design
+  const handleResetAndClose = () => {
+    setStep('email');
+    setOtp('');
+    setError('');
+    setInfoMsg('');
+    setIsSuccess(false);
+    setNoPackageError(false);
+    onClose();
+  };
+
   const displayTitle = classTitle || classDetails?.title || 'Yoga Session';
-  const displayDate = classDetails?.date 
-    ? classDetails.date 
-    : new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  
-  const rawTiming = classTiming || classDetails?.timing || classDetails?.time || '10:00am';
-  const startTime = rawTiming.split('-')[0].trim().toLowerCase().replace(/\s+/g, '');
-  const displayTime = startTime.includes('m') ? startTime : `${startTime}am`;
 
-  const rawDuration = classDetails?.duration;
-  let displayDuration = '60 mins';
-  if (rawDuration) {
-    const str = String(rawDuration).toLowerCase();
-    if (str.includes('120') || str.includes('2 hour')) displayDuration = '2 Hours';
-    else if (str.includes('60')) displayDuration = '60 mins';
-    else if (str.includes('75')) displayDuration = '75 mins';
-    else if (str.includes('90')) displayDuration = '90 mins';
-    else if (!str.includes('min') && !str.includes('hour')) displayDuration = `${str} mins`;
-    else displayDuration = String(rawDuration);
-  }
+  // Member direct booking (Skip OTP for logged in users)
+  const handleMemberDirectBook = async () => {
+    if (!user?.access_token) return;
+    setLoading(true);
+    setError('');
+    setNoPackageError(false);
+    try {
+      const res = await bookClass(user.access_token, scheduleId);
+      if (res.success) {
+        setSuccessMsg(res.message || `Your booking for ${displayTitle} has been confirmed!`);
+        setIsSuccess(true);
+      } else {
+        const msg = res.message || 'No active package or membership found for this class.';
+        setError(msg);
+        setNoPackageError(true);
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    }
+    setLoading(false);
+  };
 
-  const displayInstructor = classDetails?.instructor || classDetails?.instructor_name || 'Master Teacher';
-  const displayLocation = classDetails?.room && !classDetails.room.includes('Tak Woo')
-    ? `Main Studio (${classDetails.room}, 13/F Tak Woo House, Central)`
-    : 'Main Studio (1303-04, 13/F Tak Woo House, 1-3 Wo On Lane, Central)';
-  
-  const rawPrice = classDetails?.price || classDetails?.book_cost || classDetails?.amount;
-  const displayPrice = rawPrice 
-    ? (typeof rawPrice === 'number' ? `HK$${rawPrice.toFixed(2)}` : String(rawPrice).includes('HK$') ? String(rawPrice) : `HK$${rawPrice}`) 
-    : 'HK$816.00';
+  // Drop-in Single Class Handler
+  const handleBookDropIn = async () => {
+    if (!user?.access_token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await bookDropIn(user.access_token, scheduleId);
+      if (res.success) {
+        setSuccessMsg(res.message || `Drop-in booking request for ${displayTitle} submitted successfully!`);
+        setIsSuccess(true);
+      } else {
+        // Add single drop-in class pass to cart and open cart
+        addToCart({
+          id: scheduleId || 'dropin-' + Date.now(),
+          package_id: scheduleId,
+          schedule_id: scheduleId,
+          title: `Drop-In Single Class: ${displayTitle}`,
+          price: 220,
+          category: 'Drop-In Pass',
+          type: 'class_pack'
+        });
+        handleResetAndClose();
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    }
+    setLoading(false);
+  };
 
-  const richFallbackDesc = `At this age, children learn best through movement, stories, play and imagination. This fun-filled programme introduces yoga, balance, coordination, breathing and mindfulness through games, storytelling, arts & crafts, music and creative activities.
+  // Buy Pass or Membership Handler
+  const handleBuyPass = () => {
+    addToCart({
+      id: 12771,
+      package_id: 12771,
+      title: '10-Class Sanctuary Pass',
+      price: 1500,
+      category: 'Class Pack',
+      type: 'class_pack'
+    });
+    handleResetAndClose();
+  };
 
-🧸 What They Will Explore
-• Movement discovery and creative play
-• Balance and coordination activities
-• Story-based yoga adventures
-• Breathing for calm and focus
-• Arts and crafts projects
-• Team games and social interaction
-• Emotional awareness through play
+  // Step 1: Check Email & Send OTP
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setInfoMsg('');
 
-🌟 Benefits
-• Improved balance and coordination
-• Better focus and listening skills
-• Increased confidence
-• Social development and teamwork
-• Healthy movement habits
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
 
-🎁 Every child receives:
-✅ Certificate of Participation
-✅ Personalised Progress Report
-✅ Camp Photo Memories`;
+    setLoading(true);
+    try {
+      const res = await guestBookingCheckEmail(email);
+      if (res?.fname) setFullName(res.fname);
+      if (res?.phone) setPhone(res.phone);
+      if (res?.hongkong_id) setHkid(res.hongkong_id);
 
-  const rawDesc = classDetails?.description;
-  const fullDesc = (rawDesc && String(rawDesc).trim().length > 0) 
-    ? String(rawDesc).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>?/gm, '').trim()
-    : richFallbackDesc;
+      setStep('otp');
+      setInfoMsg(`OTP code sent to ${email}`);
+    } catch {
+      setError('Network error. Please try again.');
+    }
+    setLoading(false);
+  };
 
-  const firstParagraph = fullDesc.split('\n')[0];
-  const truncatedDesc = firstParagraph.length > 150 ? firstParagraph.slice(0, 150) + '...' : firstParagraph;
+  // Resend OTP
+  const handleResendOtp = async () => {
+    if (!email) return;
+    setResending(true);
+    setError('');
+    setInfoMsg('');
+    try {
+      await guestBookingCheckEmail(email);
+      setInfoMsg(`A new 6-digit OTP code has been sent to ${email}`);
+    } catch {
+      setError('Failed to resend OTP code. Please try again.');
+    }
+    setResending(false);
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Step 2: Verify OTP & Submit Booking
+  const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
+    if (!otp || otp.trim().length < 6) {
+      setError('Please enter the 6-digit OTP verification code sent to your email.');
+      return;
+    }
     if (!termsAgreed) {
       setError('Please accept the Terms & Conditions to proceed.');
       return;
@@ -120,76 +185,35 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
     setLoading(true);
 
     try {
-      const codeDigits = countryCode.replace(/[^0-9+]/g, '') || '852';
-      const payload = {
-        action: 'create_payment',
-        email,
+      // Bug 16 fix: strip non-numeric chars including leading '+' so API receives '852' not '+852'
+      const codeDigits = countryCode.replace(/[^0-9]/g, '') || '852';
+
+      // Bug 5 fix: Go directly to guestBooking; no incorrect create_payment attempt for class booking
+      const guestRes = await guestBooking({
+        event_id: scheduleId,
+        otp: otp.trim(),
         name: fullName,
+        email,
         phone,
         country_code: codeDigits,
         hongkong_id: hkid,
-        package_id: scheduleId,
-        schedule_id: scheduleId,
-        event_id: scheduleId,
-        notes,
-      };
+      });
 
-      const res = await fetch(API_BASE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }).then((r) => r.json());
-
-      if (res?.payment_url) {
-        window.location.href = res.payment_url;
-        return;
-      }
-
-      // If backend processes reservation directly
-      if (res?.success === true || res?.status === true) {
-        if (!user && res.access_token) {
+      if (guestRes?.success === true || guestRes?.status === true) {
+        if (!user && guestRes.access_token) {
           setSessionTokens({
-            uid: String(res.uid || ''),
+            uid: String(guestRes.uid || ''),
             name: fullName || email.split('@')[0],
             email,
-            access_token: res.access_token,
-            refresh_token: res.refresh_token || '',
+            access_token: guestRes.access_token,
+            refresh_token: guestRes.refresh_token || '',
           });
         }
-        setSuccessMsg(res.message || 'Your class reservation request has been submitted successfully!');
+        setSuccessMsg(guestRes.message || `Class reservation confirmed! A confirmation email has been sent to ${email}.`);
         setIsSuccess(true);
       } else {
-        // Fallback guest booking endpoint
-        const guestRes = await fetch(API_BASE_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'guestBooking',
-            email,
-            name: fullName,
-            phone,
-            country_code: codeDigits,
-            event_id: scheduleId,
-            schedule_id: scheduleId,
-          }),
-        }).then((r) => r.json());
-
-        if (guestRes?.success === true || guestRes?.status === true) {
-          if (!user && guestRes.access_token) {
-            setSessionTokens({
-              uid: String(guestRes.uid || ''),
-              name: fullName || email.split('@')[0],
-              email,
-              access_token: guestRes.access_token,
-              refresh_token: guestRes.refresh_token || '',
-            });
-          }
-          setSuccessMsg(guestRes.message || 'Class reservation confirmed! A confirmation email has been sent to you.');
-          setIsSuccess(true);
-        } else {
-          setError(guestRes?.message || res?.message || 'Booking completed! Thank you for reserving your class.');
-          setIsSuccess(true);
-        }
+        const errMsg = guestRes?.message || 'Invalid or expired OTP code. Please check and try again.';
+        setError(errMsg);
       }
     } catch {
       setError('Network error. Please try again.');
@@ -197,311 +221,563 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
     setLoading(false);
   };
 
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: '11.5px',
+    fontWeight: 700,
+    letterSpacing: '0.06em',
+    color: '#5A5854',
+    textTransform: 'uppercase',
+    marginBottom: '6px',
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '14px 18px 14px 44px',
+    borderRadius: '14px',
+    border: '1.5px solid rgba(39,39,39,0.15)',
+    fontSize: '15px',
+    color: '#272727',
+    backgroundColor: '#FFFFFF',
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s ease',
+  };
+
   return (
     <div
-      onClick={onClose}
+      onClick={handleResetAndClose}
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: '#F4F0EA',
-        zIndex: 1050,
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        padding: '40px 16px 80px 16px',
-        display: 'block',
+        backgroundColor: 'rgba(33, 30, 26, 0.55)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        zIndex: 1000000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
       }}
     >
-      {/* Top Center Pragya Logo */}
-      <div style={{ width: '100%', maxWidth: '660px', margin: '0 auto 24px auto', textAlign: 'center' }}>
-        <img
-          src="/logo.png"
-          alt="Pragya Yog"
-          style={{ height: '48px', margin: '0 auto', display: 'block' }}
-        />
-      </div>
-
-      {/* Main Centered Booking Card */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '660px',
-          margin: '0 auto',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '20px',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.08)',
-          border: '1px solid rgba(0, 0, 0, 0.05)',
-          padding: 0,
+          maxWidth: '460px',
+          backgroundColor: '#F8F4EE',
+          borderRadius: '24px',
+          padding: '36px 32px',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.12)',
+          border: '1px solid rgba(255, 255, 255, 0.6)',
           position: 'relative',
-          maxHeight: 'none',
-          height: 'auto',
-          overflow: 'visible',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
         }}
       >
-        {/* Top Teal Header Banner */}
-        <div
+        {/* Close Button */}
+        <button
+          onClick={handleResetAndClose}
           style={{
-            backgroundColor: '#00B594',
-            padding: '24px 32px',
-            color: '#FFFFFF',
-            borderTopLeftRadius: '20px',
-            borderTopRightRadius: '20px',
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(39, 39, 39, 0.07)',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#272727',
+            transition: 'background-color 0.2s ease',
           }}
         >
-          <h2
-            style={{
-              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-              fontSize: '22px',
-              fontWeight: 700,
-              margin: 0,
-              color: '#FFFFFF'
-            }}
-          >
-            {displayTitle}
-          </h2>
-        </div>
+          <X size={18} />
+        </button>
 
         {isSuccess ? (
-          <div style={{ padding: '56px 36px', textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', padding: '16px 8px 8px 8px' }}>
             <div
               style={{
-                width: '68px', height: '68px', borderRadius: '50%',
-                backgroundColor: 'rgba(0, 181, 148, 0.12)', color: '#00B594',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 20px auto'
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(0, 181, 148, 0.12)',
+                color: '#00B594',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px auto',
               }}
             >
-              <CheckCircle2 size={38} />
+              <CheckCircle2 size={36} />
             </div>
-            <h3 style={{ fontSize: '24px', fontWeight: 700, color: '#21201E', marginBottom: '12px' }}>
+
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', color: '#272727', marginBottom: '10px', fontWeight: 600 }}>
               Reservation Confirmed!
             </h3>
-            <p style={{ fontSize: '15px', color: '#5A5854', lineHeight: 1.6, maxWidth: '480px', margin: '0 auto 28px auto' }}>
+
+            <p style={{ fontSize: '14px', color: '#5A5854', lineHeight: 1.6, marginBottom: '24px' }}>
               {successMsg || `Thank you, ${fullName}. Your reservation for ${displayTitle} has been confirmed.`}
             </p>
+
             <button
-              onClick={onClose}
+              onClick={handleResetAndClose}
               style={{
-                backgroundColor: '#00B594', color: '#FFFFFF',
-                border: 'none', borderRadius: '12px', padding: '14px 36px',
-                fontSize: '15px', fontWeight: 700, cursor: 'pointer'
+                width: '100%',
+                padding: '14px 24px',
+                backgroundColor: '#D9A726',
+                color: '#272727',
+                fontSize: '15px',
+                fontWeight: 700,
+                borderRadius: '30px',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 6px 20px rgba(217, 167, 38, 0.35)',
               }}
             >
               Close & Back to Schedule
             </button>
           </div>
-        ) : (
+        ) : user?.access_token ? (
+          /* ── LOGGED-IN MEMBER CLASS BOOKING VIEW (No OTP) ─────────────── */
           <div>
-            {/* Details Section */}
-            <div style={{ padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: '12px', alignItems: 'baseline' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#8A8580' }}>Date</span>
-                <span style={{ fontSize: '14.5px', fontWeight: 700, color: '#21201E' }}>{displayDate}</span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: '12px', alignItems: 'baseline' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#8A8580' }}>Time</span>
-                <span style={{ fontSize: '14.5px', fontWeight: 700, color: '#21201E' }}>{displayTime}</span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: '12px', alignItems: 'baseline' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#8A8580' }}>Duration</span>
-                <span style={{ fontSize: '14.5px', fontWeight: 700, color: '#21201E' }}>{displayDuration}</span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: '12px', alignItems: 'baseline' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#8A8580' }}>Instructor</span>
-                <span style={{ fontSize: '14.5px', fontWeight: 700, color: '#21201E' }}>{displayInstructor}</span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: '12px', alignItems: 'baseline' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#8A8580' }}>Location</span>
-                <span style={{ fontSize: '14.5px', fontWeight: 700, color: '#21201E', lineHeight: 1.4 }}>{displayLocation}</span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: '12px', alignItems: 'baseline' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#8A8580' }}>Price</span>
-                <div>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#21201E' }}>{displayPrice}</span>
-                  <div style={{ fontSize: '12px', color: '#8A8580', marginTop: '2px' }}>Includes 2% payment gateway fee</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: '12px', alignItems: 'baseline' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#8A8580' }}>Description</span>
-                <div>
-                  <p style={{ margin: 0, fontSize: '14px', color: '#21201E', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                    {showFullDesc ? fullDesc : truncatedDesc}
-                  </p>
-                  {fullDesc.length > 150 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowFullDesc(!showFullDesc)}
-                      style={{
-                        border: 'none', background: 'none', color: '#00B594',
-                        fontSize: '13.5px', fontWeight: 700, cursor: 'pointer',
-                        padding: 0, marginTop: '8px', display: 'block'
-                      }}
-                    >
-                      {showFullDesc ? 'Show less' : 'Read more'}
-                    </button>
-                  )}
-                </div>
-              </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#944426', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
+              <Sparkles size={14} color="#944426" />
+              <span>MEMBER CLASS BOOKING</span>
             </div>
 
-            {/* Section Divider */}
-            <div style={{ borderTop: '1px solid #EFEAE4', margin: '0 36px' }} />
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '26px', color: '#272727', margin: '0 0 6px 0', fontWeight: 600 }}>
+              Book Class
+            </h3>
 
-            {/* Form Inputs Section */}
-            <form onSubmit={handleSubmit} style={{ padding: '32px 36px 40px 36px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {error && (
-                <div style={{ backgroundColor: 'rgba(220, 38, 38, 0.08)', border: '1px solid rgba(220, 38, 38, 0.2)', borderRadius: '10px', padding: '12px 16px', fontSize: '13.5px', color: '#DC2626' }}>
-                  {error}
+            <p style={{ fontSize: '13.5px', color: '#6B655F', lineHeight: 1.5, marginBottom: '20px', marginTop: 0 }}>
+              Confirm your booking for <strong>{displayTitle}</strong>.
+            </p>
+
+            <div style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(39,39,39,0.1)', borderRadius: '16px', padding: '18px 20px', marginBottom: '20px' }}>
+              <div style={{ fontSize: '11px', color: '#8A8580', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em', marginBottom: '6px' }}>
+                LOGGED-IN MEMBER ACCOUNT
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: '#272727', marginBottom: '2px' }}>
+                {user.name || user.email}
+              </div>
+              <div style={{ fontSize: '13.5px', color: '#6B655F' }}>
+                {user.email}
+              </div>
+              {classTiming && (
+                <div style={{ fontSize: '13px', color: '#944426', fontWeight: 600, marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(39,39,39,0.06)' }}>
+                  ⏰ {classTiming}
                 </div>
               )}
+            </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#21201E', marginBottom: '8px' }}>Email *</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="me@mail.com"
-                  style={{
-                    width: '100%', padding: '14px 18px', borderRadius: '12px',
-                    border: '2px solid #21201E', fontSize: '14.5px', color: '#21201E',
-                    backgroundColor: '#FFFFFF', outline: 'none', boxSizing: 'border-box'
-                  }}
-                  required
-                />
+            {error && (
+              <div style={{ backgroundColor: 'rgba(220, 38, 38, 0.08)', border: '1px solid rgba(220, 38, 38, 0.2)', borderRadius: '14px', padding: '16px', fontSize: '13px', color: '#DC2626', marginBottom: '18px' }}>
+                <div style={{ fontWeight: 700, marginBottom: noPackageError ? '4px' : 0 }}>⚠️ {error}</div>
+                {noPackageError && (
+                  <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(220, 38, 38, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={handleBookDropIn}
+                      disabled={loading}
+                      style={{
+                        padding: '11px 16px',
+                        borderRadius: '100px',
+                        backgroundColor: '#944426',
+                        color: '#FFFFFF',
+                        fontSize: '12.5px',
+                        fontWeight: 700,
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        boxShadow: '0 4px 12px rgba(148,68,38,0.25)'
+                      }}
+                    >
+                      <ShoppingBag size={14} />
+                      <span>Book Single Drop-In Class (HK$220)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleBuyPass}
+                      style={{
+                        padding: '11px 16px',
+                        borderRadius: '100px',
+                        backgroundColor: '#272727',
+                        color: '#FFFFFF',
+                        fontSize: '12.5px',
+                        fontWeight: 700,
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        boxShadow: '0 4px 12px rgba(39,39,39,0.2)'
+                      }}
+                    >
+                      <CreditCard size={14} />
+                      <span>Buy Pass or Membership</span>
+                    </button>
+                  </div>
+                )}
               </div>
+            )}
 
-              <div>
-                <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#21201E', marginBottom: '8px' }}>Full Name *</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Your name"
-                  style={{
-                    width: '100%', padding: '14px 18px', borderRadius: '12px',
-                    border: '1px solid #E2DCD5', fontSize: '14.5px', color: '#21201E',
-                    backgroundColor: '#FAFAF8', outline: 'none', boxSizing: 'border-box'
-                  }}
-                  required
-                />
-              </div>
+            <button
+              onClick={handleMemberDirectBook}
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '15px 24px',
+                backgroundColor: '#D9A726',
+                color: '#272727',
+                fontSize: '15px',
+                fontWeight: 700,
+                borderRadius: '30px',
+                border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: '0 6px 20px rgba(217, 167, 38, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                opacity: loading ? 0.7 : 1,
+              }}
+            >
+              {loading ? <Loader className="animate-spin" size={18} /> : <>Confirm Booking <ArrowRight size={18} /></>}
+            </button>
+          </div>
+        ) : (
+          <div>
+            {/* Header Badge matching reference screenshot */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: '#944426',
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}
+            >
+              <Sparkles size={14} color="#944426" />
+              <span>GUEST VERIFICATION & AUTO-LOGIN</span>
+            </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#21201E', marginBottom: '8px' }}>Phone Number *</label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    style={{
-                      padding: '14px 12px', borderRadius: '12px', border: '1px solid #E2DCD5',
-                      fontSize: '14px', color: '#21201E', backgroundColor: '#FAFAF8', outline: 'none'
-                    }}
-                  >
-                    <option value="+852 Hong Kong">+852 Hong Kong</option>
-                    <option value="+86 China">+86 China</option>
-                    <option value="+853 Macau">+853 Macau</option>
-                    <option value="+1 USA/Canada">+1 USA/Canada</option>
-                    <option value="+44 UK">+44 UK</option>
-                    <option value="+65 Singapore">+65 Singapore</option>
-                  </select>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Phone number"
-                    style={{
-                      flex: 1, padding: '14px 18px', borderRadius: '12px',
-                      border: '1px solid #E2DCD5', fontSize: '14.5px', color: '#21201E',
-                      backgroundColor: '#FAFAF8', outline: 'none', boxSizing: 'border-box'
-                    }}
-                    required
-                  />
-                </div>
-              </div>
+            {/* Title */}
+            <h3
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: '26px',
+                color: '#272727',
+                margin: '0 0 6px 0',
+                fontWeight: 600,
+              }}
+            >
+              OTP Verification
+            </h3>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#21201E', marginBottom: '8px' }}>HKID/Passport No.</label>
-                <input
-                  type="text"
-                  value={hkid}
-                  onChange={(e) => setHkid(e.target.value)}
-                  placeholder="Optional"
-                  style={{
-                    width: '100%', padding: '14px 18px', borderRadius: '12px',
-                    border: '1px solid #E2DCD5', fontSize: '14.5px', color: '#21201E',
-                    backgroundColor: '#FAFAF8', outline: 'none', boxSizing: 'border-box'
-                  }}
-                />
-              </div>
+            {/* Subtext */}
+            <p style={{ fontSize: '13.5px', color: '#6B655F', lineHeight: 1.5, marginBottom: '24px', marginTop: 0 }}>
+              Verify your email to create your guest account and book <strong>{displayTitle}</strong>.
+            </p>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#21201E', marginBottom: '8px' }}>Notes</label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Optional"
-                  rows={3}
-                  style={{
-                    width: '100%', padding: '14px 18px', borderRadius: '12px',
-                    border: '1px solid #E2DCD5', fontSize: '14.5px', color: '#21201E',
-                    backgroundColor: '#FAFAF8', outline: 'none', boxSizing: 'border-box',
-                    fontFamily: 'inherit'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
-                <input
-                  type="checkbox"
-                  id="terms-check"
-                  checked={termsAgreed}
-                  onChange={(e) => setTermsAgreed(e.target.checked)}
-                  style={{ width: '18px', height: '18px', accentColor: '#00B594', cursor: 'pointer' }}
-                />
-                <label htmlFor="terms-check" style={{ fontSize: '13.5px', color: '#21201E', cursor: 'pointer' }}>
-                  I accept the <a href="/terms" target="_blank" rel="noreferrer" style={{ color: '#00B594', textDecoration: 'underline' }}>Terms & Conditions</a> *
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
+            {error && (
+              <div
                 style={{
-                  backgroundColor: '#00B594', color: '#FFFFFF', border: 'none',
-                  borderRadius: '12px', padding: '16px', fontSize: '16px', fontWeight: 700,
-                  cursor: 'pointer', transition: 'all 0.2s ease', opacity: loading ? 0.7 : 1,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  marginTop: '8px'
+                  backgroundColor: 'rgba(220, 38, 38, 0.08)',
+                  border: '1px solid rgba(220, 38, 38, 0.2)',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  fontSize: '13px',
+                  color: '#DC2626',
+                  marginBottom: '18px',
                 }}
               >
-                {loading ? <Loader className="animate-spin" size={20} /> : 'Pay to book'}
-              </button>
-
-              <div style={{ fontSize: '12px', color: '#7A756F', textAlign: 'center', marginTop: '-8px' }}>
-                You will be charged {displayPrice} via PaymentAsia (includes 2% gateway fee) .
+                {error}
               </div>
+            )}
 
-              <div style={{ textAlign: 'left', marginTop: '8px' }}>
+            {infoMsg && (
+              <div
+                style={{
+                  backgroundColor: 'rgba(0, 181, 148, 0.08)',
+                  border: '1px solid rgba(0, 181, 148, 0.2)',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  fontSize: '13px',
+                  color: '#00B594',
+                  marginBottom: '18px',
+                }}
+              >
+                {infoMsg}
+              </div>
+            )}
+
+            {step === 'email' ? (
+              /* ── STEP 1: Enter Email & Send OTP Code ─────────────── */
+              <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div>
+                  <label style={labelStyle}>EMAIL ADDRESS</label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail
+                      size={18}
+                      color="#8A8580"
+                      style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                    />
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      style={inputStyle}
+                      autoFocus
+                      required
+                    />
+                  </div>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={onClose}
+                  type="submit"
+                  disabled={loading}
                   style={{
-                    backgroundColor: 'transparent', border: 'none', color: '#7A756F',
-                    fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', padding: 0,
-                    display: 'inline-flex', alignItems: 'center', gap: '4px'
+                    width: '100%',
+                    padding: '15px 24px',
+                    backgroundColor: '#D9A726',
+                    color: '#272727',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    borderRadius: '30px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 6px 20px rgba(217, 167, 38, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    opacity: loading ? 0.7 : 1,
+                    marginTop: '4px',
                   }}
                 >
-                  ← Back to schedule
+                  {loading ? (
+                    <Loader className="animate-spin" size={18} />
+                  ) : (
+                    <>
+                      Send OTP Code <ArrowRight size={18} />
+                    </>
+                  )}
                 </button>
-              </div>
-            </form>
+              </form>
+            ) : (
+              /* ── STEP 2: Enter OTP & Complete Booking Details ────── */
+              <form onSubmit={handleSubmitBooking} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid rgba(39,39,39,0.1)',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span style={{ fontSize: '13px', color: '#5A5854' }}>
+                    OTP sent to <strong>{email}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setStep('email'); setOtp(''); setError(''); setInfoMsg(''); }}
+                    style={{ background: 'none', border: 'none', color: '#944426', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                  >
+                    Change Email
+                  </button>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>6-DIGIT OTP CODE *</label>
+                  <div style={{ position: 'relative' }}>
+                    <Shield
+                      size={18}
+                      color="#944426"
+                      style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                    />
+                    <input
+                      type="text"
+                      maxLength={6}
+                      placeholder="123456"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      style={{
+                        ...inputStyle,
+                        border: '1.5px solid #D9A726',
+                        letterSpacing: '0.15em',
+                        fontSize: '16px',
+                        fontWeight: 700,
+                      }}
+                      autoFocus
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>FULL NAME *</label>
+                  <div style={{ position: 'relative' }}>
+                    <User
+                      size={18}
+                      color="#8A8580"
+                      style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Your full name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      style={inputStyle}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>PHONE NUMBER *</label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <select
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      style={{
+                        padding: '14px 12px',
+                        borderRadius: '14px',
+                        border: '1.5px solid rgba(39,39,39,0.15)',
+                        fontSize: '13.5px',
+                        color: '#272727',
+                        backgroundColor: '#FFFFFF',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="852">+852 Hong Kong</option>
+                      <option value="86">+86 China</option>
+                      <option value="853">+853 Macau</option>
+                      <option value="1">+1 USA/Canada</option>
+                      <option value="44">+44 UK</option>
+                      <option value="65">+65 Singapore</option>
+                    </select>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <Phone
+                        size={18}
+                        color="#8A8580"
+                        style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Phone number"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        style={inputStyle}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>HKID / PASSPORT NO. (OPTIONAL)</label>
+                  <input
+                    type="text"
+                    placeholder="Optional"
+                    value={hkid}
+                    onChange={(e) => setHkid(e.target.value)}
+                    style={{ ...inputStyle, paddingLeft: '16px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                  <input
+                    type="checkbox"
+                    id="modal-terms-check"
+                    checked={termsAgreed}
+                    onChange={(e) => setTermsAgreed(e.target.checked)}
+                    style={{ width: '16px', height: '16px', accentColor: '#D9A726', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="modal-terms-check" style={{ fontSize: '12.5px', color: '#5A5854', cursor: 'pointer' }}>
+                    I accept the Terms & Conditions *
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    width: '100%',
+                    padding: '15px 24px',
+                    backgroundColor: '#D9A726',
+                    color: '#272727',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    borderRadius: '30px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 6px 20px rgba(217, 167, 38, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    opacity: loading ? 0.7 : 1,
+                    marginTop: '8px',
+                  }}
+                >
+                  {loading ? (
+                    <Loader className="animate-spin" size={18} />
+                  ) : (
+                    <>
+                      Verify & Book Class <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12.5px', marginTop: '4px' }}>
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={resending}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#944426',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    {resending ? <Loader className="animate-spin" size={14} /> : <RefreshCw size={14} />} Resend OTP Code
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleResetAndClose}
+                    style={{ background: 'none', border: 'none', color: '#7A756F', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         )}
       </div>
@@ -510,3 +786,5 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
 };
 
 export default GuestBookingModal;
+
+

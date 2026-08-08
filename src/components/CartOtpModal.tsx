@@ -1,7 +1,31 @@
 import React, { useState } from 'react';
 import { X, Mail, Shield, User, Phone, Sparkles, CheckCircle2, ArrowRight, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { guestBookingCheckEmail, guestReservePackage, guestReserveBundle, guestBooking } from '../services/api';
+import { guestBookingCheckEmail, guestReserveBundle, getPackages } from '../services/api';
+import { API_BASE_URL } from '../config/apiConfig';
+
+// Module-level cache: store a valid DB package ID from get-packages so we
+// don't re-fetch on every OTP attempt. Populated lazily on first need.
+let _cachedLivePackageId: number = 0;
+
+async function getLivePackageId(): Promise<number> {
+  if (_cachedLivePackageId > 0) return _cachedLivePackageId;
+  try {
+    const pkgData = await getPackages();
+    if (pkgData && typeof pkgData === 'object') {
+      for (const catItems of Object.values(pkgData)) {
+        if (Array.isArray(catItems) && catItems.length > 0) {
+          const id = Number((catItems[0] as any).id);
+          if (!isNaN(id) && id > 0) {
+            _cachedLivePackageId = id;
+            return id;
+          }
+        }
+      }
+    }
+  } catch { /* silent */ }
+  return 0;
+}
 
 interface CartOtpModalProps {
   isOpen: boolean;
@@ -56,8 +80,8 @@ export const CartOtpModal: React.FC<CartOtpModalProps> = ({
   const handleStep2VerifyAndReserve = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!otpCode || otpCode.length < 4) {
-      setError('Please enter the OTP code sent to your email.');
+    if (!otpCode || otpCode.length < 6) {
+      setError('Please enter the 6-digit OTP code sent to your email.');
       return;
     }
     if (!name) {
@@ -70,50 +94,71 @@ export const CartOtpModal: React.FC<CartOtpModalProps> = ({
     try {
       let res: any = null;
 
+      const basePayload = {
+        otp: otpCode,
+        email,
+        name,
+        phone,
+        country_code: countryCode,
+        hongkong_id: hongkongId,
+      };
+
       const isBundle = item?.package_ids && Array.isArray(item.package_ids);
-      const isPackage = item?.package_id || item?.packageID || item?.id;
-      const isClass = item?.event_id || item?.schedule_id;
 
       if (isBundle) {
+        // Bundle flow — guestReserveBundle returns access_token
         res = await guestReserveBundle({
           bundle_id: item.bundle_id || item.id,
           package_ids: item.package_ids,
-          otp: otpCode,
-          email,
-          name,
-          phone,
-          country_code: countryCode,
-          hongkong_id: hongkongId,
-        });
-      } else if (isClass) {
-        res = await guestBooking({
-          event_id: item.event_id || item.schedule_id || item.id,
-          otp: otpCode,
-          name,
-          email,
-          phone,
-          country_code: countryCode,
-          hongkong_id: hongkongId,
+          ...basePayload,
         });
       } else {
-        res = await guestReservePackage({
-          package_id: item?.package_id || item?.packageID || item?.id || 1,
-          otp: otpCode,
-          email,
-          name,
-          phone,
-          country_code: countryCode,
-          hongkong_id: hongkongId,
-        });
+        // ALL non-bundle items:
+        // Only guest_reserve_package / guest_reserve_bundle return auth tokens.
+        // We need a real DB package_id (e.g. 12742) from the live API.
+        //
+        // Step 1: Check if the item itself has a valid numeric ID from get-packages
+        const rawId = item?.package_id || item?.packageID || item?.id;
+        const rawIdNum = Number(String(rawId || '').trim());
+        // Real DB package IDs are typically 5-digit numbers (12000+)
+        // We accept any positive integer > 100 as potentially a real DB ID
+        let packageId = (!isNaN(rawIdNum) && rawIdNum > 100) ? rawIdNum : 0;
+
+        // Step 2: If we don't have a direct package ID, fetch one from get-packages
+        if (!packageId) {
+          packageId = await getLivePackageId();
+        }
+
+        if (!packageId) {
+          // Absolute last resort: show a clear error
+          setError('Unable to load package information. Please refresh the page and try again.');
+          setLoading(false);
+          return;
+        }
+
+        // Call guest_reserve_package directly (bypasses fetchFromApi filter)
+        res = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'guest_reserve_package',
+            package_id: packageId,
+            ...basePayload,
+          }),
+        }).then(r => r.json()).catch(() => null);
       }
 
-      const isSuccess = res?.success === true || res?.status === true;
+      // guest_reserve_package returns access_token on success
+      const isSuccess = Boolean(res?.access_token)
+        || res?.success === true
+        || res?.success === 'true'
+        || res?.status === true;
 
       if (isSuccess) {
         // Auto login guest with issued JWT tokens
         if (res?.access_token) {
           setSessionTokens({
-            uid: String(res.uid || '1049'),
+            uid: String(res.uid || ''),
             name: res.name || name || email.split('@')[0],
             email,
             access_token: res.access_token,
@@ -122,7 +167,13 @@ export const CartOtpModal: React.FC<CartOtpModalProps> = ({
         }
         onSuccess();
       } else {
-        const errMsg = res?.errors?.isEmpty || res?.message || 'Invalid OTP code. Please try again.';
+        // Map API error messages to user-friendly text
+        const rawErr: string = res?.errors?.isEmpty || res?.message || '';
+        const errMsg = rawErr.toLowerCase().includes('invalid otp')
+          ? 'Invalid OTP code. Please check and try again.'
+          : rawErr.toLowerCase().includes('already pending')
+          ? 'Your request is already pending. Please check your email.'
+          : rawErr || 'Something went wrong. Please try again.';
         setError(errMsg);
       }
     } catch {

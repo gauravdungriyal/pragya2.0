@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, User, Menu, X, LogIn, Bell, ShoppingBag } from 'lucide-react';
+import { Calendar, User, Menu, X, LogIn, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { AuthModal } from './AuthModal';
@@ -125,14 +125,20 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header
       style={{
-        position: 'absolute',
+        // Bug 1 fix: position:fixed so the header is always visible;
+        // on home it stays transparent (hero handles the bg), on inner pages a solid bg is shown
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         zIndex: 900,
         padding: '16px 36px',
         height: '100px',
-        backgroundColor: 'transparent',
+        backgroundColor: currentView === 'home' ? 'transparent' : '#F5EFE5',
+        boxShadow: currentView === 'home' ? 'none' : '0 2px 16px rgba(0,0,0,0.06)',
+        backdropFilter: currentView !== 'home' ? 'blur(12px)' : undefined,
+        WebkitBackdropFilter: currentView !== 'home' ? 'blur(12px)' : undefined,
+        transition: 'background-color 0.3s ease, box-shadow 0.3s ease',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -156,6 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
           alt="Pragya Yog School Logo"
           style={{ height: '68px', width: 'auto', objectFit: 'contain', transition: 'transform 0.25s ease' }}
           className="brand-logo-img"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
         <span
           className="brand-logo-text"
@@ -229,6 +236,7 @@ export const Header: React.FC<HeaderProps> = ({
             gap: '6px',
             backgroundColor: 'rgba(255, 255, 255, 0.65)',
             backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             border: '1px solid rgba(33, 32, 30, 0.25)',
             color: '#21201E',
             borderRadius: '999px',
@@ -257,6 +265,7 @@ export const Header: React.FC<HeaderProps> = ({
             gap: '6px',
             backgroundColor: 'rgba(255, 255, 255, 0.65)',
             backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             border: '1px solid rgba(33, 32, 30, 0.25)',
             color: '#21201E',
             borderRadius: '999px',
@@ -297,6 +306,7 @@ export const Header: React.FC<HeaderProps> = ({
             style={{
               background: 'rgba(148, 68, 38, 0.12)',
               backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
               border: '1.5px solid rgba(148, 68, 38, 0.35)',
               height: '36px',
               width: '36px',
@@ -321,7 +331,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setAuthModalOpen(true)}
             aria-label="Login"
-            className="hdr-action-btn"
+            className="hdr-login-btn"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -371,35 +381,203 @@ export const Header: React.FC<HeaderProps> = ({
         <div
           style={{
             position: 'fixed',
-            inset: 0,
-            top: '96px',
-            backgroundColor: '#E6D9CF',
-            zIndex: 899,
-            padding: '32px 48px',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: '100vh',
+            width: '100vw',
+            backgroundColor: '#F5EFE5',
+            zIndex: 999999,
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px'
+            overflowY: 'auto',
+            animation: 'fadeIn 0.2s ease-in-out',
           }}
         >
-          {navItems.map((item) => (
+          {/* Mobile Drawer Top Header Bar */}
+          <div
+            style={{
+              padding: '16px 24px',
+              height: '80px',
+              backgroundColor: '#FFFFFF',
+              borderBottom: '1px solid rgba(39, 39, 39, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              position: 'sticky',
+              top: 0,
+              zIndex: 2,
+            }}
+          >
+            <div
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleNavClick({ label: 'Home', id: 'hero', type: 'section' });
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+            >
+              <img src="/logo.png" alt="Logo" style={{ height: '44px', width: 'auto' }} />
+              <span style={{ fontFamily: "'Canela', serif", fontSize: '18px', fontWeight: 600, color: '#21201E' }}>
+                Pragya Yog
+              </span>
+            </div>
             <button
-              key={item.label}
-              onClick={() => handleNavClick(item)}
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
               style={{
-                background: 'none',
+                backgroundColor: 'rgba(39, 39, 39, 0.06)',
                 border: 'none',
-                fontFamily: 'var(--font-serif)',
-                fontSize: '24px',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
                 color: '#21201E',
-                textAlign: 'left',
-                padding: '10px 0',
-                borderBottom: '1px solid rgba(0,0,0,0.08)',
-                cursor: 'pointer'
               }}
             >
-              {item.label}
+              <X size={20} />
             </button>
-          ))}
+          </div>
+
+          {/* Mobile Nav Links List */}
+          <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+            {navItems.map((item) => {
+              const isActive = activeTab === item.label;
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleNavClick(item);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '14px 18px',
+                    backgroundColor: isActive ? '#EAE1D4' : 'transparent',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                    fontSize: '18px',
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? '#944426' : '#21201E',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span>{item.label}</span>
+                  {isActive && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#944426' }} />}
+                </button>
+              );
+            })}
+
+            {/* Action Buttons inside Mobile Menu */}
+            <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(39,39,39,0.08)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleScheduleRedirect();
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid rgba(33, 32, 30, 0.2)',
+                  borderRadius: '999px',
+                  padding: '14px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#21201E',
+                  cursor: 'pointer',
+                }}
+              >
+                <Calendar size={16} />
+                <span>VIEW SCHEDULE</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onViewChange) onViewChange('cart');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid rgba(33, 32, 30, 0.2)',
+                  borderRadius: '999px',
+                  padding: '14px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#21201E',
+                  cursor: 'pointer',
+                }}
+              >
+                <ShoppingBag size={16} color="#944426" />
+                <span>SANCTUARY CART ({cartCount})</span>
+              </button>
+
+              {user ? (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setProfileDrawerOpen(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    backgroundColor: '#944426',
+                    color: '#FFFFFF',
+                    borderRadius: '999px',
+                    padding: '14px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <User size={16} />
+                  <span>MY ACCOUNT ({user.name || user.email})</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setAuthModalOpen(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    backgroundColor: '#944426',
+                    color: '#FFFFFF',
+                    borderRadius: '999px',
+                    padding: '14px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <LogIn size={16} />
+                  <span>MEMBER LOGIN</span>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -424,9 +602,15 @@ export const Header: React.FC<HeaderProps> = ({
         .brand-logo-img:hover {
           transform: scale(1.03);
         }
+        /* Bug 12 fix: separate hover styles for schedule btn vs login btn */
         .hdr-action-btn:hover {
-          background-color: #7a3620 !important;
+          background-color: rgba(255,255,255,0.9) !important;
           box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+          transform: translateY(-1px);
+        }
+        .hdr-login-btn:hover {
+          background-color: #7a3620 !important;
+          box-shadow: 0 3px 10px rgba(148, 68, 38, 0.35);
           transform: translateY(-1px);
         }
         .hdr-icon-btn:hover {
@@ -455,6 +639,7 @@ export const Header: React.FC<HeaderProps> = ({
         @media (max-width: 1240px) {
           .desktop-nav { display: none !important; }
           .hdr-action-btn { display: none !important; }
+          .hdr-login-btn { display: none !important; }
           .mobile-menu-toggle {
             display: flex !important;
             background-color: #FFFFFF !important;

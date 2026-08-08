@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   X, User, Wallet, Bell, Phone, Shield, LogOut, ChevronRight,
   Edit3, Check, AlertCircle, QrCode, Ticket, RefreshCw, Plus, Trash2,
-  Eye, EyeOff, Lock, Camera, Calendar, Award, FileText, CalendarDays
+  Eye, EyeOff, Lock, Camera, Calendar, Award, FileText, CalendarDays,
+  Sparkles, CheckCircle2, ArrowRight
 } from 'lucide-react';
 import { useAuth, UserProfile } from '../context/AuthContext';
 import { fetchFormData, renewPackage, toggleAutoRenew } from '../services/api';
 
-const API_BASE = 'https://pragya-yog.com/api.php';
+import { API_BASE_URL } from '../config/apiConfig';
 
 interface UserProfileDrawerProps {
   isOpen: boolean;
@@ -48,10 +49,12 @@ interface Ticket {
 }
 
 export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, onClose }) => {
-  const { user, profile, logout, authFetch, refreshProfile } = useAuth();
+  const { user, profile, logout, authFetch, refreshProfile, resetPassword, setSessionTokens } = useAuth();
   const [section, setSection] = useState<Section>('overview');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetMsg, setResetMsg] = useState('');
 
   // Wallet
   const [walletBalance, setWalletBalance] = useState('');
@@ -132,28 +135,28 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
         setWalletBalance(res.balance || '0.00');
         setWalletHistory(res.history || []);
       }
-    } catch {}
+    } catch { }
   };
 
   const loadNotifications = async () => {
     try {
       const res = await authFetch('get-notification');
       if (res?.status) setNotifications(res.data || []);
-    } catch {}
+    } catch { }
   };
 
   const dismissNotification = async (id: string) => {
     try {
       await authFetch('del-notification', { id });
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    } catch {}
+    } catch { }
   };
 
   const loadContacts = async () => {
     try {
       const res = await authFetch('emergency-contact', { action_type: 'get' });
       if (res?.status) setContacts(res.data || []);
-    } catch {}
+    } catch { }
   };
 
   const addContact = async () => {
@@ -185,7 +188,7 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
         showToast('Contact removed.');
         setContacts((prev) => prev.filter((c) => c.id !== id));
       }
-    } catch {}
+    } catch { }
   };
 
   const saveProfile = async () => {
@@ -203,6 +206,14 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
       });
       const res = await fetchFormData('edit_user_details', formData, user?.access_token);
       if (res?.status) {
+        if (user && (editForm.email !== user.email || editForm.fname !== user.name.split(' ')[0])) {
+          const updatedName = `${editForm.fname} ${editForm.lname}`.trim();
+          setSessionTokens({
+            ...user,
+            email: editForm.email || user.email,
+            name: updatedName || user.name,
+          });
+        }
         showToast('Profile updated!');
         await refreshProfile();
         setSection('overview');
@@ -236,9 +247,30 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
     setLoading(false);
   };
 
+  const handleSendResetLink = async () => {
+    if (!user?.email) {
+      showToast('No account email found.', 'error');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await resetPassword(user.email);
+      if (res?.success) {
+        setResetSent(true);
+        setResetMsg(`Password reset link sent to ${user.email}. Please check your inbox!`);
+        showToast(res.message || 'Password reset link sent to your email!');
+      } else {
+        showToast(res.message || 'Could not send reset email.', 'error');
+      }
+    } catch {
+      showToast('Network error. Please try again.', 'error');
+    }
+    setLoading(false);
+  };
+
   const changePassword = async () => {
     if (!passForm.old_pass || !passForm.password || !passForm.confirmpassword) {
-      showToast('Please fill all fields.', 'error');
+      showToast('Please fill all fields, or click "Send Password Reset Link" below if signed in via OTP.', 'error');
       return;
     }
     if (passForm.password !== passForm.confirmpassword) {
@@ -252,7 +284,12 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
         showToast('Password changed. You will be logged out.');
         setTimeout(() => logout(), 2000);
       } else {
-        showToast(res?.message || 'Change failed.', 'error');
+        const msg = res?.message || 'Change failed.';
+        if (msg.toLowerCase().includes('old password') || msg.toLowerCase().includes('wrong')) {
+          showToast('Current password incorrect. If signed in via OTP, click "Send Reset Link" below!', 'error');
+        } else {
+          showToast(msg, 'error');
+        }
       }
     } catch {
       showToast('Network error.', 'error');
@@ -264,7 +301,7 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
     try {
       const res = await authFetch('get-ticket');
       if (res?.status) setTickets(res.data || []);
-    } catch {}
+    } catch { }
   };
 
   const submitTicket = async () => {
@@ -296,14 +333,14 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
       const res = await authFetch('get-user-checkin-qr');
       if (res?.status && res.qr_data) setQrData(res.qr_data);
       else if (res?.qr_code) setQrData(res.qr_code);
-    } catch {}
+    } catch { }
   };
 
   const loadMyBookings = async () => {
     try {
       const res = await authFetch('bookings', { action_type: 'upcoming' });
       if (res?.status && Array.isArray(res.data)) setMyBookings(res.data);
-    } catch {}
+    } catch { }
   };
 
   const cancelMyBooking = async (bookingId: string) => {
@@ -324,14 +361,14 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
     try {
       const res = await authFetch('get-active-membership');
       if (res?.status && Array.isArray(res.message)) setMyMemberships(res.message);
-    } catch {}
+    } catch { }
   };
 
   const loadMyInvoices = async () => {
     try {
       const res = await authFetch('billings');
       if (res?.status && Array.isArray(res.data)) setMyInvoices(res.data);
-    } catch {}
+    } catch { }
   };
 
   if (!isOpen) return null;
@@ -348,10 +385,10 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
   };
 
   const sectionBtnStyle = (s: Section): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px',
-    background: section === s ? 'rgba(148,68,38,0.08)' : 'transparent',
-    border: 'none', borderRadius: '12px', cursor: 'pointer', width: '100%',
-    color: section === s ? '#944426' : '#5A5854', fontSize: '14px', fontWeight: 600,
+    display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 18px',
+    background: section === s ? '#EAE1D4' : 'transparent',
+    border: 'none', borderRadius: '10px', cursor: 'pointer', width: '100%',
+    color: section === s ? '#8B3E23' : '#5A5854', fontSize: '13.5px', fontWeight: section === s ? 700 : 500,
     transition: 'all 0.2s',
   });
 
@@ -363,55 +400,129 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1100, backdropFilter: 'blur(2px)' }}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(25, 23, 20, 0.55)',
+          zIndex: 99998,
+          backdropFilter: 'blur(4px)',
+        }}
       />
 
       {/* Drawer */}
-      <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, width: '100%', maxWidth: '500px',
-        background: '#FDFAF6', zIndex: 1101, display: 'flex', flexDirection: 'column',
-        boxShadow: '-20px 0 60px rgba(0,0,0,0.15)',
-        animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}>
-
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          height: '100vh',
+          maxHeight: '100vh',
+          width: '100%',
+          maxWidth: '540px',
+          backgroundColor: '#F5EFE5',
+          zIndex: 99999,
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '-20px 0 60px rgba(0,0,0,0.25)',
+          animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
         {/* Toast */}
         {toast && (
-          <div style={{
-            position: 'absolute', top: '16px', left: '50%', transform: 'translateX(-50%)',
-            background: toast.type === 'success' ? '#1B5E20' : '#B71C1C',
-            color: '#fff', padding: '10px 20px', borderRadius: '999px', fontSize: '13px',
-            fontWeight: 600, zIndex: 1200, whiteSpace: 'nowrap', boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: toast.type === 'success' ? '#1B5E20' : '#B71C1C',
+              color: '#FFFFFF',
+              padding: '10px 22px',
+              borderRadius: '999px',
+              fontSize: '13px',
+              fontWeight: 700,
+              zIndex: 100000,
+              whiteSpace: 'nowrap',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+            }}
+          >
             {toast.msg}
           </div>
         )}
 
-        {/* Header */}
-        <div style={{ padding: '24px 24px 0', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#944426' }}>
-              My Account
+        {/* Header Card */}
+        <div
+          style={{
+            padding: '24px 28px 20px 28px',
+            backgroundColor: '#FFFFFF',
+            borderBottom: '1px solid rgba(39, 39, 39, 0.08)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.03)',
+            position: 'relative',
+            zIndex: 2,
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8B3E23' }}>
+              MY ACCOUNT
             </span>
-            <button onClick={onClose} style={{ background: 'rgba(39,39,39,0.06)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#272727' }}>
+            <button
+              onClick={onClose}
+              style={{
+                backgroundColor: 'rgba(39, 39, 39, 0.06)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#272727',
+                transition: 'all 0.2s ease',
+              }}
+            >
               <X size={16} />
             </button>
           </div>
 
           {/* Profile summary */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(148,68,38,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid rgba(148,68,38,0.2)' }}>
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                backgroundColor: '#E2DBD2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
               {avatar ? (
-                <img src={avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <img
+                  src={avatar}
+                  alt="Avatar"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
               ) : (
-                <User size={24} color="#944426" />
+                <User size={28} color="#9E9890" />
               )}
             </div>
             <div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#272727' }}>{displayName || 'Pragya Member'}</div>
-              <div style={{ fontSize: '12px', color: '#8A8580' }}>{profile?.email || user?.email || ''}</div>
+              <div style={{ fontSize: '17px', fontWeight: 800, color: '#1A1A1A', lineHeight: 1.2 }}>
+                {displayName || 'Pragya Member'}
+              </div>
+              <div style={{ fontSize: '12.5px', color: '#777777', fontWeight: 500, marginTop: '2px' }}>
+                {profile?.email || user?.email || ''}
+              </div>
               {profile && (
-                <div style={{ fontSize: '11px', color: '#944426', fontWeight: 600, marginTop: '2px' }}>
-                  {profile.bookings} class{Number(profile.bookings) !== 1 ? 'es' : ''} this month
+                <div style={{ fontSize: '11.5px', color: '#8B3E23', fontWeight: 700, marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px', backgroundColor: '#F9F4EC', padding: '2px 8px', borderRadius: '999px' }}>
+                  <span>{profile.bookings} class{Number(profile.bookings) !== 1 ? 'es' : ''} this month</span>
                 </div>
               )}
             </div>
@@ -419,7 +530,7 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
         </div>
 
         {/* Nav sidebar + Content */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flex: 1, height: 'calc(100vh - 130px)', minHeight: 0, overflow: 'hidden' }}>
           {/* Sidebar nav */}
           <div style={{ width: '180px', flexShrink: 0, padding: '16px 12px', borderRight: '1px solid rgba(0,0,0,0.06)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {([
@@ -453,34 +564,55 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
           </div>
 
           {/* Content area */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 24px' }}>
 
             {/* ── OVERVIEW ───────────────────────────────────────── */}
             {section === 'overview' && profile && (
               <div>
-                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '20px', color: '#272727', marginBottom: '16px' }}>Profile Overview</h3>
-                {[
-                  { label: 'Full Name', val: profile.fullname },
-                  { label: 'Chinese Name', val: profile.chinese_name },
-                  { label: 'Email', val: profile.email },
-                  { label: 'Phone', val: profile.phone },
-                  { label: 'Date of Birth', val: profile.dob },
-                  { label: 'Gender', val: profile.gender },
-                  { label: 'HKID', val: profile.hongkong_id },
-                  { label: 'Member Since', val: profile.enroll_date },
-                  { label: 'Wallet Balance', val: `HK$ ${profile.wallet_balance}` },
-                  { label: 'No-show Strikes', val: String(profile.noshow_strikes) },
-                  { label: 'Late Check-in Strikes', val: String(profile.late_checkin_strikes) },
-                ].map(({ label, val }) => (
-                  val ? (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)', fontSize: '13px' }}>
-                      <span style={{ color: '#8A8580', fontWeight: 600 }}>{label}</span>
-                      <span style={{ color: '#272727', fontWeight: 500, textAlign: 'right', maxWidth: '60%' }}>{val}</span>
-                    </div>
-                  ) : null
-                ))}
-                <button onClick={() => setSection('edit')} className="btn btn-secondary" style={{ marginTop: '20px', width: '100%', padding: '12px', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <Edit3 size={14} /> Edit My Details
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', color: '#1A1A1A', margin: '0 0 20px 0', fontWeight: 600 }}>
+                  Profile Overview
+                </h3>
+                <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', padding: '20px 24px', border: '1px solid rgba(39,39,39,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                  {[
+                    { label: 'Full Name', val: profile.fullname },
+                    { label: 'Chinese Name', val: profile.chinese_name },
+                    { label: 'Email', val: profile.email },
+                    { label: 'Phone', val: profile.phone },
+                    { label: 'Member Since', val: profile.enroll_date },
+                    { label: 'Wallet Balance', val: `HK$ ${profile.wallet_balance}` },
+                    { label: 'No-show Strikes', val: String(profile.noshow_strikes) },
+                    { label: 'Late Check-in Strikes', val: String(profile.late_checkin_strikes) },
+                  ].map(({ label, val }) => (
+                    val ? (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F2ECE4', fontSize: '13px' }}>
+                        <span style={{ color: '#777777', fontWeight: 600 }}>{label}</span>
+                        <span style={{ color: '#1A1A1A', fontWeight: 700, textAlign: 'right', maxWidth: '60%' }}>{val}</span>
+                      </div>
+                    ) : null
+                  ))}
+                </div>
+                <button
+                  onClick={() => setSection('edit')}
+                  style={{
+                    marginTop: '24px',
+                    width: '100%',
+                    padding: '15px',
+                    fontSize: '13.5px',
+                    fontWeight: 700,
+                    borderRadius: '100px',
+                    backgroundColor: '#8B3E23',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 6px 18px rgba(139,62,35,0.3)',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  <Edit3 size={15} /> Edit My Details
                 </button>
               </div>
             )}
@@ -800,10 +932,57 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
             {/* ── PASSWORD ──────────────────────────────────────── */}
             {section === 'password' && (
               <div>
-                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '20px', color: '#272727', marginBottom: '16px' }}>Change Password</h3>
+                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '20px', color: '#272727', marginBottom: '12px' }}>Change Password</h3>
+
+                {/* Banner for OTP Logged In / Missing Old Password Users */}
+                <div
+                  style={{
+                    backgroundColor: '#FAF6F0',
+                    border: '1px solid #EBE4D8',
+                    borderRadius: '16px',
+                    padding: '16px 18px',
+                    marginBottom: '20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 800, color: '#944426', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                    <Sparkles size={14} /> SIGNED IN VIA OTP / NO PASSWORD SET?
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#6B655F', margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                    If you logged in via Guest OTP Verification and don't know your current password, click below to receive a secure link via email to create your password.
+                  </p>
+
+                  {resetSent ? (
+                    <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#00B594', backgroundColor: '#E6F8F4', padding: '10px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CheckCircle2 size={16} /> {resetMsg}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSendResetLink}
+                      disabled={loading}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: '#D9A726',
+                        color: '#272727',
+                        fontSize: '12.5px',
+                        fontWeight: 700,
+                        borderRadius: '20px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 8px rgba(217, 167, 38, 0.25)',
+                      }}
+                    >
+                      Send Password Reset Link to {user?.email || 'Email'} <ArrowRight size={14} />
+                    </button>
+                  )}
+                </div>
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   {[
-                    { key: 'old_pass', label: 'Current Password', showKey: 'old' },
+                    { key: 'old_pass', label: 'Current Password (if known)', showKey: 'old' },
                     { key: 'password', label: 'New Password', showKey: 'new' },
                     { key: 'confirmpassword', label: 'Confirm New Password', showKey: 'confirm' },
                   ].map(({ key, label, showKey }) => (

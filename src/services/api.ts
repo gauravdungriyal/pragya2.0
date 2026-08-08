@@ -18,7 +18,7 @@ async function fetchFromApi<T>(action: string, payload: Record<string, any> = {}
     }
 
     const json = await response.json();
-    if (json && json.status !== false) {
+    if (json && json.status !== false && json.status !== 0 && json.status !== 'false') {
       return json;
     }
     return null;
@@ -256,7 +256,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         duration_length: 5,
         category: "Private",
         description: "Five dedicated 75-minute sessions tailored to your physical goals, injury recovery, or advanced practice.",
-        features: ["1-on-1 Asana Alignment & Modification", "Personalized Sound & Breathwork", "Flexible Schedule Booking", "Private Suite Suite Access"]
+        features: ["1-on-1 Asana Alignment & Modification", "Personalized Sound & Breathwork", "Flexible Schedule Booking", "Private Suite Access"]
       }
     ],
     "Class Packs": [
@@ -370,7 +370,7 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
 }
 
 // 6. Schedule List by Date
-export async function getScheduleByDate(dateStr?: string, instructorIdOrToken?: string, token?: string): Promise<{ today: string; schedules: ClassScheduleItem[] }> {
+export async function getScheduleByDate(dateStr?: string, instructorId?: string, token?: string): Promise<{ today: string; schedules: ClassScheduleItem[] }> {
   const payload: any = {};
   if (dateStr) {
     if (dateStr.includes('-')) {
@@ -386,13 +386,11 @@ export async function getScheduleByDate(dateStr?: string, instructorIdOrToken?: 
     }
   }
 
-  // If instructorIdOrToken looks like a JWT (long string), treat it as auth token
-  const isToken = instructorIdOrToken && instructorIdOrToken.length > 20;
-  if (isToken) {
-    payload.token = instructorIdOrToken;
-  } else if (instructorIdOrToken) {
-    payload.instructor = instructorIdOrToken;
+  // Bug 15 fix: removed fragile length>20 heuristic; instructorId is strictly for instructor filtering
+  if (instructorId) {
+    payload.instructor = instructorId;
   }
+  // Auth token is always passed via the dedicated third parameter
   if (token) payload.token = token;
 
   // Use the JWT-gated endpoint for richer data when token is provided
@@ -776,7 +774,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
   },
   // 5. MEMBERSHIP
   {
-    id: 'mem-unlim-12m',
+    id: '12712',
     type: 'regular',
     title: 'Unlimited Membership (12 Months)',
     subtitle: 'Full Year All-Access Sanctuary Pass',
@@ -801,7 +799,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     }
   },
   {
-    id: 'mem-8class',
+    id: '12753',
     type: 'regular',
     title: '8 Class / Month Membership',
     subtitle: 'Flexible Semi-Private Practice Pass',
@@ -826,7 +824,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
   },
   // 6. PRIVATE
   {
-    id: 'priv-shoaib-consult',
+    id: '12795',
     type: 'private',
     title: 'Professional 1-1 Health Consultation with Master Shoaib',
     subtitle: 'Personalized Neuro-Therapy & Spine Rehabilitation',
@@ -851,7 +849,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     }
   },
   {
-    id: 'priv-aarya-1on1',
+    id: '12771',
     type: 'private',
     title: '1-on-1 Private Session with Master Aarya',
     subtitle: 'Bespoke Asana Alignment & Subtle Energy Mastery',
@@ -903,7 +901,7 @@ function mapPhpPackageToDynamicPackage(item: any, catName: string): DynamicPacka
   };
 
   return {
-    id: String(item.id || item.packageID || 'pkg-' + Math.random()),
+    id: String(item.id || item.packageID || 'pkg-' + Date.now()),
     type: pType,
     title: item.title ? item.title.trim() : 'Pragya Offering',
     subtitle: item.duration_label ? `${item.duration_label} · ${item.access_label || 'Sanctuary Pass'}` : (item.class_access || ''),
@@ -925,7 +923,7 @@ function mapPhpPackageToDynamicPackage(item: any, catName: string): DynamicPacka
       location: pType === 'retreat' ? 'Nepal Sanctuary & Resort' : 'Rishikesh Main Studio',
       eventDate: item.periods_start_date ? `Starts: ${item.periods_start_date}` : undefined,
       totalSeats: item.total_access_sessions || 20,
-      bookedSeats: Math.floor((item.total_access_sessions || 20) * 0.5),
+      bookedSeats: 0, // Bug 27 fix: don't show fake 50% occupancy; use 0 (unknown) until API provides real data
       instructorName: pType === 'private' ? 'Master Shoaib M / Master Aarya' : 'Senior Faculty',
       validityPeriod: item.duration_label || '30 Days',
       classCount: item.benefit || 'Unlimited Sessions',
@@ -956,22 +954,28 @@ export async function getDynamicPackages(typeFilter?: PackageType | 'all'): Prom
     console.warn('Live API get-packages fetch error, using cache:', err);
   }
 
-  // Combine live API results with local modifications or fallbacks
+  // Bug 20 fix: on a successful live fetch, overwrite localStorage with fresh data
+  // instead of merging (prevents stale/deleted packages from persisting forever)
   let finalList: DynamicPackage[] = liveList.length > 0 ? liveList : INITIAL_DYNAMIC_PACKAGES;
 
   try {
-    const stored = localStorage.getItem(LOCAL_STORAGE_PACKAGES_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Merge custom/updated items from local storage with liveList
-        const mergedMap = new Map<string, DynamicPackage>();
-        finalList.forEach(p => mergedMap.set(p.id, p));
-        parsed.forEach(p => mergedMap.set(p.id, p));
-        finalList = Array.from(mergedMap.values());
-      }
-    } else {
+    if (liveList.length > 0) {
+      // Fresh data available — persist it immediately and skip localStorage merge
       localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(finalList));
+    } else {
+      // No live data — use localStorage overrides (admin edits, etc.)
+      const stored = localStorage.getItem(LOCAL_STORAGE_PACKAGES_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const mergedMap = new Map<string, DynamicPackage>();
+          finalList.forEach(p => mergedMap.set(p.id, p));
+          parsed.forEach(p => mergedMap.set(p.id, p));
+          finalList = Array.from(mergedMap.values());
+        }
+      } else {
+        localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(finalList));
+      }
     }
   } catch (e) {
     console.warn('LocalStorage merge error:', e);
@@ -999,9 +1003,10 @@ export async function saveDynamicPackage(pkg: DynamicPackage): Promise<{ success
     console.warn('API save-dynamic-package failed, saving locally:', err);
   }
 
-  // Save in LocalStorage
+  // Bug 4 fix: read localStorage directly (not via getDynamicPackages) to avoid recursive call chain
   try {
-    const currentList = await getDynamicPackages('all');
+    const raw = localStorage.getItem(LOCAL_STORAGE_PACKAGES_KEY);
+    const currentList: DynamicPackage[] = raw ? JSON.parse(raw) : INITIAL_DYNAMIC_PACKAGES;
     const existingIndex = currentList.findIndex(p => p.id === savedPkg.id);
     let updatedList: DynamicPackage[];
     if (existingIndex >= 0) {
@@ -1153,8 +1158,68 @@ export async function getBundleDetail(bundleId: string | number, token?: string)
 
 /** Get a single package's details */
 export async function getPackageDetail(packageId: string | number): Promise<any> {
-  const res = await fetchFromApi<any>('get-package-detail', { package_id: packageId });
+  const res = await fetchFromApi<any>('get-package-detail', { package_id: Number(packageId) });
   return res?.data || null;
+}
+
+/** Helper to normalize title strings for dash/hyphen/unicode agnostic matching */
+function normalizeTitle(str: string): string {
+  return (str || '')
+    .toLowerCase()
+    .replace(/[\u2010-\u2015\u2212–—\-_]/g, ' ')
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Fetch bundles specifically related to a given package ID or title (strict matching) */
+export async function getRelatedBundlesForPackage(packageId?: string | number, packageTitle?: string): Promise<any[]> {
+  try {
+    const numericId = Number(packageId);
+    if (!isNaN(numericId) && numericId > 0) {
+      const detail = await getPackageDetail(numericId);
+      if (detail?.frequently_bought_together && Array.isArray(detail.frequently_bought_together) && detail.frequently_bought_together.length > 0) {
+        return detail.frequently_bought_together;
+      }
+    }
+
+    // Fallback: search bundle-list for bundles containing this package ID or title
+    const allBundles = await getBundleList();
+    if (!Array.isArray(allBundles) || allBundles.length === 0) return [];
+
+    const pkgIdStr = packageId ? String(packageId).trim().toLowerCase() : '';
+    const normTargetTitle = normalizeTitle(packageTitle || '');
+
+    return allBundles.filter((b: any) => {
+      if (!b.packages || !Array.isArray(b.packages)) return false;
+      return b.packages.some((p: any) => {
+        const pIdStr = String(p.id || '').trim().toLowerCase();
+        if (pkgIdStr && pIdStr === pkgIdStr) return true;
+
+        const normPTitle = normalizeTitle(p.title || '');
+        if (normTargetTitle && normPTitle) {
+          if (normPTitle === normTargetTitle || normPTitle.includes(normTargetTitle) || normTargetTitle.includes(normPTitle)) {
+            return true;
+          }
+          // Keyword matching for Shoaib / Yog Therapy masterclass titles
+          if (normTargetTitle.includes('shoaib') && normPTitle.includes('shoaib')) return true;
+          if (normTargetTitle.includes('realign') && normPTitle.includes('realign')) return true;
+          if (normTargetTitle.includes('therapy 20') && normPTitle.includes('therapy 20')) return true;
+        }
+        return false;
+      });
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** Record a view or click analytics event for a bundle */
+export async function trackBundleEvent(bundleId: string | number, eventType: 'view' | 'click', token?: string): Promise<boolean> {
+  const payload: any = { bundle_id: Number(bundleId), event_type: eventType };
+  if (token) payload.token = token;
+  const res = await fetchFromApi<any>('bundle-track-event', payload);
+  return res?.status === true;
 }
 
 /** Manually renew an active membership (JWT) */
@@ -1180,17 +1245,33 @@ export async function toggleAutoRenew(token: string, userPackageId: number | str
 
 /** Book a class slot (JWT) */
 export async function bookClass(token: string, scheduleId: string | number, packageId?: string | number, waitlist?: string | number): Promise<{ success: boolean; message: string; offerDropin?: boolean; dropinData?: any }> {
-  const payload: any = { token, event_id: scheduleId, schedule_id: scheduleId };
+  const payload: any = { token, event_id: scheduleId, schedule_id: scheduleId, waitlist: waitlist !== undefined ? waitlist : '0' };
   if (packageId) payload.package_id = packageId;
-  if (waitlist !== undefined) payload.waitlist = waitlist;
+
+  // 1. Direct membership booking
   const res = await fetchFromApi<any>('book', payload);
   if (res?.status === true || res?.success === true) {
     if (res.offer_dropin) {
       return { success: false, offerDropin: true, dropinData: res, message: res.message || 'No membership valid for this class. You can book as a drop-in.' };
     }
-    return { success: true, message: res.message || 'Booking confirmed!' };
+    return { success: true, message: res.message || 'Class Booked Successfully!' };
   }
-  return { success: false, message: res?.message || 'Booking failed.' };
+
+  // 2. Booking request fallback (waitlist='request')
+  const reqPayload = { ...payload, waitlist: 'request' };
+  const reqRes = await fetchFromApi<any>('book', reqPayload);
+  if (reqRes?.status === true || reqRes?.success === true) {
+    return { success: true, message: reqRes.message || 'Booking Request Submitted Successfully!' };
+  }
+
+  // 3. Drop-in request fallback
+  const dropRes = await fetchFromApi<any>('book_dropin', { token, event_id: scheduleId, schedule_id: scheduleId });
+  if (dropRes?.status === true || dropRes?.success === true) {
+    return { success: true, message: dropRes.message || 'Drop-in Booking Request Submitted!' };
+  }
+
+  const errorMsg = res?.message || reqRes?.message || dropRes?.message || 'No active package or membership found for this class.';
+  return { success: false, message: errorMsg };
 }
 
 export async function bookDropIn(token: string, scheduleId: string | number): Promise<{ success: boolean; message: string }> {
@@ -1221,6 +1302,18 @@ export async function guestBooking(payload: {
   return fetchFromApi<any>('guestBooking', payload);
 }
 
+export function resolveValidPackageId(rawId: string | number | undefined | null): number {
+  if (!rawId) return 0;
+  const str = String(rawId).trim();
+  const num = parseInt(str, 10);
+  // Pass through any valid positive integer (DB package IDs can be 5-digit, e.g. 12742)
+  if (!isNaN(num) && num > 0) {
+    return num;
+  }
+  // Non-numeric string IDs (mock/legacy) — return 0 to indicate "no valid DB ID"
+  return 0;
+}
+
 /** Guest Reserve Package with OTP Verification & Auth Token Issuance */
 export async function guestReservePackage(payload: {
   package_id: number | string;
@@ -1231,10 +1324,13 @@ export async function guestReservePackage(payload: {
   country_code?: string;
   hongkong_id?: string;
 }): Promise<any> {
-  return fetchFromApi<any>('guest_reserve_package', {
-    ...payload,
-    package_id: Number(payload.package_id),
-  });
+  // Use the package_id as-is — caller is responsible for providing a valid DB ID
+  const res = await fetch(API_BASE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'guest_reserve_package', ...payload }),
+  }).then(r => r.json()).catch(() => null);
+  return res;
 }
 
 /** Guest Reserve Bundle with OTP Verification & Auth Token Issuance */

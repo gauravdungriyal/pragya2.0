@@ -7,6 +7,7 @@ interface TeachersPageProps {
   onOpenTeacherModal: (teacher: Instructor) => void;
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
   onNavigateSection?: (sectionId: string) => void;
+  onOpenPackageDetail?: (pkg: any) => void;
 }
 
 export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, onOpenBooking }) => {

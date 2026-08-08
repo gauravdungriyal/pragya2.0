@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Sparkles, RefreshCw, Zap, ShieldCheck, Heart, Award, ArrowUpRight, Calendar, Tag, Info, ShoppingBag } from 'lucide-react';
-import { getPackages, getDynamicPackages } from '../services/api';
-import { PackageItem, DynamicPackage } from '../types';
+import { Check, Sparkles, RefreshCw, Zap, ShieldCheck, Heart, Award, ArrowUpRight, Calendar, Tag, Info, ShoppingBag, ArrowRight } from 'lucide-react';
+import { getPackages, getBundleList, trackBundleEvent } from '../services/api';
+import { PackageItem, BundleItem } from '../types';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 interface MembershipPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
   onNavigateSection?: (sectionId: string) => void;
+  onOpenPackageDetail?: (pkg: any) => void;
 }
 
 export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking }) => {
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [packagesData, setPackagesData] = useState<Record<string, PackageItem[]>>({});
+  const [bundlesList, setBundlesList] = useState<BundleItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
 
@@ -131,12 +135,23 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
     let isMounted = true;
     setLoading(true);
 
-    getPackages().then((data) => {
+    Promise.all([
+      getPackages().catch(() => ({})),
+      getBundleList(user?.access_token).catch(() => []),
+    ]).then(([pkgData, bundles]) => {
       if (!isMounted) return;
-      if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-        setPackagesData(data);
+      if (pkgData && typeof pkgData === 'object' && Object.keys(pkgData).length > 0) {
+        setPackagesData(pkgData as Record<string, PackageItem[]>);
       } else {
         setPackagesData(fallbackPackages);
+      }
+
+      if (Array.isArray(bundles) && bundles.length > 0) {
+        setBundlesList(bundles);
+        // Record view analytics for bundles
+        bundles.forEach((b) => {
+          if (b?.id) trackBundleEvent(b.id, 'view', user?.access_token).catch(() => {});
+        });
       }
       setLoading(false);
     });
@@ -144,10 +159,10 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.access_token]);
 
   const dataToUse = Object.keys(packagesData).length > 0 ? packagesData : fallbackPackages;
-  const categoriesList = ['ALL', ...Object.keys(dataToUse)];
+  const categoriesList = ['ALL', 'Special Bundles', ...Object.keys(dataToUse).filter((c) => c !== 'Special Bundles')];
 
   // Flatten packages list based on filter category
   const allFlattenedPackages: (PackageItem & { groupCategory: string })[] = [];
@@ -368,6 +383,178 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
             <span style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '13px', color: '#944426', fontWeight: 700, letterSpacing: '0.04em' }}>
               — The Bhagavad Gita
             </span>
+          </div>
+        ) : activeCategory === 'Special Bundles' ? (
+          <div>
+            {bundlesList.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px', backgroundColor: '#FFFFFF', borderRadius: '20px', color: '#7A756F' }}>
+                No active special bundles currently available. Check back soon!
+              </div>
+            ) : (
+              <div
+                className="membership-cards-grid"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+                  gap: '32px'
+                }}
+              >
+                {bundlesList.map((bundle) => {
+                  const origPrice = Number(bundle.original_price || 0);
+                  const finalPrice = Number(bundle.final_price || bundle.discounted_price || 0);
+                  const savings = Number(bundle.savings || (origPrice - finalPrice) || 0);
+                  const packageIds = bundle.packages ? bundle.packages.map((p) => Number(p.id)) : [];
+
+                  return (
+                    <div
+                      key={bundle.id}
+                      className="package-card-box"
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: '24px',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        position: 'relative',
+                        boxShadow: '0 8px 28px rgba(148, 68, 38, 0.12)',
+                        border: '2px solid #D9A726',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                      }}
+                    >
+                      <div>
+                        {/* Cover image area */}
+                        <div className="package-card-img-box" style={{ width: '100%', height: '180px', overflow: 'hidden', position: 'relative' }}>
+                          <img
+                            src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop"
+                            alt={bundle.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                          />
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '16px',
+                              right: '16px',
+                              backgroundColor: '#944426',
+                              color: '#FFFFFF',
+                              borderRadius: '999px',
+                              padding: '4px 14px',
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              letterSpacing: '0.04em',
+                              textTransform: 'uppercase',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                            }}
+                          >
+                            {savings > 0 ? `SAVE HK$${savings.toFixed(0)}` : 'SPECIAL BUNDLE'}
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="package-card-inner" style={{ padding: '24px 24px 20px 24px' }}>
+                          <div
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              letterSpacing: '0.08em',
+                              color: '#944426',
+                              textTransform: 'uppercase',
+                              marginBottom: '6px'
+                            }}
+                          >
+                            PRAGYA BUNDLE VALUE PASS
+                          </div>
+
+                          <h3 style={{ fontSize: '22px', fontWeight: 700, color: '#21201E', margin: '0 0 16px 0', lineHeight: 1.25 }}>
+                            {bundle.name}
+                          </h3>
+
+                          {/* Pricing Pill */}
+                          <div
+                            style={{
+                              backgroundColor: '#FAF6F0',
+                              border: '1px solid #EBE4D8',
+                              borderRadius: '12px',
+                              padding: '12px 16px',
+                              textAlign: 'center',
+                              marginBottom: '20px'
+                            }}
+                          >
+                            {origPrice > finalPrice && (
+                              <span style={{ fontSize: '13px', color: '#8A8580', textDecoration: 'line-through', marginRight: '8px' }}>
+                                HK${origPrice.toFixed(2)}
+                              </span>
+                            )}
+                            <span style={{ fontSize: '18px', fontWeight: 800, color: '#944426' }}>
+                              HK${finalPrice.toFixed(2)}
+                            </span>
+                            {savings > 0 && (
+                              <div style={{ fontSize: '11.5px', color: '#00B594', fontWeight: 700, marginTop: '2px' }}>
+                                You save HK${savings.toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Included Packages */}
+                          <div>
+                            <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', color: '#944426', textTransform: 'uppercase', marginBottom: '10px' }}>
+                              INCLUDED PACKAGES:
+                            </div>
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {bundle.packages && bundle.packages.map((pkg, pIdx) => (
+                                <li key={pkg.id || pIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13.5px', color: '#21201E' }}>
+                                  <Check size={14} color="#00B594" strokeWidth={3} />
+                                  <span>{pkg.title}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action button */}
+                      <div className="package-card-button-box" style={{ padding: '0 24px 24px 24px' }}>
+                        <button
+                          onClick={() => {
+                            trackBundleEvent(bundle.id, 'click', user?.access_token).catch(() => {});
+                            addToCart({
+                              id: `bundle-${bundle.id}`,
+                              title: `${bundle.name} (Special Bundle)`,
+                              price: finalPrice,
+                              originalPrice: origPrice > finalPrice ? origPrice : undefined,
+                              bundle_id: bundle.id,
+                              package_ids: packageIds,
+                              category: 'Special Bundles',
+                            });
+                          }}
+                          style={{
+                            width: '100%',
+                            backgroundColor: '#D9A726',
+                            color: '#21201E',
+                            border: 'none',
+                            borderRadius: '999px',
+                            padding: '14px 20px',
+                            fontSize: '14px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 4px 16px rgba(217, 167, 38, 0.3)',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <ShoppingBag size={17} />
+                          <span>Add Bundle to Cart</span>
+                          <ArrowRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : filteredPackages.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px', backgroundColor: '#FFFFFF', borderRadius: '20px', color: '#7A756F' }}>

@@ -199,6 +199,7 @@ export const LocationsSection: React.FC<LocationsSectionProps> = ({ onOpenBookin
                 right: '20px',
                 backgroundColor: 'rgba(255, 255, 255, 0.92)',
                 backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
                 borderRadius: '16px',
                 padding: '12px 20px',
                 fontSize: '13px',

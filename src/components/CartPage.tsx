@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import {
   ShoppingBag, Trash2, Plus, Minus, Check, ArrowRight,
-  Loader, Sparkles, ChevronDown, ChevronUp, CheckCircle2, Tag, User
+  Loader, Sparkles, ChevronDown, ChevronUp, CheckCircle2, Tag, User, Shield, X
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config/apiConfig';
+import { guestBookingCheckEmail } from '../services/api';
 
 interface CartPageProps {
   onViewChange?: (view: string) => void;
@@ -47,6 +48,12 @@ export const CartPage: React.FC<CartPageProps> = ({ onViewChange }) => {
   const [error, setError] = useState('');
   const [orderResult, setOrderResult] = useState<any>(null);
 
+  // Guest OTP Verification state for unauthenticated guest checkout
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpError, setOtpError] = useState('');
+
   const discountAmount = couponApplied ? Math.round(subtotal * 0.1) : 0;
   const grandTotal = Math.max(0, subtotal - discountAmount);
 
@@ -61,12 +68,47 @@ export const CartPage: React.FC<CartPageProps> = ({ onViewChange }) => {
     }
   };
 
-  const resolveNumericId = (id: number | string): number => {
-    const n = Number(id);
-    return (!isNaN(n) && n > 0) ? n : 12795;
+  const DB_ID_MAP: Record<string, number> = {
+    '12771': 12771,
+    '12795': 12795,
+    '12794': 12794,
+    '12742': 12742,
+    '12712': 12712,
+    '12753': 12753,
+    '12725': 12725,
+    '12726': 12726,
+    '12791': 12791,
+    '12792': 12792,
+    '12796': 12796,
+    '12760': 12760,
+    '1': 12795,
+    '2': 12771,
+    'mem-unlim-12m': 12712,
+    'mem-8class': 12753,
   };
 
-  const packageIds = items.map((i) => resolveNumericId(i.id));
+  const resolveNumericDbId = (item?: any): number => {
+    if (!item) return 12771;
+    const rawPkgId = item.package_id || item.packageID || item.id;
+    const rawStr = String(rawPkgId || '').trim();
+
+    if (DB_ID_MAP[rawStr]) return DB_ID_MAP[rawStr];
+
+    const num = Number(rawStr);
+    if (!isNaN(num) && num > 0) return num;
+
+    const title = (item.title || '').toLowerCase();
+    if (title.includes('aarya')) return 12771;
+    if (title.includes('shoaib')) return 12795;
+    if (title.includes('realign') || title.includes('workshop') || title.includes('therapy')) return 12794;
+    if (title.includes('unlimited')) return 12712;
+    if (title.includes('nepal') || title.includes('retreat')) return 12725;
+    if (title.includes('boat')) return 12792;
+    if (title.includes('back bend') || title.includes('backbend')) return 12791;
+    if (title.includes('teacher') || title.includes('200')) return 12760;
+
+    return 12742;
+  };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,86 +116,244 @@ export const CartPage: React.FC<CartPageProps> = ({ onViewChange }) => {
     if (!termsAgreed) { setError('Please accept the terms & conditions to proceed.'); return; }
     if (!email) { setError('Please enter a valid email address.'); return; }
     if (!firstName || !lastName) { setError('Please fill in your full name.'); return; }
+    if (!items || items.length === 0) { setError('Your cart is empty. Please add items before placing an order.'); return; }
     setLoading(true);
 
     try {
-      // Branch 1: Online Payment Asia Gateway
-      if (paymentMethod === 'gateway') {
-        let payRes: any;
-        if (user) {
-          if (packageIds.length === 1) {
-            payRes = await authFetch('create_payment', { package_id: packageIds[0] });
-          } else {
-            payRes = await authFetch('create_payment', { bundle_id: 1, package_ids: packageIds });
+      const bundleItem = items.find((i) => i.bundle_id || (i.package_ids && i.package_ids.length > 0));
+      const singlePackageId = resolveNumericDbId(items[0]);
+      const bundleId = bundleItem ? Number(bundleItem.bundle_id || 2) : undefined;
+      const packageIds = bundleItem
+        ? (bundleItem.package_ids || []).map((id) => Number(id)).filter((n) => !isNaN(n) && n > 0)
+        : [singlePackageId];
+
+      let payRes: any = null;
+
+      // 1. Authenticated user — call create_payment with user.access_token
+      if (user?.access_token) {
+        if (bundleItem && bundleId) {
+          payRes = await authFetch('create_payment', { bundle_id: bundleId, package_ids: packageIds }).catch(() => null);
+        } else {
+          payRes = await authFetch('create_payment', { package_id: singlePackageId }).catch(() => null);
+        }
+      } else {
+        // 2. Guest user flow
+        const payload: any = {
+          action: 'create_payment',
+          email,
+          name: `${firstName} ${lastName}`.trim(),
+          phone,
+          country_code: countryCode,
+          package_id: singlePackageId,
+        };
+        if (bundleItem && bundleId) {
+          payload.bundle_id = bundleId;
+          payload.package_ids = packageIds;
+        }
+
+        payRes = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }).then((r) => r.json()).catch(() => null);
+
+        // Fallback for guest package reservation
+        if (!payRes?.payment_url && (payRes?.status === false || payRes?.success === 'false')) {
+          const reserveRes = await fetch(API_BASE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'guest_reserve_package',
+              package_id: singlePackageId,
+              email,
+              name: `${firstName} ${lastName}`.trim(),
+              phone,
+              country_code: countryCode,
+              payment_method: paymentMethod,
+            }),
+          }).then((r) => r.json()).catch(() => null);
+
+          if (reserveRes?.access_token) {
+            setSessionTokens({
+              uid: String(reserveRes.uid || ''),
+              name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
+              email,
+              access_token: reserveRes.access_token,
+              refresh_token: reserveRes.refresh_token || '',
+            });
           }
+          if (reserveRes?.payment_url || reserveRes?.url) {
+            payRes = reserveRes;
+          }
+        }
+      }
+
+      // Redirect directly to Payment Asia Gateway endpoint
+      const baseUrl = API_BASE_URL.replace('/api_v2.php', '').replace('/api.php', '');
+      const paymentAsiaUrl = payRes?.payment_url ||
+        (payRes?.payment_id ? `${baseUrl}/payment_initiate.php?payment_id=${payRes.payment_id}` : `${baseUrl}/payment_initiate.php?package_id=${singlePackageId}`);
+
+      if (paymentAsiaUrl) {
+        clearCart();
+        window.location.href = paymentAsiaUrl;
+        return;
+      }
+
+      // Order completed successfully — render Order Confirmation
+      const currentItems = [...items];
+      const currentTotal = grandTotal;
+
+      setOrderResult({
+        orderId: payRes?.payment_id || payRes?.order_id || `PYS-${Math.floor(100000 + Math.random() * 900000)}`,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        items: currentItems,
+        total: currentTotal,
+        paymentMethod,
+        message: payRes?.message || 'Your order has been placed successfully. Our team will be in touch shortly.',
+      });
+
+      clearCart();
+      setStep('order');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      setError('Network error. Please try again.');
+    }
+    setLoading(false);
+  };
+
+  const handleVerifyGuestOtpAndPlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpError('');
+    if (!otpCode || otpCode.trim().length < 4) {
+      setOtpError('Please enter the 6-digit OTP verification code sent to your email.');
+      return;
+    }
+    setVerifyingOtp(true);
+
+    try {
+      const bundleItem = items.find((i) => i.bundle_id || (i.package_ids && i.package_ids.length > 0));
+      const singlePackageId = resolveNumericDbId(items[0]);
+      const bundleId = bundleItem ? Number(bundleItem.bundle_id || 2) : undefined;
+      const packageIds = bundleItem
+        ? (bundleItem.package_ids || []).map((id) => Number(id)).filter((n) => !isNaN(n) && n > 0)
+        : [singlePackageId];
+
+      const basePayload = {
+        otp: otpCode.trim(),
+        email,
+        name: `${firstName} ${lastName}`.trim(),
+        phone,
+        country_code: countryCode,
+        hongkong_id: hkId,
+      };
+
+      let reserveRes: any;
+      if (bundleItem && bundleId) {
+        reserveRes = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'guest_reserve_bundle',
+            bundle_id: bundleId,
+            package_ids: packageIds,
+            ...basePayload,
+          }),
+        }).then((r) => r.json()).catch(() => null);
+      } else {
+        reserveRes = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'guest_reserve_package',
+            package_id: singlePackageId,
+            ...basePayload,
+          }),
+        }).then((r) => r.json()).catch(() => null);
+      }
+
+      if (!reserveRes?.access_token) {
+        const guestBookRes = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'guestBooking',
+            event_id: singlePackageId,
+            ...basePayload,
+          }),
+        }).then((r) => r.json()).catch(() => null);
+
+        if (guestBookRes?.access_token) {
+          reserveRes = guestBookRes;
+        }
+      }
+
+      const token = reserveRes?.access_token || reserveRes?.token;
+      if (token) {
+        const authUser = {
+          uid: String(reserveRes.uid || ''),
+          name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
+          email,
+          access_token: token,
+          refresh_token: reserveRes.refresh_token || '',
+        };
+        setSessionTokens(authUser);
+
+        let payRes: any;
+        if (bundleItem && bundleId) {
+          payRes = await fetch(API_BASE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create_payment',
+              token: token,
+              bundle_id: bundleId,
+              package_ids: packageIds,
+            }),
+          }).then((r) => r.json());
         } else {
           payRes = await fetch(API_BASE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action: 'create_payment',
-              email,
-              name: `${firstName} ${lastName}`.trim(),
-              phone,
-              country_code: countryCode,
-              package_id: packageIds[0],
-              package_ids: packageIds,
+              token: token,
+              package_id: singlePackageId,
             }),
           }).then((r) => r.json());
         }
 
         if (payRes?.payment_url) {
           clearCart();
+          setOtpModalOpen(false);
           window.location.href = payRes.payment_url;
           return;
         }
 
-        // If create_payment returned an explicit error without payment_url
-        if (payRes && payRes.success === "false" && payRes.message) {
-          setError(payRes.message);
-          setLoading(false);
+        if (reserveRes?.success === true || reserveRes?.status === true || payRes?.success === 'true') {
+          setOrderResult({
+            orderId: reserveRes.order_id || reserveRes.id || `PYS-${Math.floor(100000 + Math.random() * 900000)}`,
+            date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            items: [...items], total: grandTotal, paymentMethod,
+            message: reserveRes.message || 'Your order has been placed. Our team will be in touch shortly.',
+          });
+          clearCart();
+          setOtpModalOpen(false);
+          setStep('order');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
-      }
 
-      // Branch 2: Reservation request (or fallback)
-      let res: any;
-      if (user) {
-        res = await authFetch('reserve_bundle', {
-          package_ids: packageIds, total_amount: grandTotal, payment_method: paymentMethod,
-          billing_details: { first_name: firstName, last_name: lastName, country: 'Hong Kong',
-            address: `${street1} ${street2}`.trim(), city, state: stateRegion,
-            postcode, phone: `${countryCode}-${phone}`, hk_id: hkId, order_notes: orderNotes },
-        });
+        const errMsg = payRes?.message || reserveRes?.message || 'Failed to complete payment. Please try again.';
+        setOtpError(errMsg);
       } else {
-        res = await fetch(API_BASE_URL, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'guest_reserve_bundle', email,
-            name: `${firstName} ${lastName}`.trim(), phone, country_code: countryCode,
-            package_ids: packageIds, total_amount: grandTotal, payment_method: paymentMethod, order_notes: orderNotes }),
-        }).then((r) => r.json());
+        const rawErr = reserveRes?.errors?.isEmpty || reserveRes?.message || 'Invalid or expired OTP. Please try again.';
+        setOtpError(rawErr);
       }
+    } catch {
+      setOtpError('Network error. Please try again.');
+    }
 
-      if (res?.success === true || res?.status === true) {
-        if (!user && res.access_token) {
-          setSessionTokens({ uid: String(res.uid || ''), name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
-            email, access_token: res.access_token, refresh_token: res.refresh_token || '' });
-        }
-        setOrderResult({
-          orderId: res.order_id || res.id || `PYS-${Math.floor(100000 + Math.random() * 900000)}`,
-          date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-          items: [...items], total: grandTotal, paymentMethod,
-          message: res.message || 'Your order has been placed. Our team will be in touch shortly.',
-        });
-        clearCart(); setStep('order');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        let msg = res?.errors?.isEmpty || res?.message || 'Order placement failed. Please try again.';
-        if (msg === 'Please Try Again') msg = 'One of the items in your cart is currently unavailable.';
-        setError(msg);
-      }
-    } catch { setError('Network error. Please try again.'); }
-    setLoading(false);
+    setVerifyingOtp(false);
   };
 
   const inputCls = [
@@ -257,18 +457,18 @@ export const CartPage: React.FC<CartPageProps> = ({ onViewChange }) => {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32, alignItems: 'start' }}>
+            <div className="cart-page-grid">
 
               {/* Left: Product Table */}
               <div>
                 {/* Table heading row */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', borderBottom: '2px solid #e2dbd3', paddingBottom: 10, marginBottom: 0 }}>
+                <div className="cart-table-heading">
                   <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#888' }}>Product</span>
                   <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#888', textAlign: 'right' }}>Total</span>
                 </div>
 
                 {items.map((item) => (
-                  <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px', alignItems: 'center', borderBottom: '1px solid #ede8e1', padding: '20px 0', gap: 16 }}>
+                  <div key={item.id} className="cart-item-row">
                     {/* Product info */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
                       {item.coverImage ? (
@@ -281,7 +481,14 @@ export const CartPage: React.FC<CartPageProps> = ({ onViewChange }) => {
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', lineHeight: 1.4, marginBottom: 4 }}>{item.title}</div>
-                        <div style={{ fontSize: 13, color: '#944426', fontWeight: 600, marginBottom: 8 }}>HK${item.price.toLocaleString()}</div>
+                        <div style={{ fontSize: 13, color: '#944426', fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {item.originalPrice && item.originalPrice > item.price && (
+                            <span style={{ textDecoration: 'line-through', color: '#888', fontSize: 12 }}>
+                              HK${item.originalPrice.toLocaleString()}
+                            </span>
+                          )}
+                          <span>HK${item.price.toLocaleString()}</span>
+                        </div>
                         {item.category && (
                           <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>{item.category}</div>
                         )}
@@ -459,14 +666,14 @@ export const CartPage: React.FC<CartPageProps> = ({ onViewChange }) => {
             </div>
           )}
 
-          <form onSubmit={handlePlaceOrder} style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 40, alignItems: 'start' }}>
+          <form onSubmit={handlePlaceOrder} className="checkout-page-grid">
 
             {/* Left: Billing Details */}
             <div>
               <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 600, color: '#1a1a1a', margin: '0 0 24px' }}>Billing details</h2>
 
               {/* Field rows */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div className="billing-name-grid">
                 <div>
                   <label className={labelCls}>First name *</label>
                   <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputCls} style={{ padding: '14px 14px' }} />
@@ -672,6 +879,137 @@ export const CartPage: React.FC<CartPageProps> = ({ onViewChange }) => {
             style={{ padding: '12px 32px', borderRadius: 100, background: '#272727', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: 'pointer' }}>
             Return to Home
           </button>
+        </div>
+      )}
+
+      {/* ── GUEST OTP VERIFICATION MODAL FOR PLACE ORDER ───────────────────────────── */}
+      {otpModalOpen && (
+        <div
+          onClick={() => setOtpModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(33, 30, 26, 0.55)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            zIndex: 1000000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '440px',
+              backgroundColor: '#F8F4EE',
+              borderRadius: '24px',
+              padding: '36px 32px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.6)',
+              position: 'relative',
+            }}
+          >
+            <button
+              onClick={() => setOtpModalOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(39, 39, 39, 0.07)',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#272727',
+              }}
+            >
+              <X size={16} />
+            </button>
+
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#944426', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
+              <Sparkles size={14} color="#944426" />
+              <span>Guest Account Verification</span>
+            </div>
+
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', color: '#272727', margin: '0 0 6px 0', fontWeight: 600 }}>
+              Enter Verification Code
+            </h3>
+            <p style={{ fontSize: '13px', color: '#6B655F', lineHeight: 1.5, marginBottom: '20px', marginTop: 0 }}>
+              An OTP code was sent to <strong>{email}</strong>. Enter the 6-digit code below to confirm your guest account and place your order.
+            </p>
+
+            {otpError && (
+              <div style={{ backgroundColor: 'rgba(220, 38, 38, 0.08)', border: '1px solid rgba(220, 38, 38, 0.2)', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
+                {otpError}
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyGuestOtpAndPlaceOrder} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', color: '#5A5854', textTransform: 'uppercase', marginBottom: '6px' }}>
+                  6-DIGIT OTP CODE *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Shield size={18} color="#944426" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="123456"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '14px 18px 14px 44px',
+                      borderRadius: '14px',
+                      border: '1.5px solid #D9A726',
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      letterSpacing: '0.15em',
+                      color: '#272727',
+                      backgroundColor: '#FFFFFF',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                    autoFocus
+                    required
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={verifyingOtp}
+                style={{
+                  width: '100%',
+                  padding: '15px 24px',
+                  backgroundColor: '#1A1A1A',
+                  color: '#FFFFFF',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  borderRadius: '100px',
+                  border: 'none',
+                  cursor: verifyingOtp ? 'not-allowed' : 'pointer',
+                  opacity: verifyingOtp ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginTop: '6px',
+                }}
+              >
+                {verifyingOtp ? <Loader style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> : 'Verify & Complete Order'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
 

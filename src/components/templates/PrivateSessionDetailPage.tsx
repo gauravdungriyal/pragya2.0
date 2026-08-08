@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   UserCheck,
@@ -10,7 +10,10 @@ import {
   ShieldCheck,
   Activity
 } from 'lucide-react';
-import { DynamicPackage } from '../../types';
+import { DynamicPackage, BundleItem } from '../../types';
+import { getRelatedBundlesForPackage } from '../../services/api';
+import { FrequentlyBoughtTogether } from '../FrequentlyBoughtTogether';
+import { useCart } from '../../context/CartContext';
 
 interface PrivateSessionDetailPageProps {
   pkg: DynamicPackage;
@@ -26,7 +29,19 @@ export const PrivateSessionDetailPage: React.FC<PrivateSessionDetailPageProps> =
   isPreview = false
 }) => {
   const [saved, setSaved] = useState(false);
+  const [bundles, setBundles] = useState<BundleItem[]>([]);
+  const { addToCart } = useCart();
   const { metadata = {} } = pkg;
+
+  useEffect(() => {
+    let isMounted = true;
+    getRelatedBundlesForPackage(pkg?.id, pkg?.title).then((list) => {
+      if (isMounted) {
+        setBundles(list);
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, [pkg?.id, pkg?.title]);
 
   const focusAreas = metadata.focusAreas ?? [
     'Spine & Posture Rehabilitation',
@@ -217,6 +232,48 @@ export const PrivateSessionDetailPage: React.FC<PrivateSessionDetailPageProps> =
                 </div>
               </div>
             )}
+
+            {/* Frequently Bought Together Bundles */}
+            <FrequentlyBoughtTogether
+              bundles={bundles}
+              packageTitle={pkg.title}
+              onSelectBundle={(bundle) => {
+                const packageIds = bundle.packages ? bundle.packages.map((p) => Number(p.id)) : [];
+                onOpenBooking('bundle', bundle.name, {
+                  isBundleMode: true,
+                  bundleId: bundle.id,
+                  packageIds,
+                  title: bundle.name,
+                  price: bundle.final_price || bundle.discounted_price,
+                });
+              }}
+              onAddToCartBundle={(bundle, selectedItems) => {
+                const packageIds = (selectedItems && selectedItems.length > 0)
+                  ? selectedItems.map((p) => p.id)
+                  : (bundle.packages || []).map((p) => p.id);
+
+                const allPkgs = bundle.packages || [];
+                const selPkgs = allPkgs.filter((p) => packageIds.map(String).includes(String(p.id)));
+                const origPriceSum = selPkgs.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+                const isAllSel = selPkgs.length === allPkgs.length && allPkgs.length > 0;
+                const bDiscount = Number(bundle.bundle_discount || bundle.discount_value || bundle.savings || 0);
+
+                const finalPrice = (isAllSel && bDiscount > 0)
+                  ? Math.max(0, origPriceSum - bDiscount)
+                  : (bundle.final_price || bundle.discounted_price || origPriceSum);
+
+                addToCart({
+                  id: `bundle-${bundle.id}`,
+                  title: `${bundle.name} (Special Bundle)`,
+                  price: Number(finalPrice) || 0,
+                  originalPrice: (isAllSel && bDiscount > 0 && origPriceSum > finalPrice) ? origPriceSum : undefined,
+                  bundle_id: bundle.id,
+                  package_ids: packageIds,
+                  category: 'Special Bundles',
+                  coverImage: selPkgs[0]?.coverImage || selPkgs[0]?.image || bundle.image,
+                });
+              }}
+            />
           </div>
 
           <div className="lg:col-span-4 space-y-6">

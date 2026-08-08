@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ArrowUpRight, ChevronLeft, ChevronRight, RefreshCw, Calendar, SlidersHorizontal, Check } from 'lucide-react';
 import { getScheduleByDate } from '../services/api';
 import { ClassScheduleItem } from '../types';
@@ -15,6 +15,8 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [scheduleItems, setScheduleItems] = useState<ClassScheduleItem[]>([]);
+  // Bug 13 fix: ref for click-outside detection
+  const filterWrapperRef = useRef<HTMLDivElement>(null);
 
   const levelOptions = ['ALL', 'Beginner', 'Intermediate', 'Advanced', 'Restorative'];
 
@@ -68,11 +70,15 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    const dateStr = selectedDate.toISOString().split('T')[0];
+    // Bug 3 fix: use local date parts to avoid UTC timezone shift (e.g. UTC+5:30 shifting date back by 1)
+    const y = selectedDate.getFullYear();
+    const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const d = String(selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
 
     // Use JWT endpoint when user is logged in for richer data (spots remaining, user booking status)
     const fetchFn = user
-      ? getScheduleByDate(dateStr, user.access_token)
+      ? getScheduleByDate(dateStr, undefined, user.access_token)
       : getScheduleByDate(dateStr);
 
     fetchFn.then((data) => {
@@ -97,7 +103,19 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
     return () => {
       isMounted = false;
     };
-  }, [selectedDate]);
+  }, [selectedDate, user]); // Bug 2 fix: user added so re-fetch happens after login
+
+  // Bug 13 fix: close filter dropdown on outside click
+  useEffect(() => {
+    if (!showFilterModal) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (filterWrapperRef.current && !filterWrapperRef.current.contains(e.target as Node)) {
+        setShowFilterModal(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [showFilterModal]);
 
   const displayItems = scheduleItems.length > 0 ? scheduleItems : (fallbackClasses as any[]);
 
@@ -110,7 +128,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
       id="schedule"
       style={{
         backgroundColor: '#FFFFFF',
-        padding: '72px 0',
+        padding: '24px 0 20px 0',
         color: '#21201E'
       }}
     >
@@ -239,10 +257,12 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                 {/* Hidden Native Date Input */}
                 <input
                   type="date"
-                  value={selectedDate.toISOString().split('T')[0]}
+                  value={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth()+1).padStart(2,'0')}-${String(selectedDate.getDate()).padStart(2,'0')}`}
                   onChange={(e) => {
                     if (e.target.value) {
-                      setSelectedDate(new Date(e.target.value));
+                      // Bug 3 fix: parse date as local midnight (avoid UTC→local timezone shift)
+                      const [y, m, d] = e.target.value.split('-').map(Number);
+                      setSelectedDate(new Date(y, m - 1, d));
                     }
                   }}
                   style={{
@@ -309,7 +329,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
             </button>
 
             {/* FILTERS Pill Button */}
-            <div className="schedule-filter-wrapper" style={{ position: 'relative' }}>
+            <div className="schedule-filter-wrapper" style={{ position: 'relative' }} ref={filterWrapperRef}>
               <button
                 className="schedule-filter-btn"
                 onClick={() => setShowFilterModal(!showFilterModal)}
@@ -502,8 +522,9 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
             padding: 20px 12px !important;
             border-radius: 20px !important;
           }
+          /* Bug 28 fix: Today and Filter buttons now visible on mobile */
           .schedule-today-btn, .schedule-filter-wrapper {
-            display: none !important;
+            display: flex !important;
           }
           .schedule-nav-bar {
             margin-bottom: 16px !important;

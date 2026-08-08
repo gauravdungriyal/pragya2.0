@@ -114,8 +114,26 @@ export interface DynamicPackage {
   metadata: PackageMetadata;
 }
 
+export interface BundleItem {
+  id: number | string;
+  name: string;
+  description?: string;
+  packages: PackageItem[];
+  original_price: number;
+  discounted_price: number;
+  bundle_discount: number;
+  final_price: number;
+  savings: number;
+  priority?: number;
+  discount_type?: 'percentage' | 'fixed' | string;
+  discount_value?: string | number;
+  once_per_customer?: boolean | number;
+  package_ids?: (number | string)[];
+  image?: string;
+}
+
 export interface PackageItem {
-  id: number;
+  id: number | string;
   packageID: string | null;
   title: string;
   payment_type: number;
@@ -129,11 +147,19 @@ export interface PackageItem {
   period: string;
   duration_type: number;
   duration_length: number;
-  category?: 'Private' | 'Group' | 'Retreat' | 'Membership';
+  category?: 'Private' | 'Group' | 'Retreat' | 'Membership' | 'Regular' | 'TTC' | 'Workshop' | 'Event' | string;
   description?: string;
   features?: string[];
   type?: PackageType;
   metadata?: PackageMetadata;
+  benefit?: string;
+  class_access?: string;
+  duration_label?: string;
+  access_label?: string;
+  frequently_bought_together?: BundleItem[];
+  image?: string;
+  coverImage?: string;
+  original_amount?: number;
 }
 
 export interface UpcomingEvent {

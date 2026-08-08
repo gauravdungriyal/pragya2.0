@@ -158,7 +158,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenCartPage }) => {
     <div className="fixed inset-0 z-[999999] overflow-hidden">
       {/* Backdrop with smooth blur */}
       <div
-        className="absolute inset-0 bg-black/55 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 transition-opacity"
+        style={{
+          backgroundColor: 'rgba(33, 30, 26, 0.45)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
         onClick={handleClose}
       />
 
@@ -396,7 +401,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenCartPage }) => {
               {[
                 { label: 'OTP Code', val: guestOtp, setter: setGuestOtp, type: 'text', placeholder: '6-digit code' },
                 { label: 'Full Name', val: guestName, setter: setGuestName, type: 'text', placeholder: 'Your full name' },
-                { label: 'Phone Number', val: guestPhone, setter: setGuestPhone, type: 'tel', placeholder: '8533969185' },
+                { label: 'Phone Number', val: guestPhone, setter: setGuestPhone, type: 'tel', placeholder: 'Phone number' },
               ].map((field) => (
                 <div key={field.label}>
                   <label className="block text-xs font-semibold text-stone-600 mb-1.5 uppercase tracking-wide">

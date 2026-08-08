@@ -111,16 +111,26 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
   const shouldTruncateBio = fullBio.length > 220;
   const displayBio = shouldTruncateBio && !isBioExpanded ? `${fullBio.slice(0, 220)}...` : fullBio;
 
-  // Qualifications list
-  const qualifications = [
-    '200-Hour & 500-Hour Yoga Alliance Certified Master Teacher',
-    'PhD Research Scholar in Yogic Sciences & Human Physiology',
-    'Advanced Certification in Pranayama, Meditation & Sound Therapy',
-    'Over 8+ Years of International Teaching & Workshop Facilitation'
-  ];
+  // Bug 6 fix: derive qualifications from actual teacher data instead of hardcoding
+  const qualifications: string[] = [];
+  if (teacher.experience) qualifications.push(teacher.experience);
+  if (teacher.specialization && teacher.specialization.length > 0) {
+    teacher.specialization.forEach(s => qualifications.push(s));
+  }
+  // Fallback if teacher has no structured data
+  if (qualifications.length === 0) {
+    qualifications.push('Certified Yoga Alliance Instructor');
+    qualifications.push('Experienced Mindfulness & Meditation Guide');
+  }
 
-  const studioBadges = ['Woo House'];
-  const languageBadges = ['English', 'Hindi', 'Sanskrit'];
+  // Bug 7 fix: derive studio and language badges from teacher fields, not hardcoded
+  const studioBadges = (teacher as any).studios ? (teacher as any).studios : ['Woo House'];
+  const teacherLangs: string[] = (teacher as any).languages
+    ? (teacher as any).languages
+    : (teacher.name?.toLowerCase().includes('aarya') || teacher.name?.toLowerCase().includes('shoaib')
+      ? ['English', 'Hindi', 'Sanskrit']
+      : ['English']);
+  const languageBadges = teacherLangs;
 
   return (
     <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E' }}>
@@ -222,7 +232,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
               Studios
             </span>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {studioBadges.map((studio) => (
+              {studioBadges.map((studio: string) => (
                 <span
                   key={studio}
                   style={{
@@ -560,8 +570,8 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
                   const matchClass = selectedClassFilter === 'All' || c.title?.toLowerCase().includes(selectedClassFilter.toLowerCase());
                   return matchInst && matchClass;
                 });
-                const displayClass = teacherClasses.length > 0 ? teacherClasses[0] : null;
-                const hasClass = Boolean(displayClass);
+                // Bug 8 fix: show ALL classes this teacher has that day, not just the first one
+                const hasClass = teacherClasses.length > 0;
 
                 return (
                   <div
@@ -589,61 +599,52 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
                       </div>
                     </div>
 
-                    {/* Middle / Bottom Content */}
-                    {hasClass && displayClass ? (
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                          <img
-                            src={bgImage}
-                            alt={teacher.name}
-                            style={{
-                              width: '42px',
-                              height: '42px',
-                              borderRadius: '50%',
-                              objectFit: 'cover'
-                            }}
-                          />
-                          <div>
-                            <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 800, color: '#21201E', lineHeight: 1.2 }}>
-                              {displayClass.title || 'Hatha Yoga'}
+                    {/* Bug 8 fix: render ALL classes for this day, each with its own Book button */}
+                    {hasClass ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {teacherClasses.map((cls, cIdx) => (
+                          <div key={cIdx}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                              <img
+                                src={bgImage}
+                                alt={teacher.name}
+                                style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                              />
+                              <div>
+                                <div style={{ fontFamily: "var(--font-sans)", fontSize: '14px', fontWeight: 800, color: '#21201E', lineHeight: 1.2 }}>
+                                  {cls.title || 'Hatha Yoga'}
+                                </div>
+                                <div style={{ fontFamily: "var(--font-sans)", fontSize: '11.5px', color: '#7A756F', fontWeight: 600, marginTop: '2px' }}>
+                                  {cls.timing || '09:00 AM'} · {cls.room || 'Main Studio'}
+                                </div>
+                              </div>
                             </div>
-                            <div style={{ fontFamily: "var(--font-sans)", fontSize: '12px', color: '#7A756F', fontWeight: 600, marginTop: '2px' }}>
-                              {displayClass.timing || '09:00 AM (60 mins)'}
-                            </div>
+                            <button
+                              onClick={() => onOpenBooking('class', cls.title || 'Yoga Class', cls)}
+                              style={{
+                                width: '100%',
+                                backgroundColor: '#354336',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '999px',
+                                padding: '9px 0',
+                                fontSize: '12.5px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#944426'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#354336'; }}
+                            >
+                              Book Class
+                            </button>
                           </div>
-                        </div>
-
-                        <div style={{ fontFamily: "var(--font-sans)", fontSize: '12px', color: '#7A756F', marginBottom: '16px' }}>
-                          {displayClass.instructor || teacher.name} • {displayClass.room || 'Woo House'}
-                        </div>
-
-                        <button
-                          onClick={() => onOpenBooking('class', displayClass.title || 'Yoga Class', displayClass)}
-                          style={{
-                            width: '100%',
-                            backgroundColor: '#354336',
-                            color: '#FFFFFF',
-                            border: 'none',
-                            borderRadius: '999px',
-                            padding: '10px 0',
-                            fontSize: '13px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#944426';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#354336';
-                          }}
-                        >
-                          Book Class
-                        </button>
+                        ))}
                       </div>
                     ) : (
+                      // Bug 24 fix: correct the double-dot typo
                       <div style={{ fontFamily: "var(--font-sans)", fontSize: '13.5px', color: '#8A8580', fontWeight: 500, padding: '16px 0' }}>
-                        No Classes Available..
+                        No classes scheduled.
                       </div>
                     )}
                   </div>

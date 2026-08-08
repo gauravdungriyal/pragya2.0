@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { DailyQuoteBanner } from './components/DailyQuoteBanner';
@@ -53,6 +53,12 @@ export const App: React.FC = () => {
   const [selectedEventForPage, setSelectedEventForPage] = useState<UpcomingEvent | null>(null);
   const [selectedPackageForPage, setSelectedPackageForPage] = useState<DynamicPackage | null>(null);
   const [pageVisible, setPageVisible] = useState(true);
+
+  const handleOpenPackageDetail = useCallback((pkg: DynamicPackage) => {
+    setSelectedPackageForPage(pkg);
+    setCurrentView('package-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
   const mainRef = useRef<HTMLDivElement>(null);
 
   // ── Global Scroll-Reveal Observer ──────────────────────────────────────────
@@ -197,14 +203,11 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Fallback generic modal
+    // Fallback generic modal — do NOT navigate away; just open the generic booking modal
     if (type) setBookingType(type);
     if (title) setBookingTitle(title);
     if (details) setBookingDetails(details);
-    if (currentView !== 'home') {
-      setCurrentView('home');
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setBookingModalOpen(true);
   };
 
   const handleOpenTeacherDetail = (teacher: Instructor) => {
@@ -257,6 +260,18 @@ export const App: React.FC = () => {
     }
   };
 
+  // Bug 26 fix: use a ref to always call the latest handleViewChange, avoiding stale closure
+  const handleViewChangeRef = useRef(handleViewChange);
+  useEffect(() => { handleViewChangeRef.current = handleViewChange; });
+
+  useEffect(() => {
+    const handleCartNav = () => {
+      handleViewChangeRef.current('cart');
+    };
+    window.addEventListener('navigate-to-cart', handleCartNav);
+    return () => window.removeEventListener('navigate-to-cart', handleCartNav);
+  }, []);
+
   useEffect(() => {
     const path = window.location.pathname;
     const hash = window.location.hash;
@@ -302,6 +317,8 @@ export const App: React.FC = () => {
           opacity: pageVisible ? 1 : 0,
           transform: pageVisible ? 'translate3d(0,0,0)' : 'translate3d(0,18px,0)',
           transition: 'opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
+          // Bug 1 fix: add top padding on inner pages so fixed header doesn't overlap content
+          paddingTop: currentView === 'home' ? 0 : '100px',
         }}
       >
         {currentView === 'about' ? (
@@ -319,11 +336,13 @@ export const App: React.FC = () => {
             onOpenTeacherModal={handleOpenTeacherDetail}
             onOpenBooking={handleOpenBooking}
             onNavigateSection={handleNavigateSection}
+            onOpenPackageDetail={handleOpenPackageDetail}
           />
         ) : currentView === 'membership' ? (
           <MembershipPage
             onOpenBooking={handleOpenBooking}
             onNavigateSection={handleNavigateSection}
+            onOpenPackageDetail={handleOpenPackageDetail}
           />
         ) : currentView === 'events' ? (
           <EventsPage
@@ -354,7 +373,7 @@ export const App: React.FC = () => {
           <PackageDetailPage
             pkg={selectedPackageForPage}
             onBack={() => {
-              setCurrentView('home');
+              setCurrentView('membership');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onOpenBooking={handleOpenBooking}
@@ -386,6 +405,7 @@ export const App: React.FC = () => {
               onOpenBooking={handleOpenBooking}
               onOpenEventDetail={handleOpenEventDetail}
               onViewChange={handleViewChange}
+              onOpenPackageDetail={handleOpenPackageDetail}
             />
 
             <InteractiveSchedule onOpenBooking={handleOpenBooking} />

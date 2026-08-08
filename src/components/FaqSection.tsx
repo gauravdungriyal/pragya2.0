@@ -49,7 +49,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
       className="faq-section"
       style={{
         backgroundColor: '#FFFFFF',
-        padding: '84px 0 96px 0',
+        padding: '24px 0 16px 0',
         color: '#21201E',
         position: 'relative'
       }}
@@ -63,31 +63,38 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
         }}
       >
         {/* Header Tag & Title */}
-        <div className="faq-header reveal-blur" style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <div
+          className="faq-header reveal-on-scroll"
+          style={{
+            textAlign: 'center',
+            marginBottom: '40px'
+          }}
+        >
           <span
             className="faq-sub-tag"
             style={{
-              fontSize: '11.5px',
+              fontFamily: "'Neue Montreal', sans-serif",
+              fontSize: '12px',
               fontWeight: 700,
-              letterSpacing: '0.16em',
-              color: '#4A4640',
+              letterSpacing: '0.14em',
+              color: '#944426',
               textTransform: 'uppercase',
               display: 'block',
-              marginBottom: '12px'
+              marginBottom: '10px'
             }}
           >
             — FREQUENTLY ASKED QUESTIONS —
           </span>
-
           <h2
             className="faq-heading"
             style={{
               fontFamily: "var(--font-serif)",
-              fontSize: 'clamp(32px, 4.5vw, 54px)',
-              fontWeight: 400,
+              fontSize: '42px',
+              fontWeight: 700,
               color: '#21201E',
-              lineHeight: 1.15,
-              margin: 0
+              margin: 0,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.12
             }}
           >
             Quick Answers for Curious Minds
@@ -102,7 +109,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
           </div>
         ) : (
           /* Accordion List */
-          <div className="faq-accordion-list" style={{ display: 'flex', flexDirection: 'column', marginBottom: '48px' }}>
+          <div className="faq-accordion-list" style={{ display: 'flex', flexDirection: 'column', marginBottom: '16px' }}>
             {displayList.map((faq, idx) => {
               const isOpen = openIndex === idx;
               const formattedIndex = String(idx + 1).padStart(2, '0');

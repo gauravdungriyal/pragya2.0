@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Calendar, Check, ArrowRight, ShieldCheck, Sparkles, Clock, BarChart2, MapPin, Heart } from 'lucide-react';
-import { UpcomingEvent } from '../types';
-import { getUpcomingEvents, toggleEventFavorite } from '../services/api';
+import { UpcomingEvent, BundleItem, PackageItem } from '../types';
+import { getUpcomingEvents, toggleEventFavorite, getRelatedBundlesForPackage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { FrequentlyBoughtTogether } from './FrequentlyBoughtTogether';
 
 interface EventDetailPageProps {
   event: UpcomingEvent;
@@ -26,6 +27,7 @@ const splitEventTitle = (fullTitle: string) => {
 
 export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack, onOpenBooking, onSelectEvent }) => {
   const [otherEvents, setOtherEvents] = useState<UpcomingEvent[]>([]);
+  const [bundles, setBundles] = useState<BundleItem[]>([]);
   const [isFavorited, setIsFavorited] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const { user } = useAuth();
@@ -44,10 +46,16 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
         console.error("Failed fetching other events", err);
       });
 
+    getRelatedBundlesForPackage(event?.id, event?.title || event?.name).then((list) => {
+      if (isMounted) {
+        setBundles(list);
+      }
+    }).catch(() => {});
+
     return () => {
       isMounted = false;
     };
-  }, [event.id]);
+  }, [event?.id, event?.title, event?.name]);
 
   const coverImage = event.image || event.banner_image?.url || "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1600&auto=format&fit=crop";
   const title = event.title || event.name || 'Pragya Yog Masterclass';
@@ -216,9 +224,6 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '24px' }}>
-            <span style={{ fontSize: '18px', color: '#8A857F', textDecoration: 'line-through' }}>
-              HK$ 1,200
-            </span>
             <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '36px', fontWeight: 800, color: '#944426' }}>
               {displayPrice}
             </span>
@@ -383,6 +388,48 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
           </div>
         </section>
 
+        {/* SECTION 4.5: FREQUENTLY BOUGHT TOGETHER BUNDLES */}
+        <FrequentlyBoughtTogether
+          bundles={bundles}
+          packageTitle={title}
+          onSelectBundle={(bundle, selectedPackageIds) => {
+            const packageIds = selectedPackageIds || (bundle.packages ? bundle.packages.map((p) => Number(p.id)) : []);
+            onOpenBooking('bundle', bundle.name, {
+              isBundleMode: true,
+              bundleId: bundle.id,
+              packageIds,
+              title: bundle.name,
+              price: bundle.final_price || bundle.discounted_price,
+            });
+          }}
+          onAddToCartBundle={(bundle, selectedItems) => {
+            const packageIds = (selectedItems && selectedItems.length > 0)
+              ? selectedItems.map((p) => p.id)
+              : (bundle.packages || []).map((p) => p.id);
+
+            const allPkgs = bundle.packages || [];
+            const selPkgs = allPkgs.filter((p) => packageIds.map(String).includes(String(p.id)));
+            const origPriceSum = selPkgs.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+            const isAllSel = selPkgs.length === allPkgs.length && allPkgs.length > 0;
+            const bDiscount = Number(bundle.bundle_discount || bundle.discount_value || bundle.savings || 0);
+
+            const finalPrice = (isAllSel && bDiscount > 0)
+              ? Math.max(0, origPriceSum - bDiscount)
+              : (bundle.final_price || bundle.discounted_price || origPriceSum);
+
+            addToCart({
+              id: `bundle-${bundle.id}`,
+              title: `${bundle.name} (Special Bundle)`,
+              price: Number(finalPrice) || 0,
+              originalPrice: (isAllSel && bDiscount > 0 && origPriceSum > finalPrice) ? origPriceSum : undefined,
+              bundle_id: bundle.id,
+              package_ids: packageIds,
+              category: 'Special Bundles',
+              coverImage: selPkgs[0]?.coverImage || selPkgs[0]?.image || bundle.image,
+            });
+          }}
+        />
+
         {/* SECTION 5: CTA */}
         <section style={{ padding: '80px 0 60px 0', borderTop: '1px solid rgba(0, 0, 0, 0.08)', textAlign: 'center' }}>
           <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: '#944426', textTransform: 'uppercase', display: 'block', marginBottom: '16px' }}>RESERVE YOUR SPOT TODAY</span>
@@ -391,7 +438,6 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: 'clamp(40px, 5.5vw, 72px)', fontWeight: 800, color: '#21201E', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>{titleMain}</span>
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '36px' }}>
-            <span style={{ fontSize: '18px', color: '#8A857F', textDecoration: 'line-through' }}>HK$ 1,200</span>
             <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '36px', fontWeight: 800, color: '#944426' }}>{displayPrice}</span>
           </div>
           <button onClick={handleReserveNow} style={{ backgroundColor: '#944426', color: '#FFFFFF', border: 'none', borderRadius: '999px', padding: '18px 48px', fontSize: '14px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 10px 28px rgba(148, 68, 38, 0.35)', transition: 'all 0.3s ease' }}>RESERVE NOW</button>
@@ -421,9 +467,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
 
       <div className="edp-sticky-bottom-bar" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 99, backgroundColor: 'rgba(245, 239, 229, 0.96)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderTop: '1px solid rgba(0, 0, 0, 0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.08)' }}>
         <button onClick={handleReserveNow} style={{ backgroundColor: '#944426', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '14px 48px', fontSize: '14px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', maxWidth: '640px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 6px 20px rgba(148, 68, 38, 0.35)', transition: 'all 0.25s ease' }}>
-          <span>Reserve Now</span>
-          <span style={{ opacity: 0.5, textDecoration: 'line-through', fontSize: '13px' }}>HK$ 1,200</span>
-          <span>{displayPrice}</span>
+          <span>Reserve Now — {displayPrice}</span>
         </button>
       </div>
 
