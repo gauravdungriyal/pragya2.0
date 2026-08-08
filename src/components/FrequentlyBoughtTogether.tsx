@@ -89,7 +89,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
   };
 
   const handleAction = (bundle: BundleItem, action: 'reserve' | 'cart') => {
-    trackBundleEvent(bundle.id, 'click', user?.access_token).catch(() => {});
+    trackBundleEvent(bundle.id, 'click', user?.access_token).catch(() => { });
 
     const allPackages = bundle.packages || [];
     const bundlePkgIds = allPackages.map((p) => p.id);
@@ -186,7 +186,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                 {bundle.name}
               </h4>
               {bundle.description && (
-                <p style={{ fontSize: '13.5px', color: '#6A655F', margin: 0 }}>
+                <p className="hidden md:block" style={{ fontSize: '13.5px', color: '#6A655F', margin: 0 }}>
                   {bundle.description}
                 </p>
               )}
@@ -198,13 +198,13 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  justifyContent: 'center',
+                  gap: '8px',
                   marginBottom: '24px',
-                  padding: '16px',
+                  padding: '12px 14px',
                   backgroundColor: '#FBF8F4',
                   borderRadius: '16px',
                   border: '1px solid #F0E9DF',
-                  overflowX: 'auto',
                 }}
               >
                 {allPackages.map((pkg, idx) => {
@@ -216,14 +216,14 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                       <div
                         style={{
                           position: 'relative',
-                          width: '100px',
-                          height: '75px',
+                          flex: '1 1 0px',
+                          maxWidth: '120px',
+                          height: '70px',
                           borderRadius: '12px',
                           overflow: 'hidden',
                           border: isChecked ? '2px solid #944426' : '2px solid transparent',
                           opacity: isChecked ? 1 : 0.45,
                           transition: 'all 0.2s ease',
-                          flexShrink: 0,
                           boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                         }}
                       >
@@ -238,8 +238,8 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                       {idx < allPackages.length - 1 && (
                         <div
                           style={{
-                            width: '24px',
-                            height: '24px',
+                            width: '22px',
+                            height: '22px',
                             borderRadius: '50%',
                             backgroundColor: '#EAE3D9',
                             display: 'flex',
@@ -248,7 +248,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                             flexShrink: 0,
                           }}
                         >
-                          <Plus size={14} color="#5A554F" strokeWidth={2.5} />
+                          <Plus size={13} color="#5A554F" strokeWidth={2.5} />
                         </div>
                       )}
                     </React.Fragment>
@@ -263,7 +263,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                 const isChecked = currentSelectedIds.map(String).includes(String(pkg.id));
                 const isMainItem = idx === 0;
                 const origPrice = Number(pkg.amount) || 0;
-                
+
                 // For add-on item in bundle, show discounted price if full bundle is active
                 const discountedPrice = (!isMainItem && isAllSelected && bundleDiscount > 0)
                   ? Math.max(0, origPrice - bundleDiscount)
@@ -300,7 +300,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                           </span>
 
                           {subDesc && (
-                            <p style={{ fontSize: '12.5px', color: '#6A655F', margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                            <p className="hidden md:block" style={{ fontSize: '12.5px', color: '#6A655F', margin: '4px 0 0 0', lineHeight: 1.5 }}>
                               {subDesc}
                             </p>
                           )}
