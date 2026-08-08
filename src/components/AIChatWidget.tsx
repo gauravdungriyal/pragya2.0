@@ -243,10 +243,9 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
       {/* ── Floating Launcher Button & Tooltip (Hidden when chat modal is open to avoid overlap) ── */}
       {!isOpen && (
         <div
+          className="pragya-launcher-container"
           style={{
             position: 'fixed',
-            bottom: '20px',
-            right: '20px',
             zIndex: 9990,
             display: 'flex',
             flexDirection: 'column',
@@ -258,6 +257,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
           {/* Idle Tooltip Badge */}
           {showTooltip && (
             <div
+              className="pragya-tooltip-badge"
               style={{
                 pointerEvents: 'auto',
                 marginBottom: '10px',
@@ -270,7 +270,6 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                maxWidth: '280px',
                 fontSize: '13px'
               }}
             >
@@ -340,17 +339,12 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
       {/* ── Exact Chat Window Modal Panel ────────────────────────────────────────── */}
       {isOpen && (
         <div
+          className="pragya-chat-modal"
           style={{
             position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            width: 'min(400px, calc(100vw - 32px))',
-            height: 'min(640px, calc(100vh - 40px))',
-            maxHeight: 'calc(100vh - 40px)',
             zIndex: 9995,
             backgroundColor: '#1E1815',
             color: '#F5EFE5',
-            borderRadius: '24px',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(196, 154, 42, 0.3)',
             display: 'flex',
             flexDirection: 'column',
@@ -361,14 +355,15 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
           <div
             style={{
               background: 'linear-gradient(120deg, #ff7f3f 0%, #f2a93c 48%, #5e9e56 100%)',
-              padding: '12px 16px',
+              padding: '8px 16px 12px 16px',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              flexDirection: 'column',
               borderBottom: '2px solid #C49A2A',
               position: 'relative'
             }}
           >
+            <div className="pragya-mobile-handle" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginTop: '4px' }}>
             {/* Left: Avatar + Status */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div
@@ -501,6 +496,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
               </button>
             </div>
           </div>
+        </div>
 
           {/* 2. Scrollable Body with Sacred Geometry Background */}
           <div
@@ -827,7 +823,10 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
           </div>
 
           {/* 3. Input Footer Bar */}
-          <div style={{ padding: '10px 12px', backgroundColor: '#16100D', borderTop: '1px solid rgba(242, 169, 60, 0.2)' }}>
+          <div
+            className="pragya-chat-footer"
+            style={{ padding: '10px 12px', backgroundColor: '#16100D', borderTop: '1px solid rgba(242, 169, 60, 0.2)' }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {/* Voice Dictation Button */}
               <button
@@ -857,14 +856,14 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask me anything"
+                placeholder="Ask me anything..."
+                className="pragya-chat-input"
                 style={{
                   flex: 1,
                   backgroundColor: '#281F1A',
                   border: '1px solid rgba(242, 169, 60, 0.3)',
                   borderRadius: '20px',
                   padding: '8px 14px',
-                  fontSize: '13px',
                   color: '#F5EFE5',
                   outline: 'none'
                 }}
@@ -920,8 +919,64 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
         </div>
       )}
 
-      {/* Global Animation Styles */}
-      <style>{`
+      {/* Global Animation & Responsiveness Styles */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        @media (min-width: 641px) {
+          .pragya-launcher-container {
+            bottom: 24px;
+            right: 24px;
+          }
+          .pragya-tooltip-badge {
+            max-width: 280px;
+          }
+          .pragya-chat-modal {
+            bottom: 24px;
+            right: 24px;
+            width: 410px;
+            height: 650px;
+            max-height: calc(100vh - 48px);
+            border-radius: 24px;
+          }
+          .pragya-mobile-handle {
+            display: none;
+          }
+        }
+        @media (max-width: 640px) {
+          .pragya-launcher-container {
+            bottom: max(16px, env(safe-area-inset-bottom));
+            right: 16px;
+          }
+          .pragya-tooltip-badge {
+            max-width: calc(100vw - 32px);
+          }
+          .pragya-chat-modal {
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100dvh;
+            max-height: 100dvh;
+            border-radius: 0;
+            z-index: 99999 !important;
+          }
+          .pragya-mobile-handle {
+            width: 38px;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.35);
+            border-radius: 2px;
+            margin: 4px auto 8px auto;
+          }
+          .pragya-chat-input {
+            font-size: 16px !important; /* Prevents iOS auto-zoom on input focus */
+            padding: 10px 14px !important;
+          }
+          .pragya-chat-footer {
+            padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+          }
+        }
+
         @keyframes floatUpDown {
           0%, 100% {
             transform: translateY(0px);
@@ -956,7 +1011,8 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
-      `}</style>
+      `
+      }} />
     </div>
   );
 };
