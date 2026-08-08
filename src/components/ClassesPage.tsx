@@ -1818,16 +1818,24 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             display: none !important;
           }
           .cls-sch-btn {
-            width: auto !important;
+            width: 38px !important;
+            height: 38px !important;
+            padding: 0 !important;
             flex-shrink: 0 !important;
-            padding: 6px 12px !important;
-            font-size: 11px !important;
-            font-weight: 800 !important;
             border-radius: 999px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             margin-top: 0 !important;
           }
           .cls-sch-btn span {
             display: none !important;
+          }
+          .cls-sch-btn svg {
+            display: block !important;
+            width: 16px !important;
+            height: 16px !important;
+            margin: 0 !important;
           }
         .weekly-slot-card:hover {
           transform: translateY(-3px) !important;
