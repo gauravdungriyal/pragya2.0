@@ -117,7 +117,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
         style={{
           maxWidth: '1240px',
           margin: '0 auto',
-          padding: '95px 16px 16px 16px'
+          padding: '78px 16px 12px 16px'
         }}
       >
         <button
@@ -624,7 +624,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
           .edp-objectives-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
         }
         @media (max-width: 640px) {
-          .edp-back-bar { padding: 90px 16px 12px 16px !important; }
+          .edp-back-bar { padding: 74px 16px 10px 16px !important; }
         }
       `}</style>
     </div>

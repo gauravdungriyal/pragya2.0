@@ -142,7 +142,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
         style={{
           backgroundColor: '#F5EFE5',
           color: '#21201E',
-          padding: '140px 32px 48px 32px'
+          padding: '84px 24px 24px 24px'
         }}
       >
         <div
@@ -566,7 +566,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
             order: 2 !important;
           }
           .events-top-banner {
-            padding: 104px 20px 24px 20px !important;
+            padding: 78px 16px 16px 16px !important;
           }
           .events-header-grid {
             grid-template-columns: 1fr !important;
