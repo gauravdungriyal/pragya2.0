@@ -860,10 +860,11 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
                 className="pragya-chat-input"
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   backgroundColor: '#281F1A',
                   border: '1px solid rgba(242, 169, 60, 0.3)',
                   borderRadius: '20px',
-                  padding: '8px 14px',
+                  padding: '8px 12px',
                   color: '#F5EFE5',
                   outline: 'none'
                 }}
@@ -969,11 +970,17 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
             margin: 4px auto 8px auto;
           }
           .pragya-chat-input {
+            min-width: 0 !important;
             font-size: 16px !important; /* Prevents iOS auto-zoom on input focus */
-            padding: 10px 14px !important;
+            padding: 9px 12px !important;
           }
           .pragya-chat-footer {
-            padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+            padding-top: 8px !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+            padding-bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
           }
         }
 
