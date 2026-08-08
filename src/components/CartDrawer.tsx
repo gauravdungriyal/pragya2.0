@@ -177,7 +177,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenCartPage }) => {
               <ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-serif text-lg sm:text-xl font-medium text-[#272727] leading-tight tracking-tight">Sanctuary Cart</h3>
+              <h3 className="font-serif text-lg sm:text-xl font-medium text-[#272727] leading-tight tracking-tight">Cart</h3>
               <p className="text-xs font-medium text-[#8A8580] mt-0.5">{cartCount} {cartCount === 1 ? 'item' : 'items'} selected</p>
             </div>
           </div>

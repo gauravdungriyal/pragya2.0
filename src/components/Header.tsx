@@ -257,7 +257,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Shopping Cart Button */}
         <button
           onClick={() => onViewChange && onViewChange('cart')}
-          aria-label="Sanctuary Cart"
+          aria-label="Cart"
           className="hdr-icon-btn"
           style={{
             display: 'inline-flex',
@@ -524,7 +524,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
               >
                 <ShoppingBag size={16} color="#944426" />
-                <span>SANCTUARY CART ({cartCount})</span>
+                <span>CART ({cartCount})</span>
               </button>
 
               {user ? (
