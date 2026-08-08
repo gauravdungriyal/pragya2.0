@@ -441,6 +441,12 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             <div
               key={item.id}
               className="ideal-class-card"
+              onClick={() => {
+                const el = document.getElementById('live-schedule');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
               style={{
                 backgroundColor: '#EAE1D3',
                 borderRadius: '20px',
@@ -449,7 +455,8 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 boxShadow: '0 4px 16px rgba(0, 0, 0, 0.03)',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                cursor: 'pointer'
               }}
             >
               {/* Top Photo Banner */}
@@ -538,7 +545,13 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             <div
               key={item.id}
               className="classes-ref-card"
-              onClick={() => onOpenBooking('class', item.title, item)}
+              onClick={() => {
+                const el = document.getElementById('live-schedule');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              style={{ cursor: 'pointer' }}
             >
               {/* Top Header Row: Level Tag */}
               <div className="card-top-row">
