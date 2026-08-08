@@ -337,6 +337,7 @@ export const App: React.FC = () => {
             onOpenBooking={handleOpenBooking}
             onNavigateSection={handleNavigateSection}
             onOpenPackageDetail={handleOpenPackageDetail}
+            onViewChange={handleViewChange}
           />
         ) : currentView === 'membership' ? (
           <MembershipPage

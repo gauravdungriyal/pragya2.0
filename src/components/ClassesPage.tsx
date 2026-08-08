@@ -1019,7 +1019,14 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             </p>
 
             <button
-              onClick={() => onOpenBooking('class', 'Book Your Class')}
+              onClick={() => {
+                const el = document.getElementById('live-schedule');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  onOpenBooking('class', 'Book Your Class');
+                }
+              }}
               style={{
                 fontFamily: "var(--font-sans)",
                 backgroundColor: '#354336',

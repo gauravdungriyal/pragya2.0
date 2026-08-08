@@ -8,9 +8,10 @@ interface TeachersPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
   onNavigateSection?: (sectionId: string) => void;
   onOpenPackageDetail?: (pkg: any) => void;
+  onViewChange?: (view: any) => void;
 }
 
-export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, onOpenBooking }) => {
+export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, onOpenBooking, onViewChange }) => {
   const [teachers, setTeachers] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -355,7 +356,13 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onOpenTeacherModal, 
             </p>
 
             <button
-              onClick={() => onOpenBooking('private', 'Private Session with Faculty')}
+              onClick={() => {
+                if (onViewChange) {
+                  onViewChange('membership');
+                } else {
+                  onOpenBooking('private', 'Private Session with Faculty');
+                }
+              }}
               style={{
                 backgroundColor: '#354336',
                 color: '#FFFFFF',

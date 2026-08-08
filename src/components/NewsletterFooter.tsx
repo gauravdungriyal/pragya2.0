@@ -32,7 +32,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
       style={{
         backgroundColor: '#00381F',
         color: '#FFFFFF',
-        paddingTop: '20px',
+        paddingTop: '32px',
         paddingBottom: '24px',
         borderTop: '1px solid rgba(217, 174, 41, 0.25)'
       }}
@@ -51,7 +51,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
             justifyContent: 'space-between',
             alignItems: 'center',
             gap: '24px',
-            marginBottom: '24px',
+            marginBottom: '16px',
             flexWrap: 'wrap'
           }}
         >
@@ -69,7 +69,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
               src="/logo.png"
               alt="Pragya Yog School Logo"
               style={{
-                height: '64px',
+                height: '76px',
                 width: 'auto',
                 objectFit: 'contain',
                 transition: 'transform 0.3s ease'
@@ -78,7 +78,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
             />
             <span
               style={{
-                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                fontFamily: "var(--font-sans)",
                 fontSize: '15px',
                 fontWeight: 800,
                 letterSpacing: '0.14em',

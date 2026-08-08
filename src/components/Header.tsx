@@ -127,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
       style={{
         // Bug 1 fix: position:fixed so the header is always visible;
         // on home it stays transparent (hero handles the bg), on inner pages a solid bg is shown
-        position: 'fixed',
+        position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
@@ -160,7 +160,7 @@ export const Header: React.FC<HeaderProps> = ({
         <img
           src="/logo.png"
           alt="Pragya Yog School Logo"
-          style={{ height: '68px', width: 'auto', objectFit: 'contain', transition: 'transform 0.25s ease' }}
+          style={{ height: '74px', width: 'auto', objectFit: 'contain', transition: 'transform 0.25s ease' }}
           className="brand-logo-img"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
@@ -168,9 +168,9 @@ export const Header: React.FC<HeaderProps> = ({
           className="brand-logo-text"
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: '16px',
+            fontSize: '14.5px',
             fontWeight: 800,
-            letterSpacing: '0.08em',
+            letterSpacing: '0.1em',
             color: '#21201E',
             textTransform: 'uppercase',
             whiteSpace: 'nowrap'
@@ -417,9 +417,9 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
             >
-              <img src="/logo.png" alt="Logo" style={{ height: '44px', width: 'auto' }} />
-              <span style={{ fontFamily: "'Canela', serif", fontSize: '18px', fontWeight: 600, color: '#21201E' }}>
-                Pragya Yog
+              <img src="/logo.png" alt="Logo" style={{ height: '60px', width: 'auto' }} />
+              <span style={{ fontFamily: "var(--font-sans)", fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', color: '#21201E', textTransform: 'uppercase' }}>
+                Pragya Yog School
               </span>
             </div>
             <button
