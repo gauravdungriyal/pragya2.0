@@ -118,6 +118,17 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
     }
   }, [profile]);
 
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      const origOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = origOverflow;
+      };
+    }
+  }, [isOpen]);
+
   // Load section data on navigate
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -440,9 +451,14 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
           .profile-drawer-container {
             width: 100vw !important;
             max-width: 100vw !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            top: 0 !important;
+            bottom: 0 !important;
           }
           .profile-drawer-body {
             flex-direction: column !important;
+            overflow: hidden !important;
           }
           .profile-nav-sidebar {
             display: none !important;
@@ -451,7 +467,9 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
             display: flex !important;
           }
           .profile-content-area {
-            padding: 20px 16px 110px 16px !important;
+            padding: 20px 16px 40px 16px !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
           }
           .profile-form-grid {
             grid-template-columns: 1fr !important;
