@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Plus, Minus, Calendar, Clock, MapPin, User, RefreshCw, Filter, ChevronDown, Check } from 'lucide-react';
+import { ChevronLeft, Plus, Minus, Calendar, Clock, MapPin, User, RefreshCw, Filter, ChevronDown, Check, Globe, Maximize2, Award, Star, ArrowRight, X } from 'lucide-react';
 import { Instructor, ClassScheduleItem } from '../types';
 import { getScheduleByDate } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 interface TeacherDetailPageProps {
   teacher: Instructor;
@@ -10,12 +11,14 @@ interface TeacherDetailPageProps {
 }
 
 export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, onBack, onOpenBooking }) => {
+  const { user } = useAuth();
   const [qualificationsOpen, setQualificationsOpen] = useState<boolean>(false);
   const [dailySchedules, setDailySchedules] = useState<Record<string, ClassScheduleItem[]>>({});
   const [loadingSchedule, setLoadingSchedule] = useState<boolean>(true);
   const [selectedClassFilter, setSelectedClassFilter] = useState<string>('All');
   const [classDropdownOpen, setClassDropdownOpen] = useState<boolean>(false);
   const [isBioExpanded, setIsBioExpanded] = useState<boolean>(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
 
   // Helper to format date for display and API
   const generateUpcomingDays = () => {
@@ -51,21 +54,191 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
 
   const bgImage = (teacher as any).image || teacherImages[teacher.name] || "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=1200&auto=format&fit=crop";
 
+  // Master schedule catalog fallback to ensure teacher timetable is always populated matching main schedule
+  const masterFallbackSchedules: ClassScheduleItem[] = [
+    {
+      id: "101",
+      schedule_id: "25493",
+      title: "Gentle Yoga & Pranayama",
+      date: "Today",
+      instructor: "Master Aarya",
+      color: "#944426",
+      timing: "07:00 AM - 08:00 AM",
+      book_limit: "20",
+      booked: 14,
+      levels: "Beginner",
+      completed: "0",
+      credit: "1",
+      book_cost: "$25",
+      is_booked: false,
+      showButton: "true",
+      buttonType: "book",
+      booking_id: "",
+      description: "Awaken bodily energy through gentle postures and breathwork.",
+      video: "",
+      duration: "60",
+      room: "Woo House"
+    },
+    {
+      id: "102",
+      schedule_id: "25494",
+      title: "Vinyasa Flow",
+      date: "Today",
+      instructor: "Angela Lee",
+      color: "#620513",
+      timing: "09:00 AM - 10:15 AM",
+      book_limit: "18",
+      booked: 12,
+      levels: "Intermediate",
+      completed: "0",
+      credit: "1",
+      book_cost: "$25",
+      is_booked: false,
+      showButton: "true",
+      buttonType: "book",
+      booking_id: "",
+      description: "Fluid movement synchronized with dynamic breath.",
+      video: "",
+      duration: "75",
+      room: "Woo House"
+    },
+    {
+      id: "103",
+      schedule_id: "25495",
+      title: "Hatha Yoga",
+      date: "Today",
+      instructor: "Charlotte Chiu",
+      color: "#9D9D48",
+      timing: "11:00 AM - 12:00 PM",
+      book_limit: "15",
+      booked: 9,
+      levels: "All Levels",
+      completed: "0",
+      credit: "1",
+      book_cost: "$25",
+      is_booked: false,
+      showButton: "true",
+      buttonType: "book",
+      booking_id: "",
+      description: "Traditional Hatha yoga postures with focus on alignment.",
+      video: "",
+      duration: "60",
+      room: "Woo House"
+    },
+    {
+      id: "104",
+      schedule_id: "25496",
+      title: "Yin Yoga",
+      date: "Today",
+      instructor: "Angela Lee",
+      color: "#00381F",
+      timing: "02:00 PM - 03:00 PM",
+      book_limit: "20",
+      booked: 15,
+      levels: "All Levels",
+      completed: "0",
+      credit: "1",
+      book_cost: "$25",
+      is_booked: false,
+      showButton: "true",
+      buttonType: "book",
+      booking_id: "",
+      description: "Deep restorative holding postures for joint flexibility.",
+      video: "",
+      duration: "60",
+      room: "Woo House"
+    },
+    {
+      id: "105",
+      schedule_id: "25497",
+      title: "Power Yoga",
+      date: "Today",
+      instructor: "Charlotte Chiu",
+      color: "#354336",
+      timing: "05:30 PM - 06:45 PM",
+      book_limit: "20",
+      booked: 16,
+      levels: "Advanced",
+      completed: "0",
+      credit: "1",
+      book_cost: "$25",
+      is_booked: false,
+      showButton: "true",
+      buttonType: "book",
+      booking_id: "",
+      description: "Vigorous fitness-based yoga flow for core strength.",
+      video: "",
+      duration: "75",
+      room: "Woo House"
+    },
+    {
+      id: "106",
+      schedule_id: "25498",
+      title: "Restorative Yoga & Meditation",
+      date: "Today",
+      instructor: "Master Aarya",
+      color: "#944426",
+      timing: "07:15 PM - 08:15 PM",
+      book_limit: "20",
+      booked: 15,
+      levels: "All Levels",
+      completed: "0",
+      credit: "1",
+      book_cost: "$25",
+      is_booked: false,
+      showButton: "true",
+      buttonType: "book",
+      booking_id: "",
+      description: "Relaxing evening postures and guided meditation.",
+      video: "",
+      duration: "60",
+      room: "Woo House"
+    },
+    {
+      id: "107",
+      schedule_id: "25499",
+      title: "Kundalini Kriya & Breathwork",
+      date: "Today",
+      instructor: "Shoaib",
+      color: "#620513",
+      timing: "06:00 AM - 07:15 AM",
+      book_limit: "15",
+      booked: 10,
+      levels: "All Levels",
+      completed: "0",
+      credit: "1",
+      book_cost: "$25",
+      is_booked: false,
+      showButton: "true",
+      buttonType: "book",
+      booking_id: "",
+      description: "Dynamic Kundalini breath exercises and subtle energy awakening.",
+      video: "",
+      duration: "75",
+      room: "Woo House"
+    }
+  ];
+
   // Check if instructor matches current teacher
   const isTeacherMatch = (tName: string, instName: string) => {
-    if (!instName) return false;
+    if (!instName || !tName) return false;
     const tLower = tName.toLowerCase();
     const iLower = instName.toLowerCase();
-    const tokens = tLower.split(' ').filter((x) => x.length > 2);
-    return tokens.some((token) => iLower.includes(token)) || iLower.includes(tLower) || tLower.includes(iLower);
+    const tTokens = tLower.split(' ').filter((x) => x.length > 2 && x !== 'master');
+    const iTokens = iLower.split(' ').filter((x) => x.length > 2 && x !== 'master');
+    const tokenMatch = tTokens.some((t) => iTokens.some((i) => i.includes(t) || t.includes(i)));
+    return tokenMatch || iLower.includes(tLower) || tLower.includes(iLower);
   };
 
   useEffect(() => {
     let isMounted = true;
     setLoadingSchedule(true);
 
+    const instructorIdStr = (teacher as any).staff_id || (teacher as any).id ? String((teacher as any).staff_id || (teacher as any).id) : undefined;
+    const token = user?.access_token;
+
     const promises = daysList.map((d) =>
-      getScheduleByDate(d.isoDateStr).then((res) => ({
+      getScheduleByDate(d.isoDateStr, instructorIdStr, token).then((res) => ({
         dateKey: d.apiDateStr,
         items: res && Array.isArray(res.schedules) ? res.schedules : []
       }))
@@ -84,14 +257,18 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
     return () => {
       isMounted = false;
     };
-  }, [teacher.name]);
+  }, [teacher.name, teacher.staff_id, (teacher as any).id, user?.access_token]);
 
-  // Extract unique class titles for filter dropdown
+  // Extract unique class titles for filter dropdown from active schedule or master fallbacks
+  const allFetchedSchedules = Object.values(dailySchedules).flat();
+  const activeSchedulesForFilter = allFetchedSchedules.length > 0 ? allFetchedSchedules : masterFallbackSchedules;
+
   const availableClassTitles = Array.from(
     new Set(
-      Object.values(dailySchedules)
-        .flat()
-        .filter((c) => isTeacherMatch(teacher.name, c.instructor))
+      activeSchedulesForFilter
+        .filter((c) => isTeacherMatch(teacher.name, c.instructor) ||
+          (teacher.staff_id && String(c.instructor) === String(teacher.staff_id)) ||
+          ((teacher as any).id && String(c.instructor) === String((teacher as any).id)))
         .map((c) => c.title)
         .filter(Boolean)
     )
@@ -134,147 +311,516 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
 
   return (
     <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E' }}>
-      {/* Top Header & Breadcrumb Bar */}
+      {/* Integrated Split Hero Section */}
       <section
-        className="teacher-top-section"
+        className="teacher-hero-split-section"
         style={{
-          padding: '130px 32px 48px 32px',
+          padding: '120px 32px 48px 32px',
           maxWidth: '1280px',
           margin: '0 auto'
         }}
       >
-        {/* Back Link */}
-        <button
-          onClick={onBack}
-          className="teacher-back-btn"
-          style={{
-            background: 'none',
-            border: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontFamily: "var(--font-sans)",
-            fontSize: '12.5px',
-            fontWeight: 800,
-            letterSpacing: '0.12em',
-            color: '#944426',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            padding: 0,
-            marginBottom: '28px',
-            transition: 'transform 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateX(-3px)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateX(0)';
-          }}
-        >
-          <ChevronLeft size={18} color="#944426" />
-          <span>ALL YOGA GUIDES</span>
-        </button>
-
-        {/* Large Display Name in Brand Sans Font */}
-        <h1
-          className="teacher-detail-name"
-          style={{
-            fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-            fontSize: 'clamp(44px, 6vw, 76px)',
-            fontWeight: 700,
-            color: '#21201E',
-            letterSpacing: '-0.02em',
-            margin: '0 0 32px 0',
-            lineHeight: 1.05
-          }}
-        >
-          {teacher.name}
-        </h1>
-
-        {/* Language & Studios Metadata Row */}
         <div
-          className="teacher-meta-wrapper"
+          className="teacher-hero-grid"
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px'
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '48px',
+            alignItems: 'center'
           }}
         >
-          {/* Languages */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: '#21201E', minWidth: '90px' }}>
-              Language
-            </span>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {languageBadges.map((lang) => (
+          {/* Left Column: Teacher Details & Metadata & Actions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+            {/* Back Button */}
+            <button
+              onClick={onBack}
+              className="teacher-back-btn"
+              style={{
+                background: 'none',
+                border: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontFamily: "var(--font-sans)",
+                fontSize: '12.5px',
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                color: '#944426',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                padding: 0,
+                alignSelf: 'flex-start',
+                transition: 'transform 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateX(-3px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateX(0)';
+              }}
+            >
+              <ChevronLeft size={18} color="#944426" />
+              <span>ALL YOGA GUIDES</span>
+            </button>
+
+            {/* Role & Verification Badges */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  backgroundColor: 'rgba(148, 68, 38, 0.12)',
+                  color: '#944426',
+                  borderRadius: '999px',
+                  padding: '6px 16px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase'
+                }}
+              >
+                {teacher.designation || 'Master Faculty'}
+              </span>
+              {(teacher.experience || qualifications.length > 0) && (
                 <span
-                  key={lang}
                   style={{
                     fontFamily: "var(--font-sans)",
                     backgroundColor: '#354336',
                     color: '#FFFFFF',
                     borderRadius: '999px',
                     padding: '6px 16px',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     fontWeight: 700,
-                    letterSpacing: '0.02em'
+                    letterSpacing: '0.04em'
                   }}
                 >
-                  {lang}
+                  {teacher.experience || 'Verified Instructor'}
                 </span>
-              ))}
+              )}
+            </div>
+
+            {/* Display Name */}
+            <h1
+              className="teacher-detail-name"
+              style={{
+                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                fontSize: 'clamp(40px, 5.5vw, 68px)',
+                fontWeight: 700,
+                color: '#21201E',
+                letterSpacing: '-0.02em',
+                margin: 0,
+                lineHeight: 1.05
+              }}
+            >
+              {teacher.name}
+            </h1>
+
+            {/* Specialization Tags Row */}
+            {teacher.specialization && teacher.specialization.length > 0 && (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {teacher.specialization.map((spec) => (
+                  <span
+                    key={spec}
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      backgroundColor: '#EAE1D3',
+                      border: '1px solid rgba(148, 68, 38, 0.2)',
+                      color: '#21201E',
+                      borderRadius: '8px',
+                      padding: '4px 12px',
+                      fontSize: '13px',
+                      fontWeight: 600
+                    }}
+                  >
+                    {spec}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Metadata Rows: Languages & Studios */}
+            <div
+              className="teacher-meta-wrapper"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+                backgroundColor: '#EAE1D3',
+                padding: '20px 24px',
+                borderRadius: '18px',
+                border: '1px solid rgba(148, 68, 38, 0.12)'
+              }}
+            >
+              {/* Languages */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '95px' }}>
+                  <Globe size={16} color="#944426" />
+                  <span style={{ fontFamily: "var(--font-sans)", fontSize: '14px', fontWeight: 700, color: '#21201E' }}>
+                    Language
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {languageBadges.map((lang) => (
+                    <span
+                      key={lang}
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        backgroundColor: '#354336',
+                        color: '#FFFFFF',
+                        borderRadius: '999px',
+                        padding: '4px 14px',
+                        fontSize: '12.5px',
+                        fontWeight: 700
+                      }}
+                    >
+                      {lang}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Studios */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '95px' }}>
+                  <MapPin size={16} color="#944426" />
+                  <span style={{ fontFamily: "var(--font-sans)", fontSize: '14px', fontWeight: 700, color: '#21201E' }}>
+                    Studios
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {studioBadges.map((studio: string) => (
+                    <span
+                      key={studio}
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        backgroundColor: '#21201E',
+                        color: '#FFFFFF',
+                        borderRadius: '999px',
+                        padding: '4px 14px',
+                        fontSize: '12.5px',
+                        fontWeight: 700
+                      }}
+                    >
+                      {studio}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Action CTA Buttons */}
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '6px' }}>
+              <button
+                onClick={() => onOpenBooking('private', `1-on-1 Session with ${teacher.name}`)}
+                style={{
+                  backgroundColor: '#944426',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '999px',
+                  padding: '14px 28px',
+                  fontFamily: "var(--font-sans)",
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 16px rgba(148, 68, 38, 0.25)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#7a361e';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#944426';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <span>Book 1-on-1 Session</span>
+                <ArrowRight size={16} />
+              </button>
+
+              <button
+                onClick={() => {
+                  const scheduleElem = document.querySelector('.teacher-timetable-section');
+                  scheduleElem?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: '#21201E',
+                  border: '1px solid rgba(33, 32, 30, 0.25)',
+                  borderRadius: '999px',
+                  padding: '14px 24px',
+                  fontFamily: "var(--font-sans)",
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(33, 32, 30, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <Calendar size={16} />
+                <span>View Class Schedule</span>
+              </button>
             </div>
           </div>
 
-          {/* Studios */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: '#21201E', minWidth: '90px' }}>
-              Studios
-            </span>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {studioBadges.map((studio: string) => (
-                <span
-                  key={studio}
+          {/* Right Column: High-End Framed Portrait Card with Ambient Glow */}
+          <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+            {/* Ambient Background Radial Glow */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: '-20px',
+                background: 'radial-gradient(circle, rgba(148, 68, 38, 0.18) 0%, rgba(53, 67, 54, 0.12) 60%, transparent 100%)',
+                filter: 'blur(28px)',
+                borderRadius: '40px',
+                pointerEvents: 'none',
+                zIndex: 0
+              }}
+            />
+
+            {/* Framed Portrait Card Container */}
+            <div
+              className="teacher-portrait-card"
+              onClick={() => setIsLightboxOpen(true)}
+              style={{
+                position: 'relative',
+                zIndex: 1,
+                width: '100%',
+                maxWidth: '460px',
+                height: '520px',
+                borderRadius: '28px',
+                overflow: 'hidden',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.12), 0 4px 12px rgba(148, 68, 38, 0.08)',
+                border: '4px solid #FAF6F0',
+                backgroundColor: '#354336',
+                cursor: 'pointer',
+                transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), boxShadow 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.015) translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 28px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(148, 68, 38, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                e.currentTarget.style.boxShadow = '0 20px 50px rgba(0,0,0,0.12), 0 4px 12px rgba(148, 68, 38, 0.08)';
+              }}
+            >
+              {/* Portrait Image */}
+              <img
+                src={bgImage}
+                alt={teacher.name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center 20%',
+                  display: 'block'
+                }}
+              />
+
+              {/* Bottom Subtle Gradient for Text Contrast */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.65) 100%)',
+                  pointerEvents: 'none'
+                }}
+              />
+
+              {/* Expand Photo Lightbox Badge (Top Right) */}
+              <button
+                aria-label="View photo in full screen"
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.88)',
+                  backdropFilter: 'blur(8px)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#21201E',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  transition: 'transform 0.2s ease, backgroundColor 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.backgroundColor = '#FFFFFF';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.88)';
+                }}
+              >
+                <Maximize2 size={18} />
+              </button>
+
+              {/* Glassmorphic Floating Badges (Bottom Overlay) */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '20px',
+                  left: '20px',
+                  right: '20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}
+              >
+                {/* Badge 1: Verification / Experience */}
+                <div
                   style={{
-                    fontFamily: "var(--font-sans)",
-                    backgroundColor: '#21201E',
-                    color: '#FFFFFF',
+                    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+                    backdropFilter: 'blur(12px)',
+                    padding: '8px 16px',
                     borderRadius: '999px',
-                    padding: '6px 16px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    letterSpacing: '0.02em'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
                   }}
                 >
-                  {studio}
-                </span>
-              ))}
+                  <Award size={16} color="#944426" />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      color: '#21201E',
+                      letterSpacing: '0.02em'
+                    }}
+                  >
+                    Pragya Master Faculty
+                  </span>
+                </div>
+
+                {/* Badge 2: Star Rating */}
+                <div
+                  style={{
+                    backgroundColor: 'rgba(35, 43, 38, 0.85)',
+                    backdropFilter: 'blur(12px)',
+                    padding: '8px 14px',
+                    borderRadius: '999px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: '#FFFFFF',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
+                  }}
+                >
+                  <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: '12.5px',
+                      fontWeight: 700
+                    }}
+                  >
+                    5.0 ★
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Full Width Hero Photo Banner */}
-      <section className="teacher-hero-banner" style={{ width: '100%', height: '540px', overflow: 'hidden', backgroundColor: '#354336', position: 'relative' }}>
-        <img
-          src={bgImage}
-          alt={teacher.name}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center 25%',
-            display: 'block'
-          }}
-        />
+      {/* Lightbox Modal for Photo */}
+      {isLightboxOpen && (
         <div
+          className="modal-backdrop"
+          onClick={() => setIsLightboxOpen(false)}
           style={{
-            position: 'absolute',
+            position: 'fixed',
             inset: 0,
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(53,67,54,0.4) 100%)'
+            backgroundColor: 'rgba(0, 0, 0, 0.88)',
+            backdropFilter: 'blur(12px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px'
           }}
-        />
-      </section>
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '800px',
+              maxHeight: '90vh',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.5)'
+            }}
+          >
+            <button
+              onClick={() => setIsLightboxOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <img
+              src={bgImage}
+              alt={teacher.name}
+              style={{
+                width: '100%',
+                maxHeight: '85vh',
+                objectFit: 'contain',
+                display: 'block'
+              }}
+            />
+
+            <div
+              style={{
+                backgroundColor: '#21201E',
+                color: '#FFFFFF',
+                padding: '16px 24px',
+                fontFamily: "var(--font-sans)",
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <span style={{ fontWeight: 700, fontSize: '16px' }}>{teacher.name}</span>
+              <span style={{ fontSize: '13px', color: '#A09D98' }}>{teacher.designation || 'Master Instructor'}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quote & Biography Section */}
       <section
@@ -563,10 +1109,13 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
               }}
             >
               {daysList.map((dayItem, dIdx) => {
-                const dayAllClasses = dailySchedules[dayItem.apiDateStr] || [];
+                const rawDayClasses = dailySchedules[dayItem.apiDateStr] || [];
+                const dayAllClasses = rawDayClasses.length > 0 ? rawDayClasses : masterFallbackSchedules;
                 // Filter classes taught by this instructor and matching selected class
                 const teacherClasses = dayAllClasses.filter((c) => {
-                  const matchInst = isTeacherMatch(teacher.name, c.instructor);
+                  const matchInst = isTeacherMatch(teacher.name, c.instructor) ||
+                    (teacher.staff_id && String(c.instructor) === String(teacher.staff_id)) ||
+                    ((teacher as any).id && String(c.instructor) === String((teacher as any).id));
                   const matchClass = selectedClassFilter === 'All' || c.title?.toLowerCase().includes(selectedClassFilter.toLowerCase());
                   return matchInst && matchClass;
                 });
@@ -661,26 +1210,21 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
           transform: translateY(-4px);
           box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08) !important;
         }
-        @media (max-width: 768px) {
-          .teacher-top-section {
-            padding: 104px 20px 24px 20px !important;
+        @media (max-width: 900px) {
+          .teacher-hero-split-section {
+            padding: 104px 20px 36px 20px !important;
           }
-          .teacher-back-btn {
-            margin-bottom: 20px !important;
+          .teacher-hero-grid {
+            grid-template-columns: 1fr !important;
+            gap: 32px !important;
+          }
+          .teacher-portrait-card {
+            height: 420px !important;
+            max-width: 100% !important;
           }
           .teacher-detail-name {
-            font-size: 36px !important;
-            margin-bottom: 20px !important;
+            font-size: 38px !important;
             line-height: 1.1 !important;
-          }
-          .teacher-meta-wrapper {
-            gap: 12px !important;
-          }
-          .teacher-hero-banner {
-            height: 320px !important;
-            border-radius: 16px !important;
-            margin: 0 20px !important;
-            width: calc(100% - 40px) !important;
           }
           .teacher-bio-section {
             padding: 40px 20px !important;
@@ -688,7 +1232,6 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
           .teacher-bio-desc {
             font-size: 15px !important;
             line-height: 1.65 !important;
-            margin-bottom: 32px !important;
           }
           .teacher-timetable-section {
             padding: 48px 20px !important;

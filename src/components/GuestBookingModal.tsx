@@ -95,68 +95,89 @@ export const GuestBookingModal: React.FC<GuestBookingModalProps> = ({
     setLoading(false);
   };
 
-  // Drop-in Single Class Handler (Dynamic Price & ID)
+  // Drop-in Single Class Handler (Uses exact schedule/class API values and HK$220 price)
   const handleBookDropIn = async () => {
-    if (!user?.access_token) return;
     setLoading(true);
     setError('');
-    const dropInPrice = Number(classDetails?.price || classDetails?.dropin_price || classDetails?.cost || 220);
-    try {
-      const res = await bookDropIn(user.access_token, scheduleId);
-      if (res.success) {
-        setSuccessMsg(res.message || `Drop-in booking request for ${displayTitle} submitted successfully!`);
-        setIsSuccess(true);
-      } else {
-        // Add single drop-in class pass to cart dynamically
-        addToCart({
-          id: scheduleId || classDetails?.id || 'dropin-' + Date.now(),
-          package_id: classDetails?.package_id || classDetails?.id || scheduleId,
-          schedule_id: scheduleId,
-          title: `Drop-In Single Class: ${displayTitle}`,
-          price: dropInPrice,
-          category: classDetails?.category || 'Drop-In Pass',
-          type: 'class_pack'
-        });
-        handleResetAndClose();
+
+    const targetScheduleId = classDetails?.schedule_id || classDetails?.id || scheduleId;
+    const targetPackageId = classDetails?.package_id || classDetails?.id || targetScheduleId;
+    const rawPrice = classDetails?.book_cost || classDetails?.dropin_price || classDetails?.cost || classDetails?.price || 220;
+    const cleanPriceNum = Number(String(rawPrice).replace(/[^0-9.]/g, '')) || 220;
+
+    // 1. If logged-in member, attempt backend book_dropin API endpoint first
+    if (user?.access_token) {
+      try {
+        const res = await bookDropIn(user.access_token, targetScheduleId);
+        if (res.success) {
+          setSuccessMsg(res.message || `Drop-in booking request for ${displayTitle} submitted successfully!`);
+          setIsSuccess(true);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        /* proceed to add drop-in pass to cart */
       }
-    } catch {
-      setError('Network error. Please try again.');
     }
+
+    // 2. Add exact single drop-in class pass to cart dynamically using API schedule ID & title
+    addToCart({
+      id: `dropin-${targetScheduleId}`,
+      package_id: targetPackageId,
+      schedule_id: targetScheduleId,
+      title: `Drop-In Single Class Pass: ${displayTitle}`,
+      price: cleanPriceNum,
+      category: 'Drop-In Pass',
+      type: 'class_pack'
+    });
+    handleResetAndClose();
     setLoading(false);
   };
 
-  // Buy Pass or Membership Handler (Dynamic API package lookup)
+  // Buy Pass or Membership Handler (Filter for Group / Class Pack packages from API)
   const handleBuyPass = async () => {
+    setLoading(true);
     try {
       const pkgData = await getPackages();
       if (pkgData && typeof pkgData === 'object') {
-        for (const catItems of Object.values(pkgData)) {
-          if (Array.isArray(catItems) && catItems.length > 0) {
-            const pkg = catItems[0] as any;
-            addToCart({
-              id: pkg.id || pkg.package_id,
-              package_id: pkg.id || pkg.package_id,
-              title: pkg.title || pkg.name || 'Sanctuary Class Pass',
-              price: Number(pkg.price || pkg.amount || 1500),
-              category: pkg.category || 'Class Pack',
-              type: 'class_pack'
-            });
-            handleResetAndClose();
-            return;
+        // Query specific Group Class Packs or Memberships from API, avoiding private consultations
+        for (const [catName, catItems] of Object.entries(pkgData)) {
+          const lowerCat = catName.toLowerCase();
+          if (
+            (lowerCat.includes('pack') || lowerCat.includes('group') || lowerCat.includes('class') || lowerCat.includes('regular')) &&
+            !lowerCat.includes('consultation') &&
+            !lowerCat.includes('private')
+          ) {
+            if (Array.isArray(catItems) && catItems.length > 0) {
+              const pkg = catItems[0] as any;
+              addToCart({
+                id: pkg.id || pkg.package_id,
+                package_id: pkg.id || pkg.package_id,
+                title: pkg.title || pkg.name || 'Sanctuary Class Pass',
+                price: Number(pkg.price || pkg.amount || 1800),
+                category: pkg.category || 'Class Pack',
+                type: 'class_pack'
+              });
+              handleResetAndClose();
+              setLoading(false);
+              return;
+            }
           }
         }
       }
     } catch { /* silent fallback */ }
 
+    // Fallback if no specific group package found in API
     addToCart({
       id: classDetails?.package_id || classDetails?.id || 'pass-' + Date.now(),
       package_id: classDetails?.package_id || classDetails?.id || scheduleId,
-      title: `${displayTitle} Pass`,
-      price: Number(classDetails?.price || 1500),
+      title: `10-Class Sanctuary Pass`,
+      price: 1800,
       category: 'Class Pack',
       type: 'class_pack'
     });
     handleResetAndClose();
+    setLoading(false);
   };
 
   // Step 1: Check Email & Send OTP
