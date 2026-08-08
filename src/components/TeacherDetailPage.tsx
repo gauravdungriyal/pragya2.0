@@ -1250,7 +1250,7 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
                               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#944426'; }}
                               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#354336'; }}
                             >
-                              Book Class
+                              Book
                             </button>
                           </div>
                         ))}

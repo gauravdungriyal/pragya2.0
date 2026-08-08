@@ -22,48 +22,76 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
 
   const fallbackClasses = [
     {
-      id: '101',
+      id: '01',
       schedule_id: '25493',
-      title: 'Morning Sun Hatha & Pranayama',
-      timing: '07:00 AM - 08:15 AM',
-      duration: '75 Minutes',
+      title: 'Gentle Yoga',
+      levels: 'Beginner',
+      level: 'Beginner',
+      duration: '60 mins',
+      timing: '07:00 AM - 08:00 AM',
       instructor: 'Master Aarya',
-      levels: 'All Levels',
-      room: 'Lotus Sanctuary Room A',
-      description: 'Awaken bodily energy with sun salutations and breathwork.'
+      room: 'Woo House',
+      description: 'Awaken the bodily energy through rhythmic breathwork, classical sun salutations, and grounding posture holds.'
     },
     {
-      id: '102',
+      id: '02',
       schedule_id: '25494',
-      title: 'Mindful Vinyasa Flow',
-      timing: '09:00 AM - 10:15 AM',
-      duration: '75 Minutes',
-      instructor: 'Angela Lee',
+      title: 'Vinyasa Flow',
       levels: 'Intermediate',
-      room: 'Prana Studio',
-      description: 'Fluid movement synchronized with dynamic breath.'
-    },
-    {
-      id: '103',
-      schedule_id: '25495',
-      title: 'Reformer Pilates & Core Sculpt',
-      timing: '11:00 AM - 12:00 PM',
-      duration: '60 Minutes',
+      level: 'Intermediate',
+      duration: '75 mins',
+      timing: '09:00 AM - 10:15 AM',
       instructor: 'Angela Lee',
-      levels: 'All Levels',
-      room: 'Reformer Suite',
-      description: 'Precision controlled reformer movements.'
+      room: 'Woo House',
+      description: 'Fluid movement synchronized with dynamic breath to build stamina, balance, and centered presence.'
     },
     {
-      id: '104',
-      schedule_id: '25496',
-      title: 'Acoustic Sound Bath & Recovery',
-      timing: '05:30 PM - 06:45 PM',
-      duration: '75 Minutes',
+      id: '03',
+      schedule_id: '25495',
+      title: 'Hatha Yoga',
+      levels: 'All Levels',
+      level: 'All Levels',
+      duration: '60 mins',
+      timing: '11:00 AM - 12:00 PM',
       instructor: 'Charlotte Chiu',
+      room: 'Woo House',
+      description: 'A meditative style with longer holds that release deep tension and cultivate inner stillness and balance.'
+    },
+    {
+      id: '04',
+      schedule_id: '25496',
+      title: 'Yin Yoga',
+      levels: 'All Levels',
+      level: 'All Levels',
+      duration: '60 mins',
+      timing: '02:00 PM - 03:00 PM',
+      instructor: 'Angela Lee',
+      room: 'Woo House',
+      description: 'Precision-controlled movement using traditional postures to lengthen, align, and strengthen deep stabilizing muscles.'
+    },
+    {
+      id: '05',
+      schedule_id: '25497',
+      title: 'Power Yoga',
+      levels: 'Advanced',
+      level: 'Advanced',
+      duration: '75 mins',
+      timing: '05:30 PM - 06:45 PM',
+      instructor: 'Charlotte Chiu',
+      room: 'Woo House',
+      description: 'High energy dynamic movement sequence designed to build core vitality, stamina, and cardiovascular health.'
+    },
+    {
+      id: '06',
+      schedule_id: '25498',
+      title: 'Restorative Yoga',
       levels: 'Restorative',
-      room: 'Lotus Sanctuary Room B',
-      description: 'Deep restorative floor postures with quartz singing bowls.'
+      level: 'Restorative',
+      duration: '60 mins',
+      timing: '07:15 PM - 08:15 PM',
+      instructor: 'Master Aarya',
+      room: 'Woo House',
+      description: 'Sacred breath sequences and prop-supported floor postures designed to clear stress and rejuvenate vital energy.'
     }
   ];
 
@@ -447,16 +475,32 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                   }}
                   className="schedule-row-grid"
                 >
-                  <div className="sch-row-time" style={{ minWidth: '180px' }}>
-                    <div style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '16px', fontWeight: 700, color: '#21201E' }}>
-                      {item.timing || item.time}
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#7A756F', fontWeight: 500 }}>
-                      {item.room || 'Main Sanctuary'}
-                    </div>
+                  {/* Time & Room (Stacked Start & End Time) */}
+                  <div className="sch-row-time" style={{ minWidth: '100px', flexShrink: 0 }}>
+                    {(() => {
+                      const rawTiming = item.timing || item.time || '';
+                      const parts = rawTiming.split(/\s*-\s*|\s*to\s*/i);
+                      const startTime = parts[0]?.trim() || rawTiming;
+                      const endTime = parts[1]?.trim() || '';
+                      return (
+                        <>
+                          <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: '#944426', lineHeight: 1.2 }}>
+                            {startTime}
+                          </div>
+                          {endTime && (
+                            <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: '#6B655F', lineHeight: 1.2 }}>
+                              {endTime}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '11.5px', color: '#8A8580', fontWeight: 500, marginTop: '2px' }}>
+                            {item.room || 'Woo House'}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
-                  <div className="sch-row-main" style={{ flexGrow: 1, minWidth: '220px' }}>
+                  <div className="sch-row-main" style={{ flexGrow: 1, minWidth: '140px' }}>
                     <h4 style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: '0 0 4px 0' }}>
                       {item.title || item.className}
                     </h4>
@@ -497,7 +541,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                       gap: '6px'
                     }}
                   >
-                    <span>Book Class</span>
+                    <span>Book</span>
                     <ArrowUpRight size={15} />
                   </button>
                 </div>
@@ -608,7 +652,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
             display: none !important;
           }
           .sch-row-btn::after {
-            content: "BOOK CLASS";
+            content: "BOOK";
             font-size: 11px;
             font-weight: 800;
           }

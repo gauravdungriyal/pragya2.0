@@ -115,10 +115,13 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    const dateStr = selectedDate.toISOString().split('T')[0];
+    const y = selectedDate.getFullYear();
+    const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const d = String(selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
 
     const fetchFn = user
-      ? getScheduleByDate(dateStr, user.access_token)
+      ? getScheduleByDate(dateStr, undefined, user.access_token)
       : getScheduleByDate(dateStr);
 
     fetchFn.then((data) => {
@@ -717,18 +720,32 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                   }}
                   className="schedule-row-hover"
                 >
-                  {/* Time & Room */}
-                  <div className="cls-sch-time" style={{ minWidth: '180px' }}>
-                    <div style={{ fontFamily: "var(--font-sans)", fontSize: '16px', fontWeight: 700, color: '#21201E', marginBottom: '2px' }}>
-                      {cls.timing}
-                    </div>
-                    <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', color: '#7A756F', fontWeight: 500 }}>
-                      {cls.room}
-                    </div>
+                  {/* Time & Room (Stacked Start & End Time) */}
+                  <div className="cls-sch-time" style={{ minWidth: '100px', flexShrink: 0 }}>
+                    {(() => {
+                      const parts = (cls.timing || '').split(/\s*-\s*|\s*to\s*/i);
+                      const startTime = parts[0]?.trim() || cls.timing;
+                      const endTime = parts[1]?.trim() || '';
+                      return (
+                        <>
+                          <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: '#944426', lineHeight: 1.2 }}>
+                            {startTime}
+                          </div>
+                          {endTime && (
+                            <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: '#6B655F', lineHeight: 1.2 }}>
+                              {endTime}
+                            </div>
+                          )}
+                          <div style={{ fontFamily: "var(--font-sans)", fontSize: '11.5px', color: '#8A8580', fontWeight: 500, marginTop: '2px' }}>
+                            {cls.room}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Class Title & Instructor */}
-                  <div className="cls-sch-main" style={{ flexGrow: 1, minWidth: '220px' }}>
+                  <div className="cls-sch-main" style={{ flexGrow: 1, minWidth: '140px' }}>
                     <h4 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: '0 0 4px 0' }}>
                       {cls.title}
                     </h4>
@@ -782,7 +799,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                       e.currentTarget.style.backgroundColor = '#21201E';
                     }}
                   >
-                    <span>Book Class</span>
+                    <span>Book</span>
                     <ChevronRight size={14} />
                   </button>
                 </div>
@@ -1240,7 +1257,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             display: none !important;
           }
           .cls-sch-btn::after {
-            content: "BOOK CLASS";
+            content: "BOOK";
             font-size: 11px;
             font-weight: 800;
           }
