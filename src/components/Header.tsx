@@ -36,6 +36,24 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('pragya-open-auth', handler);
   }, []);
 
+  // Lock background scroll when mobile menu drawer is active
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [mobileMenuOpen]);
+
   // Synchronize active tab with currentView prop
   React.useEffect(() => {
     if (currentView === 'about') {
@@ -376,7 +394,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
       </div>
 
-      {/* Mobile / Tablet Drawer */}
+      {/* Mobile / Tablet Drawer (Compact & Non-scrollable) */}
       {mobileMenuOpen && (
         <div
           style={{
@@ -385,29 +403,29 @@ export const Header: React.FC<HeaderProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            height: '100vh',
+            height: '100dvh',
+            maxHeight: '100vh',
             width: '100vw',
             backgroundColor: '#F5EFE5',
             zIndex: 999999,
             display: 'flex',
             flexDirection: 'column',
-            overflowY: 'auto',
+            justifyContent: 'space-between',
+            overflow: 'hidden',
             animation: 'fadeIn 0.2s ease-in-out',
           }}
         >
           {/* Mobile Drawer Top Header Bar */}
           <div
             style={{
-              padding: '16px 24px',
-              height: '80px',
+              padding: '10px 18px',
+              height: '60px',
               backgroundColor: '#FFFFFF',
               borderBottom: '1px solid rgba(39, 39, 39, 0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              position: 'sticky',
-              top: 0,
-              zIndex: 2,
+              flexShrink: 0
             }}
           >
             <div
@@ -415,10 +433,10 @@ export const Header: React.FC<HeaderProps> = ({
                 setMobileMenuOpen(false);
                 handleNavClick({ label: 'Home', id: 'hero', type: 'section' });
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
             >
-              <img src="/logo.png" alt="Logo" style={{ height: '60px', width: 'auto' }} />
-              <span style={{ fontFamily: "var(--font-sans)", fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', color: '#21201E', textTransform: 'uppercase' }}>
+              <img src="/logo.png" alt="Logo" style={{ height: '44px', width: 'auto' }} />
+              <span style={{ fontFamily: "var(--font-sans)", fontSize: '11.5px', fontWeight: 700, letterSpacing: '0.06em', color: '#21201E', textTransform: 'uppercase' }}>
                 Pragya Yog School
               </span>
             </div>
@@ -429,8 +447,8 @@ export const Header: React.FC<HeaderProps> = ({
                 backgroundColor: 'rgba(39, 39, 39, 0.06)',
                 border: 'none',
                 borderRadius: '50%',
-                width: '36px',
-                height: '36px',
+                width: '32px',
+                height: '32px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -438,12 +456,21 @@ export const Header: React.FC<HeaderProps> = ({
                 color: '#21201E',
               }}
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
-          {/* Mobile Nav Links List */}
-          <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+          {/* Mobile Nav Links List (Compact vertical gaps) */}
+          <div
+            style={{
+              padding: '10px 16px 4px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '2px',
+              flex: 1,
+              justifyContent: 'space-evenly'
+            }}
+          >
             {navItems.map((item) => {
               const isActive = activeTab === item.label;
               return (
@@ -458,17 +485,17 @@ export const Header: React.FC<HeaderProps> = ({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     width: '100%',
-                    padding: '14px 18px',
+                    padding: '8px 14px',
                     backgroundColor: isActive ? '#EAE1D4' : 'transparent',
                     border: 'none',
-                    borderRadius: '12px',
+                    borderRadius: '10px',
                     fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                    fontSize: '18px',
+                    fontSize: '15px',
                     fontWeight: isActive ? 700 : 500,
                     color: isActive ? '#944426' : '#21201E',
                     textAlign: 'left',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   <span>{item.label}</span>
@@ -476,107 +503,116 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               );
             })}
+          </div>
 
-            {/* Action Buttons inside Mobile Menu */}
-            <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(39,39,39,0.08)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Action Buttons inside Mobile Menu (Bottom pinned, compact) */}
+          <div
+            style={{
+              padding: '8px 16px 14px 16px',
+              borderTop: '1px solid rgba(39,39,39,0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              flexShrink: 0
+            }}
+          >
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleScheduleRedirect();
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid rgba(33, 32, 30, 0.2)',
+                borderRadius: '999px',
+                padding: '10px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#21201E',
+                cursor: 'pointer',
+              }}
+            >
+              <Calendar size={15} />
+              <span>VIEW SCHEDULE</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (onViewChange) onViewChange('cart');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid rgba(33, 32, 30, 0.2)',
+                borderRadius: '999px',
+                padding: '10px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#21201E',
+                cursor: 'pointer',
+              }}
+            >
+              <ShoppingBag size={15} color="#944426" />
+              <span>CART ({cartCount})</span>
+            </button>
+
+            {user ? (
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  handleScheduleRedirect();
+                  setProfileDrawerOpen(true);
                 }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid rgba(33, 32, 30, 0.2)',
+                  backgroundColor: '#944426',
+                  color: '#FFFFFF',
                   borderRadius: '999px',
-                  padding: '14px',
-                  fontSize: '13px',
+                  padding: '10px 14px',
+                  fontSize: '12px',
                   fontWeight: 700,
-                  color: '#21201E',
+                  border: 'none',
                   cursor: 'pointer',
                 }}
               >
-                <Calendar size={16} />
-                <span>VIEW SCHEDULE</span>
+                <User size={15} />
+                <span>MY ACCOUNT ({user.name || user.email})</span>
               </button>
-
+            ) : (
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  if (onViewChange) onViewChange('cart');
+                  setAuthModalOpen(true);
                 }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid rgba(33, 32, 30, 0.2)',
+                  backgroundColor: '#944426',
+                  color: '#FFFFFF',
                   borderRadius: '999px',
-                  padding: '14px',
-                  fontSize: '13px',
+                  padding: '10px 14px',
+                  fontSize: '12px',
                   fontWeight: 700,
-                  color: '#21201E',
+                  border: 'none',
                   cursor: 'pointer',
                 }}
               >
-                <ShoppingBag size={16} color="#944426" />
-                <span>CART ({cartCount})</span>
+                <LogIn size={15} />
+                <span>MEMBER LOGIN</span>
               </button>
-
-              {user ? (
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setProfileDrawerOpen(true);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    backgroundColor: '#944426',
-                    color: '#FFFFFF',
-                    borderRadius: '999px',
-                    padding: '14px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <User size={16} />
-                  <span>MY ACCOUNT ({user.name || user.email})</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setAuthModalOpen(true);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    backgroundColor: '#944426',
-                    color: '#FFFFFF',
-                    borderRadius: '999px',
-                    padding: '14px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <LogIn size={16} />
-                  <span>MEMBER LOGIN</span>
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
       )}
