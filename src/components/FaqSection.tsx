@@ -217,7 +217,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
           </p>
 
           <button
-            onClick={() => onOpenBooking && onOpenBooking('inquiry', 'General Inquiry')}
+            onClick={() => window.open('https://wa.me/85267082503?text=Namaste%20%F0%9F%99%8F%20I%20have%20a%20question%20about%20Pragya%20Yog%20School', '_blank', 'noopener,noreferrer')}
             style={{
               backgroundColor: '#21201E',
               color: '#FFFFFF',

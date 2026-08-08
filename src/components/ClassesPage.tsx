@@ -341,12 +341,12 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Clock size={14} color="#7A756F" />
-                      <span>{item.duration || '60 minutes'}</span>
+                      <span>{String(item.duration || '60 mins').replace(/\s*mins?/gi, '')} mins</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Footer Line: Schedule + Join Class Button */}
+                {/* Footer Line: Schedule Info */}
                 <div
                   style={{
                     display: 'flex',
@@ -364,31 +364,6 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                       {item.schedule || 'Mon, Wed, Fri'}
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => onOpenBooking('class', item.title, item)}
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      backgroundColor: '#354336',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: '999px',
-                      padding: '10px 22px',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#944426';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#354336';
-                    }}
-                  >
-                    Join Class
-                  </button>
                 </div>
               </div>
             </div>
@@ -418,7 +393,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               <div className="card-meta-row">
                 <div className="meta-item">
                   <Clock size={14} color="#7A756F" />
-                  <span>{item.duration || '60 minutes'}</span>
+                  <span>{String(item.duration || '60 mins').replace(/\s*mins?/gi, '')} mins</span>
                 </div>
                 <div className="meta-item">
                   <Calendar size={14} color="#7A756F" />
