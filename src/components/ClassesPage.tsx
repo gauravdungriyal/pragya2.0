@@ -378,12 +378,9 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               className="classes-ref-card"
               onClick={() => onOpenBooking('class', item.title, item)}
             >
-              {/* Top Header Row: Level Tag + White Circle Arrow Button */}
+              {/* Top Header Row: Level Tag */}
               <div className="card-top-row">
                 <span className="card-level">{item.level || 'Beginner'}</span>
-                <div className="card-arrow-circle">
-                  <ArrowUpRight size={18} color="#21201E" />
-                </div>
               </div>
 
               {/* Class Title */}
