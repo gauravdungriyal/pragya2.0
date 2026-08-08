@@ -14,7 +14,23 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
   const [schedules, setSchedules] = useState<ClassScheduleItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [scheduleViewMode, setScheduleViewMode] = useState<'day' | 'week'>('week');
+  const [scheduleViewMode, setScheduleViewMode] = useState<'day' | 'week'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return 'day';
+    }
+    return 'week';
+  });
+
+  useEffect(() => {
+    const checkMobile = () => {
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        setScheduleViewMode('day');
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [weeklySchedules, setWeeklySchedules] = useState<Record<string, ClassScheduleItem[]>>({});
   const [weeklyLoading, setWeeklyLoading] = useState<boolean>(false);
 
