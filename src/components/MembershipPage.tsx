@@ -9,15 +9,25 @@ interface MembershipPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
   onNavigateSection?: (sectionId: string) => void;
   onOpenPackageDetail?: (pkg: any) => void;
+  initialCategory?: string;
 }
 
-export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking }) => {
+export const MembershipPage: React.FC<MembershipPageProps> = ({
+  onOpenBooking,
+  initialCategory = 'ALL'
+}) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const [packagesData, setPackagesData] = useState<Record<string, PackageItem[]>>({});
   const [bundlesList, setBundlesList] = useState<BundleItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeCategory, setActiveCategory] = useState<string>('ALL');
+  const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setActiveCategory(initialCategory);
+    }
+  }, [initialCategory]);
 
   // Fallback high quality packages
   const fallbackPackages: Record<string, PackageItem[]> = {
@@ -179,7 +189,11 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({ onOpenBooking })
 
   const filteredPackages = activeCategory === 'ALL'
     ? allFlattenedPackages
-    : allFlattenedPackages.filter((p) => p.groupCategory === activeCategory);
+    : allFlattenedPackages.filter((p) => {
+        const cat = (p.groupCategory || '').toLowerCase();
+        const active = (activeCategory || '').toLowerCase();
+        return cat === active || cat.includes(active) || active.includes(cat);
+      });
 
   // Live currentDate string formatted from local date
   const currentDateStr = new Date().toLocaleDateString('en-US', {

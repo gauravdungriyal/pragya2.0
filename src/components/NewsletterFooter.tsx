@@ -7,7 +7,8 @@ interface NewsletterFooterProps {
 }
 
 export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
-  onNavigateSection
+  onNavigateSection,
+  onOpenBooking
 }) => {
   const quickLinks = [
     { label: 'Pragya Connect Community', section: 'community' },
@@ -19,11 +20,11 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
   ];
 
   const yogCourses = [
-    { label: 'Regular Classes', section: 'schedule' },
-    { label: 'Private Sessions', section: 'membership' },
-    { label: 'Pragya 200-Hr TTC', section: 'programs' },
-    { label: 'Somatic Retreats', section: 'programs' },
-    { label: 'Intake Consult', section: 'contact' }
+    { label: 'Regular Classes', type: 'navigate', section: 'membership-regular' },
+    { label: 'Private Sessions', type: 'navigate', section: 'membership-private' },
+    { label: 'Pragya 200-Hr TTC', type: 'navigate', section: 'events' },
+    { label: 'Somatic Retreats', type: 'navigate', section: 'events' },
+    { label: 'Intake Consult', type: 'booking', bookingType: 'consultation', title: 'Intake Consultation' }
   ];
 
   return (
@@ -182,7 +183,13 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                 <a
                   key={link.label}
                   onClick={() => {
-                    if (link.section === 'community') {
+                    if (link.label === 'Contact Us' || link.section === 'whatsapp') {
+                      window.open(
+                        'https://wa.me/85267082503?text=Namaste%20%F0%9F%99%8F%20I%20have%20a%20question%20about%20Pragya%20Yog%20School',
+                        '_blank',
+                        'noopener,noreferrer'
+                      );
+                    } else if (link.section === 'community') {
                       window.open('https://pragya-connect.vercel.app/', '_blank', 'noopener,noreferrer');
                     } else if (onNavigateSection) {
                       onNavigateSection(link.section);
@@ -221,7 +228,15 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
               {yogCourses.map((course) => (
                 <a
                   key={course.label}
-                  onClick={() => onNavigateSection && onNavigateSection(course.section)}
+                  onClick={() => {
+                    if (course.type === 'navigate' && course.section && onNavigateSection) {
+                      onNavigateSection(course.section);
+                    } else if (course.type === 'booking' && onOpenBooking) {
+                      onOpenBooking(course.bookingType, course.title);
+                    } else if (course.section && onNavigateSection) {
+                      onNavigateSection(course.section);
+                    }
+                  }}
                   style={{
                     fontSize: '13.5px',
                     color: 'rgba(255, 255, 255, 0.85)',
@@ -252,18 +267,60 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
               CONTACT INFORMATION
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)', lineHeight: 1.4 }}>
-                <MapPin size={16} style={{ marginTop: '2px', flexShrink: 0 }} />
+              <a
+                href="https://maps.google.com/?q=1303-04,+13/F+Tak+Woo+House,+13+Wo+On+Lane,+Central,+Hong+Kong"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  fontSize: '13.5px',
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  lineHeight: 1.4,
+                  textDecoration: 'none',
+                  transition: 'color 0.2s ease'
+                }}
+                className="footer-text-link"
+                title="View studio location on Google Maps"
+              >
+                <MapPin size={16} style={{ marginTop: '2px', flexShrink: 0, color: '#D9AE29' }} />
                 <span>1303-04, 13/F Tak Woo House, 13 Wo On Lane, Central, Hong Kong</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)' }}>
-                <Phone size={16} style={{ flexShrink: 0 }} />
+              </a>
+              <a
+                href="tel:+85267082503"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  fontSize: '13.5px',
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s ease'
+                }}
+                className="footer-text-link"
+                title="Call studio phone number"
+              >
+                <Phone size={16} style={{ flexShrink: 0, color: '#D9AE29' }} />
                 <span>+852 6708 2503</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)' }}>
-                <Mail size={16} style={{ flexShrink: 0 }} />
+              </a>
+              <a
+                href="mailto:info@pyshk.com"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  fontSize: '13.5px',
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s ease'
+                }}
+                className="footer-text-link"
+                title="Send email to Pragya Yog School"
+              >
+                <Mail size={16} style={{ flexShrink: 0, color: '#D9AE29' }} />
                 <span>info@pyshk.com</span>
-              </div>
+              </a>
             </div>
 
             {/* Social Media Circular White Buttons */}

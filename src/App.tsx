@@ -35,6 +35,7 @@ import { Instructor, UpcomingEvent, DynamicPackage } from './types';
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'admin' | 'ai-assistant' | 'community' | 'cart' | 'policy'>('home');
+  const [membershipCategory, setMembershipCategory] = useState<string>('ALL');
   const [selectedPolicyId, setSelectedPolicyId] = useState<number>(3);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingType, setBookingType] = useState('class');
@@ -93,7 +94,7 @@ export const App: React.FC = () => {
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
 
-    const STAGGER_DELAYS = ['delay-1','delay-2','delay-3','delay-4','delay-5','delay-6'];
+    const STAGGER_DELAYS = ['delay-1', 'delay-2', 'delay-3', 'delay-4', 'delay-5', 'delay-6'];
 
     const attachObservers = () => {
       const elements = document.querySelectorAll(REVEAL_SELECTORS);
@@ -235,6 +236,24 @@ export const App: React.FC = () => {
   };
 
   const handleNavigateSection = (sectionId: string) => {
+    if (sectionId === 'membership-regular' || sectionId === 'regular') {
+      setMembershipCategory('Regular');
+      setCurrentView('membership');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (sectionId === 'membership-private' || sectionId === 'private') {
+      setMembershipCategory('Private');
+      setCurrentView('membership');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (['classes', 'membership', 'events', 'teachers', 'about', 'home'].includes(sectionId)) {
+      if (sectionId === 'membership') setMembershipCategory('ALL');
+      setCurrentView(sectionId as any);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     if (sectionId.startsWith('policy-')) {
       const pid = Number(sectionId.replace('policy-', '')) || 3;
       setSelectedPolicyId(pid);
@@ -372,6 +391,7 @@ export const App: React.FC = () => {
             onOpenBooking={handleOpenBooking}
             onNavigateSection={handleNavigateSection}
             onOpenPackageDetail={handleOpenPackageDetail}
+            initialCategory={membershipCategory}
           />
         ) : currentView === 'events' ? (
           <EventsPage
