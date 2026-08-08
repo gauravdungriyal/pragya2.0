@@ -133,8 +133,8 @@ export const AiAssistantPage: React.FC<AiAssistantPageProps> = ({ onBackToHome, 
               <ArrowLeft size={14} /> Back to main site
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 shadow-inner">
-                <Bot size={28} />
+              <div className="w-14 h-14 rounded-full bg-stone-900 border-2 border-amber-400/60 flex items-center justify-center shadow-lg overflow-hidden shrink-0">
+                <img src="/mascot.png" alt="Pragya AI Mascot" className="w-full h-full object-contain" />
               </div>
               <div>
                 <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight">Pragya AI Assistant</h1>
@@ -220,6 +220,12 @@ export const AiAssistantPage: React.FC<AiAssistantPageProps> = ({ onBackToHome, 
                         msg.sender === 'user' ? 'ml-auto' : 'mr-auto'
                       }`}
                     >
+                      {msg.sender === 'bot' && (
+                        <div className="flex items-center gap-2 mb-1.5 ml-1">
+                          <img src="/mascot.png" alt="Pragya AI" className="w-6 h-6 rounded-full object-contain bg-stone-900 border border-amber-400/50 shadow-sm" />
+                          <span className="text-xs font-semibold text-amber-300">Pragya AI</span>
+                        </div>
+                      )}
                       <div
                         className={`p-4 rounded-2xl text-sm ${
                           msg.sender === 'user'
@@ -248,8 +254,8 @@ export const AiAssistantPage: React.FC<AiAssistantPageProps> = ({ onBackToHome, 
                   ))}
 
                   {loading && (
-                    <div className="flex items-center gap-2 bg-emerald-900/40 border border-amber-500/20 px-4 py-3 rounded-2xl w-fit">
-                      <Bot size={18} className="text-amber-400 animate-spin" />
+                    <div className="flex items-center gap-2.5 bg-emerald-900/40 border border-amber-500/20 px-4 py-3 rounded-2xl w-fit">
+                      <img src="/mascot.png" alt="Pragya AI typing" className="w-6 h-6 object-contain animate-bounce" />
                       <span className="text-xs text-stone-300">Pragya AI is typing...</span>
                     </div>
                   )}

@@ -251,7 +251,8 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-end',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            animation: 'floatUpDown 3.4s ease-in-out infinite'
           }}
         >
           {/* Idle Tooltip Badge */}
@@ -273,7 +274,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
                 fontSize: '13px'
               }}
             >
-              <Sparkles size={16} style={{ color: '#FBB534', flexShrink: 0 }} />
+              <img src="/mascot.png" alt="Pragya AI Mascot" style={{ width: '24px', height: '24px', objectFit: 'contain', flexShrink: 0 }} />
               <div>
                 <span style={{ fontWeight: 600, display: 'block', color: '#FCD34D' }}>Ask Pragya AI</span>
                 <span style={{ fontSize: '11.5px', color: '#D6D3D1' }}>Instant answers on classes, TTC & pricing</span>
@@ -325,11 +326,8 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {/* Mascot Lotus Yogi Avatar */}
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#FBB534', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.6)' }}>
-                <svg viewBox="0 0 100 100" style={{ width: '32px', height: '32px', fill: '#23130E' }}>
-                  <circle cx="50" cy="50" r="45" fill="#FBB534" />
-                  <path d="M50 22c-3.5 0-6.5 3-6.5 6.5s3 6.5 6.5 6.5 6.5-3 6.5-6.5S53.5 22 50 22zm-12 36c-2 0-3.5 1.5-3.5 3.5s1.5 3.5 3.5 3.5h24c2 0 3.5-1.5 3.5-3.5S64 58 62 58H38zm-4-10c-3 0-5 2.5-5 5.5s2 5.5 5 5.5h32c3 0 5-2.5 5-5.5s-2-5.5-5-5.5H34z" />
-                </svg>
+              <div style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: '#1C1512', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid #F2A93C', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                <img src="/mascot.png" alt="Pragya AI Mascot" style={{ width: '100%', height: '100%', objectFit: 'contain', animation: 'floatMascot 2.8s ease-in-out infinite' }} />
               </div>
               {unreadBadge && (
                 <span style={{ position: 'absolute', top: '-4px', right: '-4px', width: '14px', height: '14px', backgroundColor: '#EF4444', borderRadius: '50%', border: '2px solid #1C1512' }} />
@@ -378,8 +376,8 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
                   width: '42px',
                   height: '42px',
                   borderRadius: '50%',
-                  backgroundColor: '#FBB534',
-                  boxShadow: '0 0 0 2px rgba(196, 154, 42, 0.6), 0 2px 8px rgba(0,0,0,0.25)',
+                  backgroundColor: '#1C1512',
+                  boxShadow: '0 0 0 2px rgba(242, 169, 60, 0.8), 0 2px 8px rgba(0,0,0,0.25)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -387,11 +385,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
                   flexShrink: 0
                 }}
               >
-                <svg viewBox="0 0 100 100" style={{ width: '34px', height: '34px', fill: '#23130E' }}>
-                  <circle cx="50" cy="50" r="46" fill="#FBB534" />
-                  <circle cx="50" cy="30" r="8" fill="#23130E" />
-                  <path d="M50 40c-10 0-18 6-18 14 0 3 1.5 6 4 8l-6 12c-1 2 0 4 2 4h36c2 0 3-2 2-4l-6-12c2.5-2 4-5 4-8 0-8-8-14-18-14z" fill="#23130E" />
-                </svg>
+                <img src="/mascot.png" alt="Pragya AI Mascot" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
 
               <div>
@@ -525,24 +519,27 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
             <div
               style={{
                 backgroundColor: '#281F1A',
-                border: '1px solid rgba(242, 169, 60, 0.22)',
+                border: '1px solid rgba(242, 169, 60, 0.3)',
                 borderRadius: '16px',
                 padding: '14px',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '10px'
+                alignItems: 'center',
+                gap: '14px'
               }}
             >
-              <p style={{ margin: 0, fontSize: '13px', color: '#E7E5E4', lineHeight: 1.5, fontWeight: 400 }}>
-                I'm <strong style={{ color: '#FCD34D', fontWeight: 600 }}>Pragya</strong> — ask me about classes, memberships & teacher training.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ backgroundColor: '#1C1512', color: '#FCD34D', border: '1px solid rgba(242, 169, 60, 0.3)', padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  🌙 {greetingTime}
-                </span>
-                <span style={{ backgroundColor: '#1C1512', color: '#FCD34D', border: '1px solid rgba(242, 169, 60, 0.3)', padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  ⚡ 24/7 answers
-                </span>
+              <img src="/mascot.png" alt="Pragya AI Mascot" style={{ width: '48px', height: '48px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 2px 6px rgba(242,169,60,0.4))' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <p style={{ margin: 0, fontSize: '13px', color: '#E7E5E4', lineHeight: 1.5, fontWeight: 400 }}>
+                  I'm <strong style={{ color: '#FCD34D', fontWeight: 600 }}>Pragya</strong> — ask me about classes, memberships & teacher training.
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ backgroundColor: '#1C1512', color: '#FCD34D', border: '1px solid rgba(242, 169, 60, 0.3)', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    🌙 {greetingTime}
+                  </span>
+                  <span style={{ backgroundColor: '#1C1512', color: '#FCD34D', border: '1px solid rgba(242, 169, 60, 0.3)', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    ⚡ 24/7 answers
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -757,20 +754,18 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
                       width: '34px',
                       height: '34px',
                       borderRadius: '50%',
-                      backgroundColor: '#FBB534',
+                      backgroundColor: '#1C1512',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                      marginTop: '2px'
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+                      marginTop: '2px',
+                      overflow: 'hidden',
+                      border: '1px solid rgba(242, 169, 60, 0.6)'
                     }}
                   >
-                    <svg viewBox="0 0 100 100" style={{ width: '26px', height: '26px', fill: '#23130E' }}>
-                      <circle cx="50" cy="50" r="45" fill="#FBB534" />
-                      <circle cx="50" cy="30" r="8" fill="#23130E" />
-                      <path d="M50 40c-10 0-18 6-18 14 0 3 1.5 6 4 8l-6 12c-1 2 0 4 2 4h36c2 0 3-2 2-4l-6-12c2.5-2 4-5 4-8 0-8-8-14-18-14z" fill="#23130E" />
-                    </svg>
+                    <img src="/mascot.png" alt="Pragya AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   </div>
                 )}
 
@@ -820,6 +815,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
             {/* Loading Indicator */}
             {loading && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#281F1A', border: '1px solid rgba(242, 169, 60, 0.2)', padding: '10px 14px', borderRadius: '16px', fontSize: '12px', color: '#E7E5E4', width: 'fit-content' }}>
+                <img src="/mascot.png" alt="Thinking mascot" style={{ width: '22px', height: '22px', objectFit: 'contain', animation: 'bounce 1s infinite' }} />
                 <span style={{ width: '6px', height: '6px', backgroundColor: '#FCD34D', borderRadius: '50%', animation: 'bounce 1s infinite -0.3s' }} />
                 <span style={{ width: '6px', height: '6px', backgroundColor: '#FCD34D', borderRadius: '50%', animation: 'bounce 1s infinite -0.15s' }} />
                 <span style={{ width: '6px', height: '6px', backgroundColor: '#FCD34D', borderRadius: '50%', animation: 'bounce 1s infinite' }} />
@@ -926,6 +922,24 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
 
       {/* Global Animation Styles */}
       <style>{`
+        @keyframes floatUpDown {
+          0%, 100% {
+            transform: translateY(0px);
+            filter: drop-shadow(0 6px 16px rgba(255, 127, 63, 0.4));
+          }
+          50% {
+            transform: translateY(-10px);
+            filter: drop-shadow(0 16px 24px rgba(255, 127, 63, 0.65));
+          }
+        }
+        @keyframes floatMascot {
+          0%, 100% {
+            transform: translateY(0px) scale(1);
+          }
+          50% {
+            transform: translateY(-3px) scale(1.04);
+          }
+        }
         @keyframes pulseGlow {
           0% { transform: scale(1); opacity: 0.8; }
           50% { transform: scale(1.22); opacity: 0; }
