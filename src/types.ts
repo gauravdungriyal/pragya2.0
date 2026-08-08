@@ -202,9 +202,15 @@ export interface FaqItem {
   category?: string;
 }
 
-export interface FilterOptions {
-  instructors: { id: string; name: string }[];
-  levels?: { id: string; name: string }[];
-  pillars?: { id: string; name: string }[];
-  rooms?: { id: string; name: string }[];
+export interface FilterItem {
+  id: string;
+  name: string;
 }
+
+export interface FilterOptions {
+  instructors: FilterItem[];
+  pillars: FilterItem[];
+  levels: FilterItem[];
+  locations: FilterItem[];
+}
+

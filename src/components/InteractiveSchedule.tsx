@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ArrowUpRight, ChevronLeft, ChevronRight, RefreshCw, Calendar, SlidersHorizontal, Check } from 'lucide-react';
-import { getScheduleByDate } from '../services/api';
-import { ClassScheduleItem } from '../types';
+import { ArrowUpRight, ChevronLeft, ChevronRight, RefreshCw, Calendar, SlidersHorizontal, Check, X } from 'lucide-react';
+import { getScheduleByDate, getFilters } from '../services/api';
+import { ClassScheduleItem, FilterOptions } from '../types';
 import { useAuth } from '../context/AuthContext';
 
 interface InteractiveScheduleProps {
@@ -11,14 +11,44 @@ interface InteractiveScheduleProps {
 export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpenBooking }) => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  
+  // API Filter options
+  const [filterData, setFilterData] = useState<FilterOptions>({
+    instructors: [{ id: '', name: 'All Instructors' }],
+    pillars: [{ id: '', name: 'All Pillars' }],
+    levels: [
+      { id: '', name: 'All Levels' },
+      { id: 'Beginner', name: 'Beginner' },
+      { id: 'Intermediate', name: 'Intermediate' },
+      { id: 'Advanced', name: 'Advanced' },
+      { id: 'Restorative', name: 'Restorative' }
+    ],
+    locations: [{ id: '', name: 'All Locations' }]
+  });
+
+  // Selected filters
   const [levelFilter, setLevelFilter] = useState<string>('ALL');
+  const [instructorFilter, setInstructorFilter] = useState<string>('');
+  const [pillarFilter, setPillarFilter] = useState<string>('');
+  const [locationFilter, setLocationFilter] = useState<string>('');
+
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [scheduleItems, setScheduleItems] = useState<ClassScheduleItem[]>([]);
-  // Bug 13 fix: ref for click-outside detection
   const filterWrapperRef = useRef<HTMLDivElement>(null);
 
-  const levelOptions = ['ALL', 'Beginner', 'Intermediate', 'Advanced', 'Restorative'];
+  useEffect(() => {
+    getFilters().then((data) => {
+      if (data) {
+        setFilterData({
+          instructors: data.instructors && data.instructors.length > 0 ? data.instructors : [{ id: '', name: 'All Instructors' }],
+          pillars: data.pillars && data.pillars.length > 0 ? data.pillars : [{ id: '', name: 'All Pillars' }],
+          levels: data.levels && data.levels.length > 0 ? data.levels : [{ id: '', name: 'All Levels' }],
+          locations: data.locations && data.locations.length > 0 ? data.locations : [{ id: '', name: 'All Locations' }]
+        });
+      }
+    });
+  }, []);
 
   const fallbackClasses = [
     {
@@ -147,9 +177,65 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
 
   const displayItems = scheduleItems.length > 0 ? scheduleItems : (fallbackClasses as any[]);
 
-  const filteredItems = levelFilter === 'ALL'
-    ? displayItems
-    : displayItems.filter((item) => (item.levels || '').toLowerCase().includes(levelFilter.toLowerCase()));
+  const availableInstructors = React.useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    map.set('all instructors', { id: '', name: 'All Instructors' });
+
+    (filterData.instructors || []).forEach((inst) => {
+      if (inst && inst.name && inst.name.toLowerCase() !== 'all instructors') {
+        map.set(inst.name.toLowerCase(), { id: inst.id || inst.name, name: inst.name });
+      }
+    });
+
+    (displayItems || []).forEach((item) => {
+      const instName = item.instructor || (item as any).instructor_name;
+      if (instName && typeof instName === 'string' && instName.trim() !== '' && instName.toLowerCase() !== 'all instructors') {
+        if (!map.has(instName.toLowerCase())) {
+          map.set(instName.toLowerCase(), { id: instName, name: instName.trim() });
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [filterData.instructors, displayItems]);
+
+  const hasActiveFilter = Boolean(
+    (levelFilter && levelFilter !== '' && levelFilter !== 'ALL' && levelFilter.toLowerCase() !== 'all levels') ||
+    (instructorFilter && instructorFilter !== '' && instructorFilter.toLowerCase() !== 'all instructors') ||
+    (pillarFilter && pillarFilter !== '' && pillarFilter.toLowerCase() !== 'all pillars') ||
+    (locationFilter && locationFilter !== '' && locationFilter.toLowerCase() !== 'all locations')
+  );
+
+  const resetAllFilters = () => {
+    setLevelFilter('ALL');
+    setInstructorFilter('');
+    setPillarFilter('');
+    setLocationFilter('');
+  };
+
+  const filteredItems = displayItems.filter((item) => {
+    if (levelFilter && levelFilter !== '' && levelFilter !== 'ALL' && levelFilter.toLowerCase() !== 'all levels') {
+      const itemLvl = (item.levels || item.level || '').toLowerCase();
+      const targetLvl = levelFilter.toLowerCase();
+      if (!itemLvl.includes(targetLvl) && !targetLvl.includes(itemLvl)) return false;
+    }
+    if (instructorFilter && instructorFilter !== '' && instructorFilter.toLowerCase() !== 'all instructors') {
+      const itemInst = (item.instructor || (item as any).instructor_name || '').toLowerCase();
+      const targetInst = instructorFilter.toLowerCase();
+      if (!itemInst.includes(targetInst) && !targetInst.includes(itemInst)) return false;
+    }
+    if (pillarFilter && pillarFilter !== '' && pillarFilter.toLowerCase() !== 'all pillars') {
+      const itemPillar = (item.pillar || (item as any).category || (item as any).pillar_name || '').toLowerCase();
+      const targetPillar = pillarFilter.toLowerCase();
+      if (!itemPillar.includes(targetPillar) && !targetPillar.includes(itemPillar)) return false;
+    }
+    if (locationFilter && locationFilter !== '' && locationFilter.toLowerCase() !== 'all locations') {
+      const itemLoc = (item.room || (item as any).location || (item as any).studio || '').toLowerCase();
+      const targetLoc = locationFilter.toLowerCase();
+      if (!itemLoc.includes(targetLoc) && !targetLoc.includes(itemLoc)) return false;
+    }
+    return true;
+  });
 
   return (
     <section
@@ -363,8 +449,8 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                 onClick={() => setShowFilterModal(!showFilterModal)}
                 style={{
                   fontFamily: "'Neue Montreal', sans-serif",
-                  backgroundColor: showFilterModal ? '#354336' : 'transparent',
-                  color: showFilterModal ? '#FFFFFF' : '#4A4540',
+                  backgroundColor: showFilterModal || hasActiveFilter ? '#354336' : 'transparent',
+                  color: showFilterModal || hasActiveFilter ? '#FFFFFF' : '#4A4540',
                   border: '1.5px solid rgba(148, 68, 38, 0.3)',
                   borderRadius: '999px',
                   padding: '10px 24px',
@@ -380,19 +466,19 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
               >
                 <SlidersHorizontal size={14} />
                 <span>FILTERS</span>
-                {levelFilter !== 'ALL' && (
+                {hasActiveFilter && (
                   <span
                     style={{
                       width: '8px',
                       height: '8px',
                       borderRadius: '50%',
-                      backgroundColor: '#944426'
+                      backgroundColor: '#D9A726'
                     }}
                   />
                 )}
               </button>
 
-              {/* Filter Dropdown Popup */}
+              {/* Multi-Category Filter Dropdown Popup */}
               {showFilterModal && (
                 <div
                   style={{
@@ -400,45 +486,153 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                     top: 'calc(100% + 8px)',
                     right: 0,
                     backgroundColor: '#FFFFFF',
-                    borderRadius: '16px',
-                    padding: '16px',
-                    width: '220px',
-                    boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
-                    zIndex: 10,
-                    border: '1px solid rgba(0,0,0,0.06)'
+                    borderRadius: '18px',
+                    padding: '18px',
+                    width: '280px',
+                    boxShadow: '0 16px 40px rgba(0,0,0,0.15)',
+                    zIndex: 100,
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '14px',
+                    maxHeight: '440px',
+                    overflowY: 'auto'
                   }}
                 >
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#7A756F', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>
-                    Filter By Level
+                  {/* Header & Reset */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F0EAE1', paddingBottom: '8px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#944426', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Filter Schedule
+                    </span>
+                    {hasActiveFilter && (
+                      <button
+                        onClick={resetAllFilters}
+                        style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Reset All
+                      </button>
+                    )}
                   </div>
-                  {levelOptions.map((lvl) => (
-                    <button
-                      key={lvl}
-                      onClick={() => {
-                        setLevelFilter(lvl);
-                        setShowFilterModal(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        backgroundColor: levelFilter === lvl ? '#F5EFE5' : 'transparent',
-                        color: levelFilter === lvl ? '#944426' : '#21201E',
-                        fontWeight: levelFilter === lvl ? 700 : 500,
-                        fontSize: '13.5px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '4px'
-                      }}
-                    >
-                      <span>{lvl}</span>
-                      {levelFilter === lvl && <Check size={14} color="#944426" />}
-                    </button>
-                  ))}
+
+                  {/* 1. LEVEL */}
+                  {filterData.levels && filterData.levels.length > 0 && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#7A756F', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
+                        Level
+                      </label>
+                      <select
+                        value={levelFilter}
+                        onChange={(e) => setLevelFilter(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '9px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(39,39,39,0.15)',
+                          fontSize: '13px',
+                          backgroundColor: '#FDFAF6',
+                          color: '#272727',
+                          fontWeight: 600,
+                          outline: 'none'
+                        }}
+                      >
+                        {filterData.levels.map((lvl) => (
+                          <option key={lvl.id || lvl.name} value={lvl.name || lvl.id}>
+                            {lvl.name || 'All Levels'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* 2. INSTRUCTOR */}
+                  {availableInstructors && availableInstructors.length > 0 && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#7A756F', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
+                        Instructor
+                      </label>
+                      <select
+                        value={instructorFilter}
+                        onChange={(e) => setInstructorFilter(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '9px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(39,39,39,0.15)',
+                          fontSize: '13px',
+                          backgroundColor: '#FDFAF6',
+                          color: '#272727',
+                          fontWeight: 600,
+                          outline: 'none'
+                        }}
+                      >
+                        {availableInstructors.map((inst) => (
+                          <option key={inst.id || inst.name} value={inst.name || inst.id}>
+                            {inst.name || 'All Instructors'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* 3. PILLAR */}
+                  {filterData.pillars && filterData.pillars.length > 0 && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#7A756F', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
+                        Pillar / Focus
+                      </label>
+                      <select
+                        value={pillarFilter}
+                        onChange={(e) => setPillarFilter(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '9px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(39,39,39,0.15)',
+                          fontSize: '13px',
+                          backgroundColor: '#FDFAF6',
+                          color: '#272727',
+                          fontWeight: 600,
+                          outline: 'none'
+                        }}
+                      >
+                        {filterData.pillars.map((p) => (
+                          <option key={p.id || p.name} value={p.name || p.id}>
+                            {p.name || 'All Pillars'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* 4. LOCATION */}
+                  {filterData.locations && filterData.locations.length > 0 && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#7A756F', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
+                        Location / Studio
+                      </label>
+                      <select
+                        value={locationFilter}
+                        onChange={(e) => setLocationFilter(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '9px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(39,39,39,0.15)',
+                          fontSize: '13px',
+                          backgroundColor: '#FDFAF6',
+                          color: '#272727',
+                          fontWeight: 600,
+                          outline: 'none'
+                        }}
+                      >
+                        {filterData.locations.map((loc) => (
+                          <option key={loc.id || loc.name} value={loc.name || loc.id}>
+                            {loc.name || 'All Locations'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

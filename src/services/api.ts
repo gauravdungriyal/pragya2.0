@@ -364,7 +364,6 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
       date: "Starts Oct 15, 2026",
       location: "Pragya Academy Center",
       price: "$2,400",
-      category: "Teacher Training"
     }
   ];
 }
@@ -552,52 +551,77 @@ export async function getScheduleByDate(dateStr?: string, instructorId?: string,
 // 7. Get Filters
 export async function getFilters(): Promise<FilterOptions> {
   const res = await fetchFromApi<any>('get-filters');
-  if (res && res.status && res.data) {
-    return {
-      instructors: res.data.instructors || [
-        { id: "", name: "All Instructors" },
-        { id: "360610", name: "Master Aarya" },
-        { id: "360637", name: "Angela Lee" },
-        { id: "360735", name: "Charlotte Chiu" }
-      ],
-      levels: [
-        { id: "", name: "All Levels" },
-        { id: "beginner", name: "Beginner" },
-        { id: "intermediate", name: "Intermediate" },
-        { id: "advanced", name: "Advanced" },
-        { id: "restorative", name: "Restorative" }
-      ],
-      pillars: [
-        { id: "", name: "All Practices" },
-        { id: "yoga", name: "Yoga Asana" },
-        { id: "pilates", name: "Reformer Pilates" },
-        { id: "meditation", name: "Meditation & Sound" },
-        { id: "recovery", name: "Hydrotherapy & Recovery" }
-      ]
-    };
+
+  let instructors = (res && res.status && Array.isArray(res.data?.instructors)) ? res.data.instructors : [];
+  let pillars = (res && res.status && Array.isArray(res.data?.pillars)) ? res.data.pillars : [];
+  let levels = (res && res.status && Array.isArray(res.data?.levels)) ? res.data.levels : [];
+  let locations = (res && res.status && Array.isArray(res.data?.locations)) ? res.data.locations : [];
+
+  // Filter out items without names
+  instructors = instructors.filter((i: any) => i && i.name);
+  pillars = pillars.filter((p: any) => p && p.name);
+  levels = levels.filter((l: any) => l && l.name);
+  locations = locations.filter((loc: any) => loc && loc.name);
+
+  // If instructors returned from API is 1 or 0 (only "All Instructors"), populate from getTeachers()
+  if (instructors.length <= 1) {
+    try {
+      const teachers = await getTeachers();
+      if (teachers && teachers.length > 0) {
+        const teacherItems = teachers.map((t) => ({ id: String(t.staff_id || t.name), name: t.name }));
+        instructors = [{ id: '', name: 'All Instructors' }, ...teacherItems];
+      }
+    } catch { }
   }
+
+  // Fallbacks if empty
+  if (instructors.length === 0) {
+    instructors = [
+      { id: '', name: 'All Instructors' },
+      { id: '360610', name: 'Master Aarya' },
+      { id: '360637', name: 'Angela Lee' },
+      { id: '360735', name: 'Charlotte Chiu' },
+      { id: '361006', name: 'Ashish P' },
+      { id: '360801', name: 'Louise Vance' },
+      { id: '360880', name: 'Marcus Chan' },
+      { id: '360736', name: 'Dr. Yatendra Amoli' },
+      { id: '361004', name: 'Master Shoaib M' }
+    ];
+  }
+
+  if (levels.length === 0) {
+    levels = [
+      { id: '', name: 'All Levels' },
+      { id: 'Beginner', name: 'Beginner' },
+      { id: 'Intermediate', name: 'Intermediate' },
+      { id: 'Advanced', name: 'Advanced' },
+      { id: 'Restorative', name: 'Restorative' }
+    ];
+  }
+
+  if (pillars.length === 0) {
+    pillars = [
+      { id: '', name: 'All Pillars' },
+      { id: 'yoga', name: 'Yoga' },
+      { id: 'pilates', name: 'Pilates' },
+      { id: 'meditation', name: 'Meditation' },
+      { id: 'recovery', name: 'Recovery' }
+    ];
+  }
+
+  if (locations.length === 0) {
+    locations = [
+      { id: '', name: 'All Locations' },
+      { id: 'Central', name: 'Central' },
+      { id: 'Woo House', name: 'Woo House' }
+    ];
+  }
+
   return {
-    instructors: [
-      { id: "", name: "All Instructors" },
-      { id: "360610", name: "Master Aarya" },
-      { id: "360637", name: "Angela Lee" },
-      { id: "360735", name: "Charlotte Chiu" },
-      { id: "360801", name: "Louise Vance" }
-    ],
-    levels: [
-      { id: "", name: "All Levels" },
-      { id: "beginner", name: "Beginner Foundation" },
-      { id: "intermediate", name: "Intermediate Flow" },
-      { id: "advanced", name: "Master Class" },
-      { id: "restorative", name: "Yin & Restorative" }
-    ],
-    pillars: [
-      { id: "", name: "All Experiences" },
-      { id: "yoga", name: "Yoga" },
-      { id: "pilates", name: "Pilates" },
-      { id: "meditation", name: "Meditation" },
-      { id: "recovery", name: "Recovery" }
-    ]
+    instructors,
+    pillars,
+    levels,
+    locations
   };
 }
 

@@ -32,9 +32,10 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
       style={{
         backgroundColor: '#00381F',
         color: '#FFFFFF',
-        paddingTop: '32px',
+        paddingTop: '48px',
         paddingBottom: '24px',
-        borderTop: '1px solid rgba(217, 174, 41, 0.25)'
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >
       <div
@@ -44,93 +45,65 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
           padding: '0 32px'
         }}
       >
-        {/* Top Header Row: Brand Logo */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '24px',
-            marginBottom: '16px',
-            flexWrap: 'wrap'
-          }}
-        >
-          {/* Brand Logo & Name - Compact Logo + Small Refined Text */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              cursor: 'pointer'
-            }}
-            onClick={() => onNavigateSection && onNavigateSection('hero')}
-          >
-            <img
-              src="/logo.png"
-              alt="Pragya Yog School Logo"
-              style={{
-                height: '76px',
-                width: 'auto',
-                objectFit: 'contain',
-                transition: 'transform 0.3s ease'
-              }}
-              className="footer-logo-img"
-            />
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: '15px',
-                fontWeight: 800,
-                letterSpacing: '0.14em',
-                color: '#FFFFFF',
-                textTransform: 'uppercase',
-                whiteSpace: 'nowrap'
-              }}
-              className="footer-logo-text"
-            >
-              PRAGYA YOG SCHOOL
-            </span>
-          </div>
-        </div>
-
-        {/* Middle Main Content Grid */}
+        {/* Main 4-Column Grid */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1.2fr 1fr 1fr 1.4fr',
-            gap: '36px',
-            paddingBottom: '32px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.12)'
+            gridTemplateColumns: '1.2fr 1fr 1fr 1.3fr',
+            gap: '40px',
+            paddingBottom: '40px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
           }}
           className="footer-main-grid"
         >
-          {/* Column 1: Brand Info & Description */}
+          {/* Column 1: Brand Logo, Description & Mobile Apps */}
           <div className="footer-brand-col">
+            <div
+              style={{
+                marginBottom: '16px',
+                cursor: 'pointer',
+                display: 'inline-block'
+              }}
+              onClick={() => onNavigateSection && onNavigateSection('hero')}
+            >
+              <img
+                src="/footerlogo.svg"
+                alt="Pragya Yog School Logo"
+                style={{
+                  height: '52px',
+                  width: 'auto',
+                  objectFit: 'contain',
+                  transition: 'transform 0.3s ease'
+                }}
+                className="footer-logo-img"
+              />
+            </div>
+
             <p
               style={{
                 fontSize: '13.5px',
-                color: 'rgba(255, 255, 255, 0.75)',
+                color: 'rgba(255, 255, 255, 0.85)',
                 lineHeight: 1.5,
-                marginBottom: '16px',
-                maxWidth: '320px'
+                marginBottom: '24px',
+                maxWidth: '300px'
               }}
             >
               Strengthen your body, calm your mind, and embrace mindful movement with our expert-led yoga & pilates sessions.
             </p>
 
-            {/* Mobile App Downloads (Desktop Only) */}
+            {/* Mobile Apps Section */}
             <div className="footer-apps-container">
               <div
                 style={{
                   fontSize: '11px',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontWeight: 800,
+                  letterSpacing: '0.1em',
+                  color: 'rgba(255, 255, 255, 0.7)',
                   textTransform: 'uppercase',
-                  marginBottom: '10px'
+                  marginBottom: '12px'
                 }}
               >
-                Mobile Apps
+                MOBILE APPS
               </div>
               <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <a
@@ -141,14 +114,13 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '10px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.18)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '10px',
                     padding: '8px 14px',
                     color: '#FFFFFF',
                     textDecoration: 'none',
                     transition: 'all 0.2s ease-in-out',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                   }}
                   className="app-download-link"
                 >
@@ -156,7 +128,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.64-.78 1.08-1.87.96-2.96-.93.04-2.07.62-2.73 1.4-.59.68-1.11 1.79-.97 2.86 1.05.08 2.11-.52 2.74-1.3z" />
                   </svg>
                   <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.1 }}>
-                    <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'rgba(255, 255, 255, 0.65)' }}>Download on</span>
+                    <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'rgba(255, 255, 255, 0.7)' }}>DOWNLOAD ON</span>
                     <span style={{ fontSize: '13px', fontWeight: 700 }}>App Store</span>
                   </div>
                 </a>
@@ -169,14 +141,13 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '10px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.18)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '10px',
                     padding: '8px 14px',
                     color: '#FFFFFF',
                     textDecoration: 'none',
                     transition: 'all 0.2s ease-in-out',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                   }}
                   className="app-download-link"
                 >
@@ -184,7 +155,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     <path d="M3.609 1.814L13.792 12 3.61 22.186a2.372 2.372 0 0 1-.609-1.637V3.451c0-.629.227-1.207.608-1.637zM15.206 13.414l2.769 2.769-12.721 7.345 9.952-10.114zM17.975 10.637l2.84 1.64c.731.423.731 1.111 0 1.534l-2.84 1.64-2.92-2.907 2.92-2.907zM5.254.472l12.721 7.345-2.769 2.769L5.254.472z" />
                   </svg>
                   <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.1 }}>
-                    <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'rgba(255, 255, 255, 0.65)' }}>GET IT ON</span>
+                    <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'rgba(255, 255, 255, 0.7)' }}>GET IT ON</span>
                     <span style={{ fontSize: '13px', fontWeight: 700 }}>Google Play</span>
                   </div>
                 </a>
@@ -192,21 +163,21 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
             </div>
           </div>
 
-          {/* Column 2: Quick Links (Desktop Only) */}
+          {/* Column 2: Quick Links */}
           <div className="footer-links-col">
             <h4
               style={{
-                fontSize: '13px',
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                color: 'rgba(255, 255, 255, 0.5)',
+                fontSize: '12px',
+                fontWeight: 800,
+                letterSpacing: '0.1em',
+                color: 'rgba(255, 255, 255, 0.7)',
                 textTransform: 'uppercase',
-                marginBottom: '16px'
+                marginBottom: '18px'
               }}
             >
-              Quick Links
+              QUICK LINKS
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {quickLinks.map((link) => (
                 <a
                   key={link.label}
@@ -218,8 +189,8 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     }
                   }}
                   style={{
-                    fontSize: '14px',
-                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontSize: '13.5px',
+                    color: 'rgba(255, 255, 255, 0.85)',
                     cursor: 'pointer',
                     textDecoration: 'none',
                     transition: 'color 0.2s ease'
@@ -232,28 +203,28 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
             </div>
           </div>
 
-          {/* Column 3: Yog Courses (Desktop Only) */}
+          {/* Column 3: Yog Courses */}
           <div className="footer-links-col">
             <h4
               style={{
-                fontSize: '13px',
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                color: 'rgba(255, 255, 255, 0.5)',
+                fontSize: '12px',
+                fontWeight: 800,
+                letterSpacing: '0.1em',
+                color: 'rgba(255, 255, 255, 0.7)',
                 textTransform: 'uppercase',
-                marginBottom: '16px'
+                marginBottom: '18px'
               }}
             >
-              Yog Courses
+              YOG COURSES
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {yogCourses.map((course) => (
                 <a
                   key={course.label}
                   onClick={() => onNavigateSection && onNavigateSection(course.section)}
                   style={{
-                    fontSize: '14px',
-                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontSize: '13.5px',
+                    color: 'rgba(255, 255, 255, 0.85)',
                     cursor: 'pointer',
                     textDecoration: 'none',
                     transition: 'color 0.2s ease'
@@ -270,15 +241,15 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
           <div className="footer-contact-col">
             <h4
               style={{
-                fontSize: '13px',
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                color: 'rgba(255, 255, 255, 0.5)',
+                fontSize: '12px',
+                fontWeight: 800,
+                letterSpacing: '0.1em',
+                color: 'rgba(255, 255, 255, 0.7)',
                 textTransform: 'uppercase',
-                marginBottom: '16px'
+                marginBottom: '18px'
               }}
             >
-              Contact Information
+              CONTACT INFORMATION
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)', lineHeight: 1.4 }}>
@@ -300,14 +271,14 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
               <div
                 style={{
                   fontSize: '11px',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontWeight: 800,
+                  letterSpacing: '0.1em',
+                  color: 'rgba(255, 255, 255, 0.7)',
                   textTransform: 'uppercase',
-                  marginBottom: '10px'
+                  marginBottom: '12px'
                 }}
               >
-                Social Media
+                SOCIAL MEDIA
               </div>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <a
@@ -320,15 +291,15 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     height: '36px',
                     borderRadius: '50%',
                     backgroundColor: '#FFFFFF',
-                    color: '#1C1B19',
+                    color: '#00381F',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'transform 0.2s ease'
+                    transition: 'transform 0.2s ease, background-color 0.2s ease'
                   }}
                   className="social-icon-btn"
                 >
-                  <Facebook size={17} />
+                  <Facebook size={16} />
                 </a>
                 <a
                   href="https://www.x.com/pragyahk"
@@ -340,15 +311,15 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     height: '36px',
                     borderRadius: '50%',
                     backgroundColor: '#FFFFFF',
-                    color: '#1C1B19',
+                    color: '#00381F',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'transform 0.2s ease'
+                    transition: 'transform 0.2s ease, background-color 0.2s ease'
                   }}
                   className="social-icon-btn"
                 >
-                  <Twitter size={17} />
+                  <Twitter size={16} />
                 </a>
                 <a
                   href="https://www.youtube.com/@pys_hk"
@@ -360,15 +331,15 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     height: '36px',
                     borderRadius: '50%',
                     backgroundColor: '#FFFFFF',
-                    color: '#1C1B19',
+                    color: '#00381F',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'transform 0.2s ease'
+                    transition: 'transform 0.2s ease, background-color 0.2s ease'
                   }}
                   className="social-icon-btn"
                 >
-                  <Youtube size={17} />
+                  <Youtube size={16} />
                 </a>
                 <a
                   href="https://www.linkedin.com/company/pyshk"
@@ -380,15 +351,15 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     height: '36px',
                     borderRadius: '50%',
                     backgroundColor: '#FFFFFF',
-                    color: '#1C1B19',
+                    color: '#00381F',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'transform 0.2s ease'
+                    transition: 'transform 0.2s ease, background-color 0.2s ease'
                   }}
                   className="social-icon-btn"
                 >
-                  <Linkedin size={17} />
+                  <Linkedin size={16} />
                 </a>
                 <a
                   href="https://www.instagram.com/pragyahk"
@@ -400,15 +371,15 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                     height: '36px',
                     borderRadius: '50%',
                     backgroundColor: '#FFFFFF',
-                    color: '#1C1B19',
+                    color: '#00381F',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'transform 0.2s ease'
+                    transition: 'transform 0.2s ease, background-color 0.2s ease'
                   }}
                   className="social-icon-btn"
                 >
-                  <Instagram size={17} />
+                  <Instagram size={16} />
                 </a>
               </div>
             </div>
@@ -416,8 +387,8 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
         </div>
 
         {/* Bottom Copyright Row */}
-        <div style={{ paddingTop: '18px' }}>
-          <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.65)', margin: 0 }}>
+        <div style={{ paddingTop: '20px' }}>
+          <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.7)', margin: 0 }}>
             © 2026 Pragya Yog School. All rights reserved.
           </p>
         </div>
@@ -429,37 +400,44 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
         }
         .footer-text-link:hover {
           color: #FFFFFF !important;
+          text-decoration: underline !important;
         }
         .social-icon-btn:hover {
           transform: scale(1.1);
+          background-color: #E2DBD2 !important;
         }
         .app-download-link:hover {
           background-color: rgba(255, 255, 255, 0.16) !important;
         }
 
-        /* Mobile View - Streamlined Clean Footer */
+        /* Mobile Responsive View */
         @media (max-width: 768px) {
           #footer {
-            padding-top: 44px !important;
+            padding-top: 36px !important;
             padding-bottom: 28px !important;
           }
           .footer-logo-img {
-            height: 72px !important;
+            height: 46px !important;
           }
-          .footer-logo-text {
-            font-size: 13px !important;
-            letter-spacing: 0.10em !important;
+          .footer-main-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 28px !important;
+            padding-bottom: 28px !important;
           }
+          .footer-brand-col {
+            grid-column: span 2 !important;
+          }
+          .footer-contact-col {
+            grid-column: span 2 !important;
+          }
+        }
+        @media (max-width: 480px) {
           .footer-main-grid {
             grid-template-columns: 1fr !important;
             gap: 24px !important;
-            padding-bottom: 28px !important;
           }
-          .footer-apps-container, .footer-links-col {
-            display: none !important;
-          }
-          .footer-brand-col p {
-            margin-bottom: 0 !important;
+          .footer-brand-col, .footer-contact-col {
+            grid-column: span 1 !important;
           }
         }
       `}</style>
