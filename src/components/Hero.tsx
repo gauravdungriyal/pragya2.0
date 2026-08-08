@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { getDailyQuote } from '../services/api';
+import { DailyQuote } from '../types';
 
 interface HeroProps {
   onOpenBooking: (type?: string, title?: string) => void;
@@ -14,8 +16,13 @@ const HERO_DESKTOP_IMAGES = [
 
 export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, onViewChange }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [dailyQuote, setDailyQuote] = useState<DailyQuote | null>(null);
 
   useEffect(() => {
+    getDailyQuote().then((data) => {
+      if (data) setDailyQuote(data);
+    });
+
     // Preload desktop hero images for smooth transition
     HERO_DESKTOP_IMAGES.forEach((src) => {
       const img = new Image();
@@ -379,7 +386,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
             fontWeight: 400
           }}
         >
-          "Pragya Yog is THE guide in the journey of core strength, mindfulness & graceful movement."
+          "{dailyQuote ? dailyQuote.q : 'Pragya Yog is THE guide in the journey of core strength, mindfulness & graceful movement.'}"
         </p>
 
         {/* Author / Location Attribution */}
@@ -393,7 +400,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
             fontWeight: 400
           }}
         >
-          — Ananya Sharma · New Delhi
+          — {dailyQuote ? dailyQuote.a : 'Ananya Sharma · New Delhi'}
         </p>
       </div>
 

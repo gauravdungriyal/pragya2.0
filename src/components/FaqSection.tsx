@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { getFaqs } from '../services/api';
 import { FaqItem } from '../types';
 
 interface FaqSectionProps {
@@ -8,40 +9,26 @@ interface FaqSectionProps {
 
 export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
   const [loading, setLoading] = useState<boolean>(true);
-  const [openIndex, setOpenIndex] = useState<number | null>(1); // Item 02 open by default matching reference screenshot
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const homeFaqs: FaqItem[] = [
-    {
-      question: "Do I need prior experience to join?",
-      answer: "No prior experience is needed! Our expert-led sessions are designed for all levels, from complete beginners to advanced practitioners."
-    },
-    {
-      question: "What should I bring to class?",
-      answer: "A mat, comfortable clothing, and water — everything you need for a smooth and mindful practice that nurtures strength and balance."
-    },
-    {
-      question: "Is online booking available?",
-      answer: "Yes, you can easily view live session schedules and reserve your spot online up to 7 days in advance."
-    },
-    {
-      question: "Can I switch membership plans?",
-      answer: "Absolutely. You can upgrade, downgrade, or pause your membership at any time with zero hassle."
-    },
-    {
-      question: "Are classes suitable during pregnancy?",
-      answer: "Yes, we offer specialized prenatal modifications and gentle restorative sessions suitable for expecting mothers."
-    }
-  ];
+  const fetchFaqsData = () => {
+    setLoading(true);
+    getFaqs().then((data) => {
+      setFaqs(data || []);
+      setLoading(false);
+    });
+  };
 
   useEffect(() => {
-    setLoading(false);
+    fetchFaqsData();
   }, []);
 
   const toggleFaq = (idx: number) => {
     setOpenIndex(openIndex === idx ? null : idx);
   };
 
-  const displayList = homeFaqs;
+  const displayList = faqs;
 
   return (
     <section
@@ -105,7 +92,32 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#944426' }}>
             <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px auto', display: 'block' }} />
-            <p style={{ color: '#757069', fontSize: '14px' }}>Loading FAQs...</p>
+            <p style={{ color: '#757069', fontSize: '14px' }}>Fetching FAQs from API...</p>
+          </div>
+        ) : displayList.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '36px 20px', backgroundColor: '#FAF6F0', borderRadius: '16px', border: '1px solid rgba(148,68,38,0.12)', marginBottom: '24px' }}>
+            <p style={{ color: '#4A4540', fontSize: '14.5px', fontWeight: 600, margin: '0 0 14px 0' }}>
+              No FAQ entries received from backend API.
+            </p>
+            <button
+              onClick={fetchFaqsData}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: '#00381F',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '9px 22px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <RefreshCw size={14} />
+              <span>Retry Fetching FAQs</span>
+            </button>
           </div>
         ) : (
           /* Accordion List */
@@ -116,8 +128,8 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenBooking }) => {
 
               return (
                 <div
-                  key={faq.question}
-                  className={`faq-item reveal-on-scroll delay-${Math.min(idx + 1, 6)}`}
+                  key={faq.question || idx}
+                  className="faq-item"
                   style={{
                     borderBottom: '1px solid #DFD9CF',
                     paddingBottom: '20px',

@@ -214,3 +214,13 @@ export interface FilterOptions {
   locations: FilterItem[];
 }
 
+export interface PolicyItem {
+  id: string | number;
+  title: string;
+  content?: string;
+  description?: string;
+  updated_at?: string;
+  created_at?: string;
+  [key: string]: any;
+}
+

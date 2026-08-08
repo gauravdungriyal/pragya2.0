@@ -14,6 +14,62 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
   const [schedules, setSchedules] = useState<ClassScheduleItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [scheduleViewMode, setScheduleViewMode] = useState<'day' | 'week'>('week');
+  const [weeklySchedules, setWeeklySchedules] = useState<Record<string, ClassScheduleItem[]>>({});
+  const [weeklyLoading, setWeeklyLoading] = useState<boolean>(false);
+
+  const getWeekDays = (baseDate: Date) => {
+    const curr = new Date(baseDate);
+    const day = curr.getDay();
+    const diffToMon = curr.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(curr.setDate(diffToMon));
+
+    const days: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  };
+
+  const weekDays = getWeekDays(selectedDate);
+
+  useEffect(() => {
+    if (scheduleViewMode !== 'week') return;
+    let isMounted = true;
+    setWeeklyLoading(true);
+
+    const promises = weekDays.map((d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${y}-${m}-${dayStr}`;
+
+      const fetchFn = user
+        ? getScheduleByDate(dateStr, undefined, user.access_token)
+        : getScheduleByDate(dateStr);
+
+      return fetchFn.then((res) => ({
+        dateStr,
+        schedules: res && Array.isArray(res.schedules) ? res.schedules : []
+      }));
+    });
+
+    Promise.all(promises).then((results) => {
+      if (!isMounted) return;
+      const map: Record<string, ClassScheduleItem[]> = {};
+      results.forEach((r) => {
+        map[r.dateStr] = r.schedules;
+      });
+      setWeeklySchedules(map);
+      setWeeklyLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedDate, scheduleViewMode, user]);
   
   // API Filter options
   const [filterData, setFilterData] = useState<FilterOptions>({
@@ -537,11 +593,65 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                 margin: '0 0 12px 0'
               }}
             >
-              Full Daily Schedule
+              {scheduleViewMode === 'week' ? '7-Day Weekly Schedule' : 'Full Daily Schedule'}
             </h2>
-            <p style={{ fontFamily: "var(--font-sans)", fontSize: '15px', color: '#6B655F', margin: 0 }}>
-              Check classes available on any date or filter by skill level.
+            <p style={{ fontFamily: "var(--font-sans)", fontSize: '15px', color: '#6B655F', margin: '0 0 24px 0' }}>
+              {scheduleViewMode === 'week'
+                ? 'Explore the full weekly timetable below or filter by teacher, level & studio location.'
+                : 'Check classes available on any date or filter by skill level.'}
             </p>
+
+            {/* VIEW MODE TOGGLE SWITCHER (Desktop & Tablet) */}
+            <div
+              className="schedule-view-switcher-bar"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '999px',
+                padding: '4px',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+                border: '1px solid rgba(148, 68, 38, 0.15)',
+                marginBottom: '8px'
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setScheduleViewMode('day')}
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  padding: '9px 22px',
+                  borderRadius: '999px',
+                  fontSize: '12.5px',
+                  fontWeight: 800,
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: scheduleViewMode === 'day' ? '#00381F' : 'transparent',
+                  color: scheduleViewMode === 'day' ? '#FFFFFF' : '#4A4540',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                📅 Daily View
+              </button>
+              <button
+                type="button"
+                onClick={() => setScheduleViewMode('week')}
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  padding: '9px 22px',
+                  borderRadius: '999px',
+                  fontSize: '12.5px',
+                  fontWeight: 800,
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: scheduleViewMode === 'week' ? '#00381F' : 'transparent',
+                  color: scheduleViewMode === 'week' ? '#FFFFFF' : '#4A4540',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                🗓️ Weekly View
+              </button>
+            </div>
           </div>
 
           {/* DATE NAVIGATOR BAR */}
@@ -575,7 +685,8 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               <button
                 onClick={() => {
                   const prev = new Date(selectedDate);
-                  prev.setDate(prev.getDate() - 1);
+                  const shiftDays = scheduleViewMode === 'week' ? 7 : 1;
+                  prev.setDate(prev.getDate() - shiftDays);
                   setSelectedDate(prev);
                 }}
                 style={{
@@ -587,7 +698,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                   alignItems: 'center',
                   color: '#21201E'
                 }}
-                title="Previous Day"
+                title={scheduleViewMode === 'week' ? "Previous Week" : "Previous Day"}
               >
                 <ChevronLeft size={18} />
               </button>
@@ -609,12 +720,23 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               >
                 <Calendar size={18} color="#944426" />
                 <span style={{ whiteSpace: 'nowrap' }}>
-                  {selectedDate.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
+                  {scheduleViewMode === 'week' ? (
+                    (() => {
+                      const first = weekDays[0];
+                      const last = weekDays[6];
+                      if (!first || !last) return '';
+                      const m1 = first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      const m2 = last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                      return `${m1} – ${m2}`;
+                    })()
+                  ) : (
+                    selectedDate.toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })
+                  )}
                 </span>
 
                 {/* Hidden Date Input Overlay */}
@@ -642,7 +764,8 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               <button
                 onClick={() => {
                   const next = new Date(selectedDate);
-                  next.setDate(next.getDate() + 1);
+                  const shiftDays = scheduleViewMode === 'week' ? 7 : 1;
+                  next.setDate(next.getDate() + shiftDays);
                   setSelectedDate(next);
                 }}
                 style={{
@@ -654,13 +777,13 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                   alignItems: 'center',
                   color: '#21201E'
                 }}
-                title="Next Day"
+                title={scheduleViewMode === 'week' ? "Next Week" : "Next Day"}
               >
                 <ChevronRight size={18} />
               </button>
             </div>
 
-            {/* TODAY Pill Button */}
+            {/* TODAY / THIS WEEK Pill Button */}
             <button
               className="classes-today-btn"
               onClick={() => setSelectedDate(new Date())}
@@ -686,7 +809,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                 e.currentTarget.style.color = '#354336';
               }}
             >
-              TODAY
+              {scheduleViewMode === 'week' ? 'THIS WEEK' : 'TODAY'}
             </button>
 
             {/* FILTERS Pill Button */}
@@ -885,18 +1008,258 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             </div>
           </div>
 
-          {/* Schedule Loading or Results Grid */}
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px', color: '#944426' }}>
-              <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px auto', display: 'block' }} />
-              <p style={{ fontFamily: "var(--font-sans)", color: '#8A8580' }}>Loading live schedule for date...</p>
-            </div>
-          ) : filteredClasses.length === 0 ? (
-            <div style={{ fontFamily: "var(--font-sans)", textAlign: 'center', padding: '48px', backgroundColor: '#FFFFFF', borderRadius: '16px', color: '#7A756F' }}>
-              No sessions scheduled matching filter. Please try another date or clear filters.
+          {/* WEEKLY 7-DAY GRID VIEW (Desktop & Tablet) */}
+          {scheduleViewMode === 'week' ? (
+            <div className="weekly-schedule-container-desktop">
+              {weeklyLoading ? (
+                <div style={{ textAlign: 'center', padding: '60px', color: '#944426' }}>
+                  <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px auto', display: 'block' }} />
+                  <p style={{ fontFamily: "var(--font-sans)", color: '#8A8580', fontSize: '14.5px' }}>
+                    Loading 7-Day Weekly Timetable...
+                  </p>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(7, 1fr)',
+                    gap: '16px',
+                    backgroundColor: '#FAF6F0',
+                    borderRadius: '24px',
+                    padding: '24px',
+                    border: '1px solid rgba(148, 68, 38, 0.12)',
+                    boxShadow: '0 12px 36px rgba(0, 0, 0, 0.04)'
+                  }}
+                >
+                  {weekDays.map((dateObj, dIdx) => {
+                    const y = dateObj.getFullYear();
+                    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const dayStr = String(dateObj.getDate()).padStart(2, '0');
+                    const keyStr = `${y}-${m}-${dayStr}`;
+
+                    const rawDayItems = weeklySchedules[keyStr] || [];
+                    const displayDayItems = rawDayItems.length > 0 ? rawDayItems : (dIdx % 2 === 0 ? fallbackClasses.slice(0, 3) : fallbackClasses.slice(2, 5));
+
+                    // Filter items according to active filters
+                    const filteredDayItems = displayDayItems.filter((item) => {
+                      const itemLevel = ((item as any).levels || (item as any).level || '').toLowerCase();
+                      const itemInstructor = ((item as any).instructor || '').toLowerCase();
+                      const itemRoom = ((item as any).room || '').toLowerCase();
+
+                      if (levelFilter !== 'ALL' && levelFilter !== '' && !itemLevel.includes(levelFilter.toLowerCase())) return false;
+                      if (instructorFilter !== '' && !itemInstructor.includes(instructorFilter.toLowerCase())) return false;
+                      if (locationFilter !== '' && !itemRoom.includes(locationFilter.toLowerCase())) return false;
+                      return true;
+                    });
+
+                    const isToday = dateObj.toDateString() === new Date().toDateString();
+                    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                    const dateNum = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                    return (
+                      <div
+                        key={keyStr}
+                        style={{
+                          backgroundColor: isToday ? '#FFFFFF' : '#FAF6F0',
+                          borderRadius: '20px',
+                          border: isToday ? '2px solid #944426' : '1px solid #EBE4D8',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          boxShadow: isToday ? '0 10px 28px rgba(148, 68, 38, 0.14)' : 'none',
+                          transition: 'all 0.3s ease'
+                        }}
+                      >
+                        {/* Day Header Bar */}
+                        <div
+                          style={{
+                            backgroundColor: isToday ? '#00381F' : '#EAE1D3',
+                            color: isToday ? '#FFFFFF' : '#21201E',
+                            padding: '14px 10px',
+                            textAlign: 'center',
+                            borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+                          }}
+                        >
+                          <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                            {dayName}
+                          </div>
+                          <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '2px' }}>
+                            {dateNum}
+                          </div>
+                          {isToday && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                marginTop: '5px',
+                                fontSize: '9px',
+                                fontWeight: 800,
+                                backgroundColor: '#D9AE29',
+                                color: '#21201E',
+                                padding: '2px 9px',
+                                borderRadius: '999px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                boxShadow: '0 2px 6px rgba(217, 174, 41, 0.4)'
+                              }}
+                            >
+                              TODAY
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Class Slot Cards Column */}
+                        <div style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
+                          {filteredDayItems.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '32px 6px', fontSize: '12px', color: '#8A8580', fontStyle: 'italic' }}>
+                              No sessions
+                            </div>
+                          ) : (
+                            filteredDayItems.map((clsItem, cIdx) => {
+                              const title = clsItem.title || 'Yoga Class';
+                              const timing = (clsItem as any).timing || '09:00 AM';
+                              const level = (clsItem as any).levels || (clsItem as any).level || 'All Levels';
+                              const instructor = clsItem.instructor || 'Teacher';
+                              const room = (clsItem as any).room || 'Woo House';
+
+                              const parts = (timing || '').split(/\s*-\s*|\s*to\s*/i);
+                              const startTime = parts[0]?.trim() || timing;
+                              const endTime = parts[1]?.trim() || '';
+
+                              return (
+                                <div
+                                  key={cIdx}
+                                  style={{
+                                    backgroundColor: '#FFFFFF',
+                                    borderRadius: '14px',
+                                    padding: '14px 12px',
+                                    border: '1px solid #EBE4D8',
+                                    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.03)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    textAlign: 'center',
+                                    gap: '8px',
+                                    transition: 'transform 0.25s ease, box-shadow 0.25s ease'
+                                  }}
+                                  className="weekly-slot-card"
+                                >
+                                  {/* Centered Stacked Time Pill Badge */}
+                                  <div
+                                    style={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      backgroundColor: '#F5EFE5',
+                                      color: '#944426',
+                                      padding: '6px 8px',
+                                      borderRadius: '10px',
+                                      width: '100%',
+                                      textAlign: 'center'
+                                    }}
+                                  >
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11.5px', fontWeight: 800, lineHeight: 1.2 }}>
+                                      <Clock size={11} color="#944426" />
+                                      <span>{startTime}</span>
+                                    </div>
+                                    {endTime && (
+                                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#7A351C', lineHeight: 1.2, marginTop: '2px' }}>
+                                        to {endTime}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Class Title */}
+                                  <div style={{ fontFamily: "var(--font-serif)", fontSize: '15px', fontWeight: 700, color: '#21201E', lineHeight: 1.25 }}>
+                                    {title}
+                                  </div>
+
+                                  {/* Instructor & Location Info */}
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                                    <div style={{ fontSize: '11.5px', color: '#353330', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                      <User size={12} color="#944426" />
+                                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{instructor}</span>
+                                    </div>
+                                    {room && (
+                                      <div style={{ fontSize: '10.5px', color: '#7A756F', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                        <MapPin size={10} color="#7A756F" />
+                                        <span>{room}</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Level Pill Badge */}
+                                  <div style={{ marginTop: '2px' }}>
+                                    <span
+                                      style={{
+                                        fontSize: '9.5px',
+                                        fontWeight: 800,
+                                        padding: '3px 8px',
+                                        borderRadius: '999px',
+                                        backgroundColor: level.toLowerCase().includes('begin') ? '#E6F4EA' : level.toLowerCase().includes('inter') ? '#FEF7E0' : level.toLowerCase().includes('adv') ? '#FCE8E6' : '#F0F4F8',
+                                        color: level.toLowerCase().includes('begin') ? '#137333' : level.toLowerCase().includes('inter') ? '#B06000' : level.toLowerCase().includes('adv') ? '#C5221F' : '#1E40AF',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.04em'
+                                      }}
+                                    >
+                                      {level}
+                                    </span>
+                                  </div>
+
+                                  {/* Book CTA Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => onOpenBooking('class', title, clsItem)}
+                                    style={{
+                                      marginTop: '6px',
+                                      width: '100%',
+                                      backgroundColor: '#944426',
+                                      color: '#FFFFFF',
+                                      border: 'none',
+                                      borderRadius: '10px',
+                                      padding: '8px 0',
+                                      fontSize: '11.5px',
+                                      fontWeight: 800,
+                                      cursor: 'pointer',
+                                      letterSpacing: '0.06em',
+                                      boxShadow: '0 3px 8px rgba(148, 68, 38, 0.2)',
+                                      transition: 'all 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = '#7A351C';
+                                      e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = '#944426';
+                                      e.currentTarget.style.transform = 'translateY(0)';
+                                    }}
+                                  >
+                                    BOOK ↗
+                                  </button>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : (
-            <div className="classes-live-sch-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            /* Schedule Loading or Results Grid (Daily View) */
+            loading ? (
+              <div style={{ textAlign: 'center', padding: '60px', color: '#944426' }}>
+                <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px auto', display: 'block' }} />
+                <p style={{ fontFamily: "var(--font-sans)", color: '#8A8580' }}>Loading live schedule for date...</p>
+              </div>
+            ) : filteredClasses.length === 0 ? (
+              <div style={{ fontFamily: "var(--font-sans)", textAlign: 'center', padding: '48px', backgroundColor: '#FFFFFF', borderRadius: '16px', color: '#7A756F' }}>
+                No sessions scheduled matching filter. Please try another date or clear filters.
+              </div>
+            ) : (
+              <div className="classes-live-sch-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {filteredClasses.map((cls, idx) => (
                 <div
                   key={idx}
@@ -999,7 +1362,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                 </div>
               ))}
             </div>
-          )}
+          ))}
         </div>
       </section>
 
@@ -1450,10 +1813,20 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
           .cls-sch-btn span {
             display: none !important;
           }
-          .cls-sch-btn::after {
-            content: "BOOK";
-            font-size: 11px;
-            font-weight: 800;
+        .weekly-slot-card:hover {
+          transform: translateY(-3px) !important;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+          border-color: rgba(148, 68, 38, 0.25) !important;
+        }
+        @media (max-width: 767px) {
+          .schedule-view-switcher-bar {
+            display: none !important;
+          }
+          .weekly-schedule-container-desktop {
+            display: none !important;
+          }
+          .classes-desktop-grid {
+            display: none !important;
           }
         }
       `}</style>

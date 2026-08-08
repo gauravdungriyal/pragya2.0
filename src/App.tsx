@@ -30,10 +30,12 @@ import { PragyaConnectPage } from './components/PragyaConnectPage';
 import { PackageReserveModal } from './components/PackageReserveModal';
 import { GuestBookingModal } from './components/GuestBookingModal';
 import { CartPage } from './components/CartPage';
+import { PolicyPage } from './components/PolicyPage';
 import { Instructor, UpcomingEvent, DynamicPackage } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'admin' | 'ai-assistant' | 'community' | 'cart'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'admin' | 'ai-assistant' | 'community' | 'cart' | 'policy'>('home');
+  const [selectedPolicyId, setSelectedPolicyId] = useState<number>(3);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingType, setBookingType] = useState('class');
   const [bookingTitle, setBookingTitle] = useState('Book a Class');
@@ -233,6 +235,32 @@ export const App: React.FC = () => {
   };
 
   const handleNavigateSection = (sectionId: string) => {
+    if (sectionId.startsWith('policy-')) {
+      const pid = Number(sectionId.replace('policy-', '')) || 3;
+      setSelectedPolicyId(pid);
+      setCurrentView('policy');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (sectionId === 'terms') {
+      setSelectedPolicyId(2);
+      setCurrentView('policy');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (sectionId === 'privacy') {
+      setSelectedPolicyId(3);
+      setCurrentView('policy');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (sectionId === 'guidelines') {
+      setSelectedPolicyId(1);
+      setCurrentView('policy');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     if (currentView !== 'home') {
       setCurrentView('home');
       setTimeout(() => {
@@ -390,6 +418,12 @@ export const App: React.FC = () => {
           <CartPage
             onViewChange={(view) => handleViewChange(view as any)}
             onOpenBooking={handleOpenBooking}
+          />
+        ) : currentView === 'policy' ? (
+          <PolicyPage
+            policyId={selectedPolicyId}
+            onBack={() => handleViewChange('home')}
+            onSelectPolicy={(id) => setSelectedPolicyId(id)}
           />
         ) : (
           <>

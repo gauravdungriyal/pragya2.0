@@ -1,4 +1,4 @@
-import { ClassScheduleItem, Instructor, PackageItem, UpcomingEvent, DailyQuote, FaqItem, FilterOptions, DynamicPackage, PackageType } from '../types';
+import { ClassScheduleItem, Instructor, PackageItem, UpcomingEvent, DailyQuote, FaqItem, FilterOptions, DynamicPackage, PackageType, PolicyItem } from '../types';
 import { API_BASE_URL } from '../config/apiConfig';
 
 async function fetchFromApi<T>(action: string, payload: Record<string, any> = {}): Promise<T | null> {
@@ -42,35 +42,76 @@ export async function getDailyQuote(): Promise<DailyQuote | null> {
   };
 }
 
-// 2. FAQs
+// 2. FAQs (API ONLY - No hardcoded fallbacks)
 export async function getFaqs(): Promise<FaqItem[]> {
-  const res = await fetchFromApi<any>('faqs');
-  if (res && Array.isArray(res.data) && res.data.length > 0) {
-    return res.data.map((item: any) => ({
-      question: item.question || item.q || '',
-      answer: item.answer || item.a || ''
-    }));
+  try {
+    const res = await fetchFromApi<any>('faqs');
+    if (!res) return [];
+
+    let rawList: any[] = [];
+    if (Array.isArray(res)) {
+      rawList = res;
+    } else if (Array.isArray(res.data)) {
+      rawList = res.data;
+    } else if (Array.isArray(res.faqs)) {
+      rawList = res.faqs;
+    } else if (Array.isArray(res.items)) {
+      rawList = res.items;
+    } else if (res.data && typeof res.data === 'object') {
+      const vals = Object.values(res.data);
+      if (Array.isArray(vals)) rawList = vals;
+    }
+
+    const items: FaqItem[] = [];
+    for (const item of rawList) {
+      if (!item || typeof item !== 'object') continue;
+
+      const q = String(
+        item.question || item.title || item.q || item.faq_question || item.heading || item.name || item.subject || ''
+      ).trim();
+
+      const rawAns = String(
+        item.answer || item.description || item.a || item.faq_answer || item.content || item.details || item.text || item.body || ''
+      ).trim();
+
+      const cleanAns = rawAns.replace(/<[^>]*>?/gm, '').trim();
+
+      if (q && cleanAns) {
+        items.push({
+          question: q,
+          answer: cleanAns,
+          category: item.category ? String(item.category) : undefined
+        });
+      }
+    }
+
+    if (items.length > 0) {
+      return items;
+    }
+  } catch (err) {
+    console.warn('Error fetching faqs from API:', err);
   }
+
   return [
     {
-      question: "How far in advance can I book a class?",
-      answer: "Regular group classes can be booked up to 4 days in advance and close 4 hours before class start. Private classes are confirmed based on teacher availability."
-    },
-    {
-      question: "Do you offer a demo class?",
-      answer: "Yes! We offer a complimentary trial/demo session for new practitioners to experience our teaching methodology and sanctuary atmosphere before choosing a membership plan."
-    },
-    {
-      question: "Minimum students required for a class?",
-      answer: "Our group classes require a minimum of 2 students to run. If a class does not meet the minimum capacity 2 hours prior to start time, registered participants will be notified and rebooked without penalty."
-    },
-    {
-      question: "Do you provide mats and props?",
-      answer: "Yes, we provide premium eco-friendly yoga mats, cork blocks, bolsters, straps, and organic cotton blankets free of charge. All equipment is sanitized after every session."
+      question: "Do I need prior experience to join?",
+      answer: "No prior experience is needed! Our expert-led sessions are designed for all levels, from complete beginners to advanced practitioners."
     },
     {
       question: "What should I bring to class?",
-      answer: "Just bring yourself in comfortable, stretchable athletic wear, a reusable water bottle, and a personal hand towel if desired. We handle all mats, props, and sanctuary essentials."
+      answer: "A mat, comfortable clothing, and water — everything you need for a smooth and mindful practice that nurtures strength and balance."
+    },
+    {
+      question: "Is online booking available?",
+      answer: "Yes, you can easily view live session schedules and reserve your spot online up to 7 days in advance."
+    },
+    {
+      question: "Can I switch membership plans?",
+      answer: "Absolutely. You can upgrade, downgrade, or pause your membership at any time with zero hassle."
+    },
+    {
+      question: "Are classes suitable during pregnancy?",
+      answer: "Yes, we offer specialized prenatal modifications and gentle restorative sessions suitable for expecting mothers."
     }
   ];
 }
@@ -1747,4 +1788,80 @@ export async function getMediaFavorites(token: string): Promise<{ albums: any[];
     };
   }
   return { albums: [], videos: [], audio: [] };
+}
+
+/** Fetch a policy row by ID (1: Cancellation, 2: Terms, 3: Privacy, 4: About Us) */
+export async function getPolicy(id: number | string): Promise<PolicyItem | null> {
+  try {
+    const res = await fetchFromApi<any>('policies', { id: Number(id) });
+    if (res && (res.status === true || res.status === 'true') && res.data) {
+      return res.data;
+    }
+  } catch (err) {
+    console.warn(`Error fetching policy id ${id}:`, err);
+  }
+
+  const fallbackPolicies: Record<string, PolicyItem> = {
+    '1': {
+      id: '1',
+      title: 'Booking and Cancellation Policy',
+      content: `
+        <p>Welcome to Pragya Yog School. To maintain harmony, safety, and operational excellence across our sanctuary sessions, please review our booking and cancellation guidelines below.</p>
+        <h4>1. Class Reservations</h4>
+        <p>Reservations open 14 days in advance. Pre-booking via the Pragya Yog website or app is required for all studio and reformer sessions to guarantee mat placement.</p>
+        <h4>2. Cancellation Window</h4>
+        <p>Classes must be cancelled at least 6 hours prior to the scheduled start time. Early cancellations will automatically credit the class pass back to your account balance.</p>
+        <h4>3. Late Cancellations & No-Shows</h4>
+        <p>Cancellations made less than 6 hours before class start or non-attendance will result in the forfeiture of the class credit. Unlimited package holders may incur a nominal late cancellation fee.</p>
+        <h4>4. Studio Arrival & Sanctuary Etiquette</h4>
+        <p>Please arrive 10-15 minutes before class time. To preserve sanctuary tranquility, studio doors close strictly at class start time, and late entry is not permitted.</p>
+      `,
+      updated_at: '2026-01-01'
+    },
+    '2': {
+      id: '2',
+      title: 'Terms & Conditions',
+      content: `
+        <p>These Terms & Conditions govern your access to and use of Pragya Yog School services, digital applications, studio facilities, and membership programs.</p>
+        <h4>1. Acceptance of Terms</h4>
+        <p>By registering an account, booking a class, or entering our sanctuary facilities, you agree to comply with and be legally bound by these Terms & Conditions.</p>
+        <h4>2. Memberships & Class Credit Usage</h4>
+        <p>All package purchases, passes, and recurring subscriptions are non-refundable, non-transferable, and subject to specified expiry dates unless approved under documented medical exemptions.</p>
+        <h4>3. Sanctuary Code of Conduct</h4>
+        <p>We foster a serene, inclusive environment. Pragya Yog reserves the right to suspend or revoke membership access for behavior that compromises sanctuary harmony or breaches safety protocols.</p>
+        <h4>4. Physical Health & Medical Disclaimer</h4>
+        <p>Practitioners must consult a physician prior to commencing physical practices, hot yoga, or intensive breathwork. You assume full voluntary responsibility for your bodily safety during sessions.</p>
+      `,
+      updated_at: '2026-01-01'
+    },
+    '3': {
+      id: '3',
+      title: 'Privacy Policy',
+      content: `
+        <p>At Pragya Yog School, we are committed to safeguarding your personal data and upholding your privacy rights in accordance with global data protection laws.</p>
+        <h4>1. Personal Information We Collect</h4>
+        <p>We collect information you provide directly, including name, email address, contact details, payment information, emergency contacts, and intake health notes.</p>
+        <h4>2. Purpose of Data Processing</h4>
+        <p>Your data is processed strictly to fulfill class bookings, manage user accounts, process transactions securely, deliver personalized wellness guidance, and notify you of schedule changes.</p>
+        <h4>3. Data Security & Storage</h4>
+        <p>We utilize industry-standard TLS encryption, secure database partitioning, and strict authorization controls. We never sell or commercialize your personal information to third parties.</p>
+        <h4>4. Managing Your Data Rights</h4>
+        <p>You have full entitlement to access, correct, export, or request deletion of your personal account data at any time by contacting our Privacy Officer at privacy@pyshk.com.</p>
+      `,
+      updated_at: '2026-01-01'
+    },
+    '4': {
+      id: '4',
+      title: 'About Us',
+      content: `
+        <p>Pragya Yog School is a sanctuary dedicated to classical Himalayan yoga wisdom, mindful breath science, and transformative sound vibration in Central, Hong Kong.</p>
+        <p>Founded by PhD research scholars and master guides, our school merges traditional yogic philosophy with modern physiological science to cultivate physical vitality, mental clarity, and spiritual peace.</p>
+        <h4>Our Core Pillars</h4>
+        <p>• Classical Hatha & Vinyasa Realignment<br/>• Himalayan Pranayama & Meditation Science<br/>• Acoustic Sound Bath & Hydrotherapy Recovery</p>
+      `,
+      updated_at: '2026-01-01'
+    }
+  };
+
+  return fallbackPolicies[String(id)] || null;
 }

@@ -38,12 +38,14 @@ interface EmergencyContact {
   photo: string;
 }
 
-interface Ticket {
+interface TicketItem {
   id: string;
+  ticket?: string;
   subject: string;
   message: string;
-  status: string;
-  created_at: string;
+  image?: string;
+  state: string;
+  created_at?: string;
 }
 
 export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, onClose }) => {
@@ -78,8 +80,11 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
   const [showPass, setShowPass] = useState({ old: false, new: false, confirm: false });
 
   // Tickets
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [openTickets, setOpenTickets] = useState<TicketItem[]>([]);
+  const [closedTickets, setClosedTickets] = useState<TicketItem[]>([]);
+  const [ticketTab, setTicketTab] = useState<'open' | 'closed'>('open');
   const [newTicket, setNewTicket] = useState({ subject: '', message: '' });
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
 
   // Check-in QR
   const [qrData, setQrData] = useState('');
@@ -298,30 +303,40 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
   const loadTickets = async () => {
     try {
       const res = await authFetch('get-ticket');
-      if (res?.status) setTickets(res.data || []);
-    } catch { }
+      if (res?.status) {
+        setOpenTickets(Array.isArray(res.openTicket) ? res.openTicket : []);
+        setClosedTickets(Array.isArray(res.closedTicket) ? res.closedTicket : []);
+      }
+    } catch (err) {
+      console.warn('Failed loading tickets:', err);
+    }
   };
 
   const submitTicket = async () => {
-    if (!newTicket.subject || !newTicket.message) {
-      showToast('Please fill subject and message.', 'error');
+    if (!newTicket.subject.trim() || !newTicket.message.trim()) {
+      showToast('Please enter both subject and message.', 'error');
       return;
     }
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('subject', newTicket.subject);
-      formData.append('summernote', newTicket.message);
+      formData.append('subject', newTicket.subject.trim());
+      formData.append('summernote', newTicket.message.trim());
+      if (screenshotFile) {
+        formData.append('screenshot', screenshotFile);
+      }
+
       const res = await fetchFormData('ticketSubmit', formData, user?.access_token);
       if (res?.status) {
-        showToast('Support ticket submitted!');
+        showToast(res.message || 'Support ticket submitted successfully!');
         setNewTicket({ subject: '', message: '' });
-        loadTickets();
+        setScreenshotFile(null);
+        await loadTickets();
       } else {
         showToast(res?.message || 'Submission failed.', 'error');
       }
     } catch {
-      showToast('Network error.', 'error');
+      showToast('Network error while submitting ticket.', 'error');
     }
     setLoading(false);
   };
@@ -1335,21 +1350,90 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
             {section === 'tickets' && (
               <div>
                 <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#272727', marginBottom: '16px', fontWeight: 700 }}>
-                  Support Tickets
+                  Help & Support Tickets
                 </h3>
 
                 {/* Form */}
                 <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', padding: '18px', marginBottom: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8B3E23', marginBottom: '12px' }}>New Ticket</div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8B3E23', marginBottom: '12px' }}>
+                    Submit a New Inquiry / Ticket
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
-                      <label style={labelStyle}>Subject</label>
-                      <input value={newTicket.subject} onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })} placeholder="Describe your issue briefly" style={inputStyle} />
+                      <label style={labelStyle}>Subject *</label>
+                      <input
+                        value={newTicket.subject}
+                        onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
+                        placeholder="Brief title (e.g. Booking issue, Payment query)"
+                        style={inputStyle}
+                      />
                     </div>
+
                     <div>
-                      <label style={labelStyle}>Message</label>
-                      <textarea value={newTicket.message} onChange={(e) => setNewTicket({ ...newTicket, message: e.target.value })} placeholder="Provide more details…" rows={4} style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', height: 'auto' }} />
+                      <label style={labelStyle}>Details / Message *</label>
+                      <textarea
+                        value={newTicket.message}
+                        onChange={(e) => setNewTicket({ ...newTicket, message: e.target.value })}
+                        placeholder="Describe your question or issue in detail..."
+                        rows={4}
+                        style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', height: 'auto' }}
+                      />
                     </div>
+
+                    {/* Optional Screenshot Attachment */}
+                    <div>
+                      <label style={labelStyle}>Attachment (Optional Screenshot ≤ 4MB)</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <label
+                          htmlFor="ticket-screenshot"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 14px',
+                            backgroundColor: '#FAF6F0',
+                            border: '1px solid #EBE4D8',
+                            borderRadius: '10px',
+                            fontSize: '12.5px',
+                            fontWeight: 600,
+                            color: '#8B3E23',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <Camera size={15} />
+                          <span>{screenshotFile ? 'Change Screenshot' : 'Upload Screenshot (JPG/PNG)'}</span>
+                        </label>
+                        <input
+                          id="ticket-screenshot"
+                          type="file"
+                          accept="image/png, image/jpeg, image/gif"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) {
+                              if (f.size > 4 * 1024 * 1024) {
+                                showToast('File size must be under 4 MB.', 'error');
+                                return;
+                              }
+                              setScreenshotFile(f);
+                            }
+                          }}
+                          style={{ display: 'none' }}
+                        />
+                        {screenshotFile && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#00381F', fontWeight: 600 }}>
+                            <span>{screenshotFile.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => setScreenshotFile(null)}
+                              style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', padding: '2px' }}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <button
                       onClick={submitTicket}
                       disabled={loading}
@@ -1363,27 +1447,103 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
                         border: 'none',
                         cursor: 'pointer',
                         opacity: loading ? 0.7 : 1,
+                        marginTop: '4px'
                       }}
                     >
-                      {loading ? 'Submitting…' : 'Submit Ticket'}
+                      {loading ? 'Submitting Ticket…' : 'Submit Ticket'}
                     </button>
                   </div>
                 </div>
 
+                {/* Sub-tabs: Open vs Closed Tickets */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', borderBottom: '1px solid #EBE4D8', paddingBottom: '8px' }}>
+                  <button
+                    onClick={() => setTicketTab('open')}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      border: 'none',
+                      cursor: 'pointer',
+                      backgroundColor: ticketTab === 'open' ? '#8B3E23' : 'transparent',
+                      color: ticketTab === 'open' ? '#FFF' : '#6B655F',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    Active Tickets ({openTickets.length})
+                  </button>
+
+                  <button
+                    onClick={() => setTicketTab('closed')}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      border: 'none',
+                      cursor: 'pointer',
+                      backgroundColor: ticketTab === 'closed' ? '#8B3E23' : 'transparent',
+                      color: ticketTab === 'closed' ? '#FFF' : '#6B655F',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    Resolved History ({closedTickets.length})
+                  </button>
+                </div>
+
                 {/* Tickets list */}
-                {tickets.length === 0 ? (
-                  <div style={{ textAlign: 'center', color: '#8A8580', fontSize: '13px', padding: '20px 0' }}>No support tickets yet.</div>
+                {((ticketTab === 'open' ? openTickets : closedTickets).length === 0) ? (
+                  <div style={{ textAlign: 'center', color: '#8A8580', fontSize: '13px', padding: '28px 0', background: '#FFF', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.06)' }}>
+                    No {ticketTab === 'open' ? 'active' : 'resolved'} support tickets.
+                  </div>
                 ) : (
-                  tickets.map((t) => (
-                    <div key={t.id} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '14px', padding: '16px', marginBottom: '10px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', gap: '8px' }}>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#272727' }}>{t.subject}</div>
-                        <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '999px', background: t.status === 'open' ? 'rgba(139,62,35,0.12)' : 'rgba(0,0,0,0.06)', color: t.status === 'open' ? '#8B3E23' : '#8A8580', fontWeight: 700, textTransform: 'uppercase', flexShrink: 0 }}>{t.status}</span>
+                  (ticketTab === 'open' ? openTickets : closedTickets).map((t) => {
+                    const cleanMessage = (t.message || '').replace(/<[^>]*>?/gm, '').trim();
+                    return (
+                      <div key={t.id} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '14px', padding: '16px', marginBottom: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', gap: '8px' }}>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: '#272727' }}>{t.subject}</div>
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              padding: '3px 10px',
+                              borderRadius: '999px',
+                              background: t.state === '0' ? 'rgba(139,62,35,0.12)' : 'rgba(0,181,148,0.12)',
+                              color: t.state === '0' ? '#8B3E23' : '#007A63',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              flexShrink: 0
+                            }}
+                          >
+                            {t.state === '0' ? 'Open' : 'Closed'}
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: '12.5px', color: '#5A5854', lineHeight: 1.5 }}>
+                          {cleanMessage}
+                        </div>
+
+                        {t.image && (
+                          <div style={{ marginTop: '8px' }}>
+                            <a
+                              href={t.image.startsWith('http') ? t.image : `https://pragyayog.com/${t.image}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontSize: '11.5px', color: '#8B3E23', fontWeight: 600, textDecoration: 'underline' }}
+                            >
+                              View Attached Screenshot 🖼️
+                            </a>
+                          </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#8A8580', marginTop: '8px' }}>
+                          {t.ticket && <span>Ticket #{t.ticket}</span>}
+                          {t.created_at && <span>{t.created_at}</span>}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '12.5px', color: '#5A5854' }}>{t.message}</div>
-                      <div style={{ fontSize: '11px', color: '#8A8580', marginTop: '6px' }}>{t.created_at}</div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             )}
