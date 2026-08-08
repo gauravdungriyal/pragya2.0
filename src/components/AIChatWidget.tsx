@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, RotateCcw, X, Globe, Sparkles, MessageSquare, Mic, ChevronDown } from 'lucide-react';
+import { CHAT_API_URL } from '../config/apiConfig';
 
-const CHAT_API_URL = 'https://pragya-ai-assistant.vercel.app/api/chat';
 const WHATSAPP_URL = 'https://wa.me/85267082503?text=Namaste%20%F0%9F%99%8F%20I%20have%20a%20question%20about%20Pragya%20Yog%20School';
 
 interface Message {
@@ -21,7 +21,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string>('');
+  const [sessionId, setSessionId] = useState<string>(() => sessionStorage.getItem('pragya_session_id') || '');
   const [unreadBadge, setUnreadBadge] = useState(true);
   const [showTooltip, setShowTooltip] = useState(true);
 
@@ -101,14 +101,18 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: query,
-          sessionId: sessionId || undefined
+          sessionId: sessionId || undefined,
+          language: lang !== 'auto' ? lang : undefined
         })
       });
 
       if (!response.ok) throw new Error('API Request Failed');
 
       const data = await response.json();
-      if (data.sessionId) setSessionId(data.sessionId);
+      if (data.sessionId) {
+        setSessionId(data.sessionId);
+        sessionStorage.setItem('pragya_session_id', data.sessionId);
+      }
 
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -147,7 +151,9 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
 
   const handleReset = () => {
     setSessionId('');
+    sessionStorage.removeItem('pragya_session_id');
     setMessages([
+
       {
         id: Date.now().toString(),
         sender: 'bot',

@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import { Bot, Sparkles, MessageSquare, ExternalLink, ShieldCheck, ArrowLeft, Send, RotateCcw, Volume2, VolumeX, CheckCircle2 } from 'lucide-react';
+import { CHAT_API_URL, CHAT_EMBED_URL as VERCEL_EMBED_URL } from '../config/apiConfig';
 
 interface AiAssistantPageProps {
   onBackToHome: () => void;
   onOpenBooking?: (type?: string, title?: string) => void;
 }
 
-const CHAT_API_URL = 'https://pragya-ai-assistant.vercel.app/api/chat';
-const VERCEL_EMBED_URL = 'https://pragya-ai-assistant.vercel.app/';
-
 export const AiAssistantPage: React.FC<AiAssistantPageProps> = ({ onBackToHome, onOpenBooking }) => {
   const [activeTab, setActiveTab] = useState<'native' | 'iframe'>('native');
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string>('');
+  const [sessionId, setSessionId] = useState<string>(() => sessionStorage.getItem('pragya_session_id') || '');
   const [isMuted, setIsMuted] = useState(true);
 
   const [messages, setMessages] = useState<Array<{ id: string; sender: 'user' | 'bot'; text: string; timestamp: string; suggestions?: string[] }>>([
@@ -56,7 +54,11 @@ export const AiAssistantPage: React.FC<AiAssistantPageProps> = ({ onBackToHome, 
       if (!response.ok) throw new Error('API request failed');
 
       const data = await response.json();
-      if (data.sessionId) setSessionId(data.sessionId);
+      if (data.sessionId) {
+        setSessionId(data.sessionId);
+        sessionStorage.setItem('pragya_session_id', data.sessionId);
+      }
+
 
       const botMsg = {
         id: (Date.now() + 1).toString(),
