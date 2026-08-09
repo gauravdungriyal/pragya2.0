@@ -35,7 +35,7 @@ export const RegularTemplate: React.FC<RegularTemplateProps> = ({
     deepBg: '#00381F',     // Deep Forest Green
     mainBg: '#F5EFE5',     // Warm Vanilla Cream
     textColor: '#000000',  // Black Text
-    highlight: '#D9AE29'   // Golden Amber
+    highlight: '#FFFFFF'   // Pure White Text & Icons
   };
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export const RegularTemplate: React.FC<RegularTemplateProps> = ({
       )}
 
       {/* Top Header Navigation */}
-      <nav style={{ backgroundColor: COLORS.mainBg, borderBottom: `1px solid rgba(157, 157, 72, 0.25)`, padding: '16px 24px', position: 'sticky', top: 0, zIndex: 90, backdropFilter: 'blur(12px)' }}>
+      <nav style={{ backgroundColor: COLORS.mainBg, borderBottom: `1px solid rgba(157, 157, 72, 0.25)`, padding: '16px 24px', position: 'sticky', top: '100px', marginTop: '100px', zIndex: 90, backdropFilter: 'blur(12px)' }}>
         <div style={{ maxWidth: '1180px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={onBack}

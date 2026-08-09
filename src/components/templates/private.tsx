@@ -150,7 +150,7 @@ export const PrivateTemplate: React.FC<PrivateTemplateProps> = ({
       )}
 
       {/* Top Header Navigation */}
-      <nav style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #D0E1F9', padding: '16px 24px', position: 'sticky', top: 0, zIndex: 90, backdropFilter: 'blur(16px)' }}>
+      <nav style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #D0E1F9', padding: '16px 24px', position: 'sticky', top: '100px', marginTop: '100px', zIndex: 90, backdropFilter: 'blur(16px)' }}>
         <div style={{ maxWidth: '1180px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={onBack}
