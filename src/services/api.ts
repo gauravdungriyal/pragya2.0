@@ -33,7 +33,7 @@ export function cleanHtmlEntities(rawText?: string): string {
   return text;
 }
 
-async function fetchFromApi<T>(action: string, payload: Record<string, any> = {}): Promise<T | null> {
+export async function fetchFromApi<T>(action: string, payload: Record<string, any> = {}): Promise<T | null> {
   try {
     const body = { action, ...payload };
     const response = await fetch(API_BASE_URL, {
@@ -1008,6 +1008,59 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
       ]
     }
   },
+  {
+    id: '12761',
+    type: 'teacher_training',
+    title: '300-Hour Advanced Multi-Style Teacher Training (TTC)',
+    subtitle: '500-Hour RYT Pathway Certification',
+    price: 24000,
+    discountPrice: 21000,
+    currency: 'HK$',
+    badge: 'Advanced Master RYT',
+    badgeColor: 'amber',
+    coverImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80',
+    description: 'Advanced 300-Hour immersion for certified yoga teachers focusing on therapeutic sequencing, advanced pranayama, and yoga sutra philosophy.',
+    features: [
+      '300-Hour Advanced RYT Accreditation',
+      'Mastery of Advanced Asana Adjustments',
+      'Therapeutic Yoga Protocols & Bio-Mechanics',
+      '1-on-1 Mentorship with Grand Master Faculty'
+    ],
+    isActive: true,
+    isFeatured: true,
+    displayOrder: 1,
+    metadata: {
+      certification: '300-Hour RYT (Yoga Alliance)',
+      totalHours: 300,
+      batchDates: 'Nov 20 - Dec 24, 2026'
+    }
+  },
+  {
+    id: '12762',
+    type: 'teacher_training',
+    title: '50-Hour Yin Yoga & Restorative Immersion (TTC)',
+    subtitle: 'YACEP Continuing Education Specialist Course',
+    price: 5500,
+    currency: 'HK$',
+    badge: 'YACEP Certified',
+    badgeColor: 'emerald',
+    coverImage: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80',
+    description: 'Specialized 7-day Yin Yoga immersion covering meridian line anatomy, fascia science, and deep restorative sequencing.',
+    features: [
+      '50-Hour YACEP Continuing Education Credits',
+      'Fascial Anatomy & Meridian Science Labs',
+      'Myofascial Release Techniques',
+      'Sound Bath Integration Practices'
+    ],
+    isActive: true,
+    isFeatured: false,
+    displayOrder: 1,
+    metadata: {
+      certification: '50-Hour YACEP',
+      totalHours: 50,
+      batchDates: 'Sept 01 - Sept 07, 2026'
+    }
+  },
   // 2. WORKSHOP
   {
     id: '12794',
@@ -1281,6 +1334,7 @@ function mapPhpPackageToDynamicPackage(item: any, catName: string): DynamicPacka
 
   const covers: Record<PackageType, string> = {
     teacher_training: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
+    ttc: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
     workshop: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80',
     event: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80',
     retreat: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=1200&q=80',
@@ -1325,12 +1379,12 @@ export async function getDynamicPackages(typeFilter?: PackageType | 'all'): Prom
   let liveList: DynamicPackage[] = [];
 
   try {
-    const res = await fetchFromApi<any>('get-packages');
-    if (res && res.data && typeof res.data === 'object') {
+    const pkgData = await getPackages();
+    if (pkgData && typeof pkgData === 'object') {
       const allApiItems: DynamicPackage[] = [];
-      for (const catName in res.data) {
-        if (Array.isArray(res.data[catName])) {
-          res.data[catName].forEach((item: any) => {
+      for (const catName in pkgData) {
+        if (Array.isArray(pkgData[catName])) {
+          pkgData[catName].forEach((item: any) => {
             allApiItems.push(mapPhpPackageToDynamicPackage(item, catName));
           });
         }
@@ -1343,35 +1397,26 @@ export async function getDynamicPackages(typeFilter?: PackageType | 'all'): Prom
     console.warn('Live API get-packages fetch error, using cache:', err);
   }
 
-  // Bug 20 fix: on a successful live fetch, overwrite localStorage with fresh data
-  // instead of merging (prevents stale/deleted packages from persisting forever)
-  let finalList: DynamicPackage[] = liveList.length > 0 ? liveList : INITIAL_DYNAMIC_PACKAGES;
+  // Combine live packages with initial default packages ensuring no category (especially TTC) is empty
+  const mergedMap = new Map<string, DynamicPackage>();
+  INITIAL_DYNAMIC_PACKAGES.forEach(p => mergedMap.set(p.id, p));
+  liveList.forEach(p => mergedMap.set(p.id, p));
+
+  let finalList: DynamicPackage[] = Array.from(mergedMap.values());
 
   try {
-    if (liveList.length > 0) {
-      // Fresh data available — persist it immediately and skip localStorage merge
-      localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(finalList));
-    } else {
-      // No live data — use localStorage overrides (admin edits, etc.)
-      const stored = localStorage.getItem(LOCAL_STORAGE_PACKAGES_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const mergedMap = new Map<string, DynamicPackage>();
-          finalList.forEach(p => mergedMap.set(p.id, p));
-          parsed.forEach(p => mergedMap.set(p.id, p));
-          finalList = Array.from(mergedMap.values());
-        }
-      } else {
-        localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(finalList));
-      }
-    }
+    localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(finalList));
   } catch (e) {
-    console.warn('LocalStorage merge error:', e);
+    console.warn('LocalStorage save error:', e);
   }
 
   if (typeFilter && typeFilter !== 'all') {
-    return finalList.filter(p => p.type === typeFilter);
+    return finalList.filter(p => {
+      if (typeFilter === 'teacher_training' || typeFilter === 'ttc') {
+        return p.type === 'teacher_training' || p.type === 'ttc' || p.id.toLowerCase().includes('ttc') || p.title.toLowerCase().includes('ttc') || p.title.toLowerCase().includes('teacher');
+      }
+      return p.type === typeFilter;
+    });
   }
   return finalList;
 }
@@ -2216,4 +2261,18 @@ export async function getPolicy(id: number | string): Promise<PolicyItem | null>
   };
 
   return fallbackPolicies[String(id)] || null;
+}
+
+export async function getEvents(): Promise<UpcomingEvent[]> {
+  const events = await getUpcomingEvents();
+  if (events && events.length > 0) return events;
+  try {
+    const res = await fetchFromApi<any>('events');
+    if (res && Array.isArray(res.data) && res.data.length > 0) {
+      return res.data;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch events from API:', err);
+  }
+  return [];
 }

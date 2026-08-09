@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, User, Menu, X, LogIn, ShoppingBag } from 'lucide-react';
+import { Calendar, User, Menu, X, LogIn, ShoppingBag, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { AuthModal } from './AuthModal';
@@ -10,7 +10,7 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onNavigateSection: (sectionId: string) => void;
   currentView?: string;
-  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers' | 'membership' | 'events' | 'ai-assistant' | 'cart') => void;
+  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers' | 'membership' | 'events' | 'ai-assistant' | 'cart' | 'admin') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({

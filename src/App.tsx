@@ -30,10 +30,34 @@ import { PackageReserveModal } from './components/PackageReserveModal';
 import { GuestBookingModal } from './components/GuestBookingModal';
 import { CartPage } from './components/CartPage';
 import { PolicyPage } from './components/PolicyPage';
+import { AdminLayout } from './components/admin/AdminLayout';
+import { AdminLogin } from './components/admin/AdminLogin';
 import { Instructor, UpcomingEvent, DynamicPackage } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'ai-assistant' | 'community' | 'cart' | 'policy'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'ai-assistant' | 'community' | 'cart' | 'policy' | 'admin'>('home');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('pragya_admin_auth') === 'true';
+  });
+
+  // Listen to route /pragya-admin or #pragya-admin
+  useEffect(() => {
+    const checkAdminRoute = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path.includes('pragya-admin') || hash.includes('pragya-admin')) {
+        setCurrentView('admin');
+      }
+    };
+
+    checkAdminRoute();
+    window.addEventListener('popstate', checkAdminRoute);
+    window.addEventListener('hashchange', checkAdminRoute);
+    return () => {
+      window.removeEventListener('popstate', checkAdminRoute);
+      window.removeEventListener('hashchange', checkAdminRoute);
+    };
+  }, []);
   const [membershipCategory, setMembershipCategory] = useState<string>('ALL');
   const [selectedPolicyId, setSelectedPolicyId] = useState<number>(3);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
@@ -319,6 +343,32 @@ export const App: React.FC = () => {
   }, []);
 
 
+
+  if (currentView === 'admin') {
+    if (!isAdminAuthenticated) {
+      return (
+        <AdminLogin
+          onAuthenticated={() => setIsAdminAuthenticated(true)}
+          onExit={() => {
+            if (window.location.pathname.includes('pragya-admin')) {
+              window.history.pushState({}, '', '/');
+            }
+            setCurrentView('home');
+          }}
+        />
+      );
+    }
+    return (
+      <AdminLayout
+        onExitAdmin={() => {
+          if (window.location.pathname.includes('pragya-admin')) {
+            window.history.pushState({}, '', '/');
+          }
+          setCurrentView('home');
+        }}
+      />
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F5EFE5' }}>

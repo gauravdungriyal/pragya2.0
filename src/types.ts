@@ -36,6 +36,7 @@ export interface Instructor {
 
 export type PackageType = 
   | 'teacher_training' 
+  | 'ttc'
   | 'workshop' 
   | 'event' 
   | 'retreat' 
