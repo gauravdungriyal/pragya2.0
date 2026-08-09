@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDailyQuote } from '../services/api';
+import { getDailyQuotes, DEFAULT_QUOTES } from '../services/api';
 import { DailyQuote } from '../types';
 
 interface HeroProps {
@@ -16,13 +16,32 @@ const HERO_DESKTOP_IMAGES = [
 
 export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, onViewChange }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [dailyQuote, setDailyQuote] = useState<DailyQuote | null>(null);
+  const [quotesList, setQuotesList] = useState<DailyQuote[]>(DEFAULT_QUOTES);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [isQuoteFading, setIsQuoteFading] = useState(false);
+  const [isQuoteHovered, setIsQuoteHovered] = useState(false);
 
   useEffect(() => {
-    getDailyQuote().then((data) => {
-      if (data) setDailyQuote(data);
+    getDailyQuotes().then((data) => {
+      if (data && data.length > 0) setQuotesList(data);
     });
+  }, []);
 
+  useEffect(() => {
+    if (quotesList.length <= 1 || isQuoteHovered) return;
+
+    const interval = setInterval(() => {
+      setIsQuoteFading(true);
+      setTimeout(() => {
+        setCurrentQuoteIndex((prev) => (prev + 1) % quotesList.length);
+        setIsQuoteFading(false);
+      }, 400);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [quotesList.length, isQuoteHovered]);
+
+  useEffect(() => {
     // Preload desktop hero images for smooth transition
     HERO_DESKTOP_IMAGES.forEach((src) => {
       const img = new Image();
@@ -344,10 +363,12 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
         </div>
       </div>
 
-      {/* Bottom Quote Banner (Desktop Only - Rendered ONLY if quote from API is available) */}
-      {dailyQuote && (
+      {/* Bottom Quote Banner (Rotates every 5 seconds) */}
+      {quotesList.length > 0 && (
         <div
           className="hero-quote-banner-desktop"
+          onMouseEnter={() => setIsQuoteHovered(true)}
+          onMouseLeave={() => setIsQuoteHovered(false)}
           style={{
             position: 'relative',
             zIndex: 10,
@@ -373,36 +394,48 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
             ))}
           </div>
 
-          {/* Quote Text */}
-          <p
+          {/* Animated Quote Content */}
+          <div
             style={{
-              fontFamily: "var(--font-serif)",
-              fontStyle: 'italic',
-              fontSize: '17px',
-              letterSpacing: '0.01em',
-              color: '#21201E',
-              maxWidth: '780px',
-              margin: '0 0 6px 0',
-              lineHeight: 1.4,
-              fontWeight: 400
+              opacity: isQuoteFading ? 0 : 1,
+              transform: isQuoteFading ? 'translateY(3px)' : 'translateY(0)',
+              transition: 'opacity 0.4s ease-in-out, transform 0.4s ease-in-out',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
             }}
           >
-            "{dailyQuote.q}"
-          </p>
+            {/* Quote Text */}
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontStyle: 'italic',
+                fontSize: '17px',
+                letterSpacing: '0.01em',
+                color: '#21201E',
+                maxWidth: '780px',
+                margin: '0 0 6px 0',
+                lineHeight: 1.4,
+                fontWeight: 400
+              }}
+            >
+              "{quotesList[currentQuoteIndex]?.q}"
+            </p>
 
-          {/* Author / Location Attribution */}
-          <p
-            style={{
-              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-              fontSize: '12px',
-              color: '#6B655D',
-              letterSpacing: '0.04em',
-              margin: 0,
-              fontWeight: 400
-            }}
-          >
-            — {dailyQuote.a}
-          </p>
+            {/* Author / Location Attribution */}
+            <p
+              style={{
+                fontFamily: "'Neue Montreal', -apple-system, sans-serif",
+                fontSize: '12px',
+                color: '#6B655D',
+                letterSpacing: '0.04em',
+                margin: 0,
+                fontWeight: 400
+              }}
+            >
+              — {quotesList[currentQuoteIndex]?.a}
+            </p>
+          </div>
         </div>
       )}
 

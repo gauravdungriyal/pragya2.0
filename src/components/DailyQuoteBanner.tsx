@@ -1,19 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { Quote, Sparkles } from 'lucide-react';
-import { getDailyQuote } from '../services/api';
+import { getDailyQuotes, DEFAULT_QUOTES } from '../services/api';
 import { DailyQuote } from '../types';
 
 export const DailyQuoteBanner: React.FC = () => {
-  const [quote, setQuote] = useState<DailyQuote | null>(null);
+  const [quotesList, setQuotesList] = useState<DailyQuote[]>(DEFAULT_QUOTES);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [isFading, setIsFading] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    getDailyQuote().then((data) => setQuote(data));
+    getDailyQuotes().then((data) => {
+      if (data && data.length > 0) setQuotesList(data);
+    });
   }, []);
 
-  if (!quote) return null;
+  useEffect(() => {
+    if (quotesList.length <= 1 || isHovered) return;
+
+    const timer = setInterval(() => {
+      setIsFading(true);
+      setTimeout(() => {
+        setCurrentIdx((prev) => (prev + 1) % quotesList.length);
+        setIsFading(false);
+      }, 400);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [quotesList.length, isHovered]);
+
+  const currentQuote = quotesList[currentIdx];
+  if (!currentQuote) return null;
 
   return (
     <section
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         backgroundColor: '#00381F',
         color: '#F5EFE5',
@@ -30,7 +52,17 @@ export const DailyQuoteBanner: React.FC = () => {
           <span>Daily Mindful Inspiration</span>
         </div>
         
-        <div className="reveal-fade" style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', justifyContent: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '16px',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            opacity: isFading ? 0 : 1,
+            transform: isFading ? 'translateY(4px)' : 'translateY(0)',
+            transition: 'opacity 0.4s ease-in-out, transform 0.4s ease-in-out'
+          }}
+        >
           <Quote size={28} color="#D9AE29" style={{ opacity: 0.6, flexShrink: 0, marginTop: '4px' }} />
           <div>
             <blockquote
@@ -44,10 +76,10 @@ export const DailyQuoteBanner: React.FC = () => {
                 marginBottom: '12px'
               }}
             >
-              "{quote.q}"
+              "{currentQuote.q}"
             </blockquote>
             <cite style={{ fontSize: '14px', color: '#D9AE29', fontStyle: 'normal', fontWeight: 600, letterSpacing: '0.04em' }}>
-              — {quote.a}
+              — {currentQuote.a}
             </cite>
           </div>
         </div>

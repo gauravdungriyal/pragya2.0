@@ -193,7 +193,7 @@ export interface UpcomingEvent {
 export interface DailyQuote {
   q: string;
   a: string;
-  h: string;
+  h?: string;
 }
 
 export interface FaqItem {

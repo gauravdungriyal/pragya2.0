@@ -28,54 +28,93 @@ async function fetchFromApi<T>(action: string, payload: Record<string, any> = {}
   }
 }
 
-// 1. Daily Quote (API ONLY - No hardcoded fallbacks)
-export async function getDailyQuote(): Promise<DailyQuote | null> {
+// 1. Daily Quote & Quotes Collection
+export const DEFAULT_QUOTES: DailyQuote[] = [
+  {
+    q: "Anger, ego, jealousy are the biggest diseases. Keep yourself aloof from these three diseases.",
+    a: "Sathya Sai Baba",
+    h: "<blockquote>&ldquo;Anger, ego, jealousy are the biggest diseases. Keep yourself aloof from these three diseases.&rdquo; &mdash; <footer>Sathya Sai Baba</footer></blockquote>"
+  },
+  {
+    q: "Yoga is the journey of the self, through the self, to the self.",
+    a: "The Bhagavad Gita",
+    h: "<blockquote>&ldquo;Yoga is the journey of the self, through the self, to the self.&rdquo; &mdash; <footer>The Bhagavad Gita</footer></blockquote>"
+  },
+  {
+    q: "In the stillness of the mind, love shines forth.",
+    a: "Sri Sri Ravi Shankar",
+    h: "<blockquote>&ldquo;In the stillness of the mind, love shines forth.&rdquo; &mdash; <footer>Sri Sri Ravi Shankar</footer></blockquote>"
+  },
+  {
+    q: "Yoga does not change the way we see things, it transforms the person who sees.",
+    a: "B.K.S. Iyengar",
+    h: "<blockquote>&ldquo;Yoga does not change the way we see things, it transforms the person who sees.&rdquo; &mdash; <footer>B.K.S. Iyengar</footer></blockquote>"
+  },
+  {
+    q: "Quiet the mind, and the soul will speak.",
+    a: "Ma Jaya Sati Bhagavati",
+    h: "<blockquote>&ldquo;Quiet the mind, and the soul will speak.&rdquo; &mdash; <footer>Ma Jaya Sati Bhagavati</footer></blockquote>"
+  },
+  {
+    q: "The body is your temple. Keep it pure and clean for the soul to reside in.",
+    a: "B.K.S. Iyengar",
+    h: "<blockquote>&ldquo;The body is your temple. Keep it pure and clean for the soul to reside in.&rdquo; &mdash; <footer>B.K.S. Iyengar</footer></blockquote>"
+  },
+  {
+    q: "Calming the mind is yoga. Not just standing on the head.",
+    a: "Swami Satchidananda",
+    h: "<blockquote>&ldquo;Calming the mind is yoga. Not just standing on the head.&rdquo; &mdash; <footer>Swami Satchidananda</footer></blockquote>"
+  }
+];
+
+export async function getDailyQuotes(): Promise<DailyQuote[]> {
   try {
     const res = await fetchFromApi<any>('get-daily-quote');
-    if (!res) return null;
+    if (!res) return DEFAULT_QUOTES;
 
-    let quoteObj: any = null;
+    const list: DailyQuote[] = [];
+    const rawItems = Array.isArray(res.data)
+      ? res.data
+      : Array.isArray(res.quote)
+      ? res.quote
+      : Array.isArray(res)
+      ? res
+      : [res];
 
-    if (Array.isArray(res.data) && res.data.length > 0) {
-      quoteObj = res.data[0];
-    } else if (res.data && typeof res.data === 'object') {
-      quoteObj = res.data;
-    } else if (Array.isArray(res.quote) && res.quote.length > 0) {
-      quoteObj = res.quote[0];
-    } else if (res.quote && typeof res.quote === 'object') {
-      quoteObj = res.quote;
-    } else if (Array.isArray(res) && res.length > 0) {
-      quoteObj = res[0];
-    } else if (typeof res === 'object') {
-      quoteObj = res;
+    for (const item of rawItems) {
+      if (item && typeof item === 'object') {
+        const q = String(
+          item.q || item.quote || item.text || item.content || item.statement || item.title || ''
+        ).trim();
+        const a = String(
+          item.a || item.author || item.by || item.speaker || item.source || ''
+        ).trim();
+        const h = String(item.h || item.html || '').trim();
+        if (q) {
+          list.push({ q, a: a || 'Pragya Yog', h });
+        }
+      }
     }
 
-    if (quoteObj && typeof quoteObj === 'object') {
-      const q = String(
-        quoteObj.q || quoteObj.quote || quoteObj.text || quoteObj.content || quoteObj.statement || quoteObj.title || ''
-      ).trim();
-
-      const a = String(
-        quoteObj.a || quoteObj.author || quoteObj.by || quoteObj.speaker || quoteObj.source || ''
-      ).trim();
-
-      const h = String(
-        quoteObj.h || quoteObj.html || (q ? `<blockquote>&ldquo;${q}&rdquo;${a ? ` &mdash; <footer>${a}</footer>` : ''}</blockquote>` : '')
-      ).trim();
-
-      if (q) {
-        return {
-          q,
-          a: a || 'Pragya Yog',
-          h
-        };
+    if (list.length > 0) {
+      const combined = [...list];
+      for (const def of DEFAULT_QUOTES) {
+        if (!combined.some(item => item.q === def.q)) {
+          combined.push(def);
+        }
       }
+      return combined;
     }
   } catch (error) {
     console.warn('Failed to fetch daily quote from API:', error);
   }
 
-  return null;
+  return DEFAULT_QUOTES;
+}
+
+export async function getDailyQuote(): Promise<DailyQuote | null> {
+  const quotes = await getDailyQuotes();
+  return quotes.length > 0 ? quotes[0] : null;
 }
 
 // 2. FAQs (API ONLY - No hardcoded fallbacks)
