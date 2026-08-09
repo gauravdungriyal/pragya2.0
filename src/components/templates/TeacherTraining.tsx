@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Award, BookOpen, Clock, GraduationCap, Heart, MapPin, Sparkles, CheckCircle2, ShieldCheck, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Award, BookOpen, Clock, GraduationCap, Heart, MapPin, Sparkles, CheckCircle2, ShieldCheck, ShoppingBag, User, ShoppingCart, ChevronDown } from 'lucide-react';
 import { DynamicPackage, BundleItem } from '../../types';
 import { getPackageDetail, getRelatedBundlesForPackage, cleanHtmlEntities, isTitleCompatible, toggleEventFavorite } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +20,7 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
   isPreview = false
 }) => {
   const { user } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart, cartCount, openCart } = useCart();
 
   const [packageDetail, setPackageDetail] = useState<any>(null);
   const [bundles, setBundles] = useState<BundleItem[]>([]);
@@ -44,7 +44,7 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
         if (isMounted) {
           setBundles((prev) => (prev && prev.length > 0 ? prev : list));
         }
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     return () => {
@@ -141,7 +141,7 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
 
   return (
     <div style={{ backgroundColor: '#FAF8F5', color: '#000000', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", minHeight: '100vh' }}>
-      
+
       {isPreview && (
         <div className="sticky top-0 z-[1000] bg-amber-600 text-white px-6 py-3.5 font-semibold text-xs sm:text-sm text-center shadow-xl flex items-center justify-between border-b border-amber-400/30">
           <div className="flex items-center gap-2.5 mx-auto">
@@ -151,20 +151,60 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
         </div>
       )}
 
-      {/* Light Hero Header */}
-      <section style={{ backgroundColor: '#F5EFE5', borderBottom: '1px solid #EADCB0', padding: '48px 24px 64px 24px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          
-          {/* Back Navigation Button */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+      {/* Light Hero Section with Full 100vh Height & Bottom White Gradient Overlay */}
+      <section
+        style={{
+          position: 'relative',
+          minHeight: '100vh',
+          width: '100%',
+          overflow: 'hidden',
+          backgroundColor: '#FAF8F5',
+          backgroundImage: `url(${coverImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 35%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start'
+        }}
+      >
+        {/* Bottom White/Light Gradient Overlay (Matching Home Page Hero Section) */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 20%, rgba(250, 248, 245, 0.65) 55%, rgba(250, 248, 245, 0.94) 82%, #FAF8F5 100%)',
+            zIndex: 2,
+            pointerEvents: 'none'
+          }}
+        />
+
+        {/* Transparent Top Navigation Bar */}
+        <nav
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            padding: '92px 32px 0 32px',
+            backgroundColor: 'transparent'
+          }}
+        >
+          <div style={{ maxWidth: '1180px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <button
               onClick={onBack}
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                backgroundColor: '#FFFFFF', color: '#000000',
-                border: '1px solid #E5D5C5', borderRadius: '999px',
-                padding: '8px 20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                color: '#000000',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                borderRadius: '999px',
+                padding: '8px 22px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.2s ease'
               }}
             >
               <ArrowLeft size={16} />
@@ -175,83 +215,130 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
               onClick={handleFavoriteClick}
               disabled={isFavoriting}
               style={{
-                width: '38px', height: '38px', borderRadius: '50%', border: '1px solid #E5D5C5',
-                backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer'
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
+                backdropFilter: 'blur(10px)'
               }}
               title="Save Program"
             >
               <Heart size={18} fill={isFavorited ? "#B8860B" : "none"} color={isFavorited ? "#B8860B" : "#000000"} />
             </button>
           </div>
+        </nav>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '40px', alignItems: 'center' }}>
-            <div>
-              {/* Accreditation Badge */}
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#FFFFFF', border: '1.5px solid #C29219', borderRadius: '999px', padding: '6px 16px', marginBottom: '20px', boxShadow: '0 2px 10px rgba(194, 146, 25, 0.1)' }}>
-                <Award size={16} color="#C29219" />
-                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.14em', color: '#000000', textTransform: 'uppercase' }}>
-                  YOGA ALLIANCE USA ACCREDITED (RYS 200/300/500)
-                </span>
-              </div>
+        {/* Center Hero Body Content */}
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            maxWidth: '1180px',
+            margin: '0 auto',
+            padding: '16px 40px 60px 40px',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center'
+          }}
+        >
+          {/* Primary Main Headline using Brand Serif */}
+          <h1
+            style={{
+              fontFamily: "var(--font-serif), 'BNCringeSerif', 'Playfair Display', serif",
+              fontSize: 'clamp(36px, 5vw, 58px)',
+              fontWeight: 600,
+              color: '#21201E',
+              letterSpacing: '0.01em',
+              maxWidth: '920px',
+              margin: '0 auto 18px auto',
+              lineHeight: 1.18
+            }}
+          >
+            {displayTitle || 'Teacher Training (TTC)'}
+          </h1>
 
-              {/* Title */}
-              <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 600, color: '#000000', margin: '0 0 16px 0', lineHeight: 1.15 }}>
-                {displayTitle}
-              </h1>
+          {/* Thin Horizontal Accent Separator */}
+          <div
+            style={{
+              width: '180px',
+              height: '1.5px',
+              backgroundColor: 'rgba(148, 68, 38, 0.35)',
+              margin: '0 auto 22px auto'
+            }}
+          />
 
-              {/* Subtitle / Focus */}
-              <p style={{ fontSize: '16px', color: '#000000', lineHeight: 1.7, margin: '0 0 28px 0', fontWeight: 400 }}>
-                {cleanDescription}
-              </p>
+          {/* Program Schedule Dates */}
+          <p
+            style={{
+              fontFamily: "var(--font-sans), 'Neue Montreal', 'Plus Jakarta Sans', sans-serif",
+              fontSize: 'clamp(18px, 2.4vw, 24px)',
+              fontWeight: 700,
+              color: '#21201E',
+              margin: '0 0 8px 0',
+              letterSpacing: '0.01em'
+            }}
+          >
+            {(isDetailMatching && packageDetail?.duration_label) ? packageDetail.duration_label : 'October 15th – November 12th 2026'}
+          </p>
 
-              {/* Price & Action Box with SINGLE Reserve Now button */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '20px', border: '1.5px solid #EADCB0', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)' }}>
-                <div>
-                  <span style={{ fontSize: '11px', color: '#000000', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'block', fontWeight: 700 }}>CERTIFICATION INVESTMENT</span>
-                  <span style={{ fontSize: '36px', fontWeight: 800, color: '#000000' }}>
-                    {displayPrice}
-                  </span>
-                </div>
+          {/* Early Bird Pricing Tag */}
+          <p
+            style={{
+              fontFamily: "var(--font-sans), 'Neue Montreal', 'Plus Jakarta Sans', sans-serif",
+              fontSize: '15.5px',
+              color: '#4A4540',
+              fontWeight: 500,
+              margin: '0 0 32px 0'
+            }}
+          >
+            Early bird pricing available for a limited time ({displayPrice})
+          </p>
 
-                <div>
-                  <button
-                    onClick={handleReserveNow}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '10px',
-                      backgroundColor: '#C29219', color: '#FFFFFF',
-                      border: 'none', borderRadius: '14px', padding: '14px 32px',
-                      fontSize: '15px', fontWeight: 700, cursor: 'pointer',
-                      boxShadow: '0 6px 20px rgba(194, 146, 25, 0.3)'
-                    }}
-                  >
-                    <ShoppingBag size={18} />
-                    <span>Reserve Now</span>
-                  </button>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Right Column Cover Card */}
-            <div>
-              <div style={{ borderRadius: '24px', overflow: 'hidden', border: '6px solid #FFFFFF', boxShadow: '0 20px 40px rgba(0,0,0,0.08)', position: 'relative' }}>
-                <img src={coverImage} alt={displayTitle} style={{ width: '100%', height: '400px', objectFit: 'cover', display: 'block' }} />
-                <div style={{ position: 'absolute', bottom: '20px', left: '20px', right: '20px', backgroundColor: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderRadius: '16px', padding: '16px 20px', border: '1px solid #EADCB0' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>INTERNATIONAL ACCREDITATION</span>
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#000000' }}>RYT 200/300/500 Registered Yoga Teacher Status worldwide.</span>
-                </div>
-              </div>
-            </div>
+          {/* Single Primary Action Pill Button */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <button
+              onClick={handleReserveNow}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#FFFFFF',
+                color: '#164E63',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '16px 52px',
+                fontSize: '16.5px',
+                fontWeight: 600,
+                fontFamily: "var(--font-sans), 'Neue Montreal', 'Plus Jakarta Sans', sans-serif",
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Reserve Now
+            </button>
           </div>
-
         </div>
       </section>
 
       {/* 4 Key Statistics Cards */}
       <section style={{ padding: '36px 24px', backgroundColor: '#FFFFFF', borderBottom: '1px solid #EADCB0' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-          
+
           <div style={{ backgroundColor: '#FAF6EE', border: '1px solid #EADCB0', borderRadius: '16px', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
             <GraduationCap size={28} color="#C29219" />
             <div>

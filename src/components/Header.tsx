@@ -143,8 +143,8 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header
       style={{
-        // Bug 1 fix: position:fixed so the header is always visible;
-        // on home it stays transparent (hero handles the bg), on inner pages a solid bg is shown
+        // Position fixed/absolute so the header floats over hero image;
+        // on home and package-detail pages it stays transparent, on other inner pages a solid bg is shown
         position: 'absolute',
         top: 0,
         left: 0,
@@ -152,10 +152,10 @@ export const Header: React.FC<HeaderProps> = ({
         zIndex: 900,
         padding: '16px 36px',
         height: '100px',
-        backgroundColor: currentView === 'home' ? 'transparent' : '#F5EFE5',
-        boxShadow: currentView === 'home' ? 'none' : '0 2px 16px rgba(0,0,0,0.06)',
-        backdropFilter: currentView !== 'home' ? 'blur(12px)' : undefined,
-        WebkitBackdropFilter: currentView !== 'home' ? 'blur(12px)' : undefined,
+        backgroundColor: (currentView === 'home' || currentView === 'package-detail') ? 'transparent' : '#F5EFE5',
+        boxShadow: (currentView === 'home' || currentView === 'package-detail') ? 'none' : '0 2px 16px rgba(0,0,0,0.06)',
+        backdropFilter: (currentView !== 'home' && currentView !== 'package-detail') ? 'blur(12px)' : undefined,
+        WebkitBackdropFilter: (currentView !== 'home' && currentView !== 'package-detail') ? 'blur(12px)' : undefined,
         transition: 'background-color 0.3s ease, box-shadow 0.3s ease',
         display: 'flex',
         alignItems: 'center',
