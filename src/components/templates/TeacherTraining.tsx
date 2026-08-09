@@ -26,6 +26,7 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
   const [bundles, setBundles] = useState<BundleItem[]>([]);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isFavoriting, setIsFavoriting] = useState(false);
+  const [isBtnHovered, setIsBtnHovered] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -164,7 +165,8 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
           backgroundPosition: 'center 35%',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'flex-start'
+          justifyContent: 'center',
+          alignItems: 'center'
         }}
       >
         {/* Bottom White/Light Gradient Overlay (Matching Home Page Hero Section) */}
@@ -181,9 +183,12 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
         {/* Transparent Top Navigation Bar */}
         <nav
           style={{
-            position: 'relative',
-            zIndex: 10,
-            padding: '92px 32px 0 32px',
+            position: 'absolute',
+            top: '100px',
+            left: 0,
+            right: 0,
+            zIndex: 20,
+            padding: '16px 32px 0 32px',
             backgroundColor: 'transparent'
           }}
         >
@@ -234,18 +239,19 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
           </div>
         </nav>
 
-        {/* Center Hero Body Content */}
+        {/* Center Hero Body Content (Vertically & Horizontally Centered) */}
         <div
           style={{
             position: 'relative',
             zIndex: 10,
             maxWidth: '1180px',
             margin: '0 auto',
-            padding: '16px 40px 60px 40px',
+            padding: '120px 40px 60px 40px',
             width: '100%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
             textAlign: 'center'
           }}
         >
@@ -312,21 +318,24 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
           >
             <button
               onClick={handleReserveNow}
+              onMouseEnter={() => setIsBtnHovered(true)}
+              onMouseLeave={() => setIsBtnHovered(false)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#FFFFFF',
-                color: '#164E63',
-                border: 'none',
+                backgroundColor: isBtnHovered ? '#164E63' : '#FFFFFF',
+                color: isBtnHovered ? '#FFFFFF' : '#164E63',
+                border: '1.5px solid #164E63',
                 borderRadius: '999px',
                 padding: '16px 52px',
                 fontSize: '16.5px',
                 fontWeight: 600,
                 fontFamily: "var(--font-sans), 'Neue Montreal', 'Plus Jakarta Sans', sans-serif",
                 cursor: 'pointer',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-                transition: 'all 0.2s ease'
+                boxShadow: isBtnHovered ? '0 12px 28px rgba(22, 78, 99, 0.35)' : '0 8px 24px rgba(0, 0, 0, 0.1)',
+                transform: isBtnHovered ? 'translateY(-2px) scale(1.02)' : 'translateY(0) scale(1)',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
               }}
             >
               Reserve Now

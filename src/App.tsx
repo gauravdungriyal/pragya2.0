@@ -346,7 +346,7 @@ export const App: React.FC = () => {
           transform: pageVisible ? 'translate3d(0,0,0)' : 'translate3d(0,18px,0)',
           transition: 'opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
           // Bug 1 fix: add top padding on inner pages so fixed header doesn't overlap content
-          paddingTop: currentView === 'home' ? 0 : '100px',
+          paddingTop: (currentView === 'home' || currentView === 'package-detail') ? 0 : '100px',
         }}
       >
         {currentView === 'about' ? (
