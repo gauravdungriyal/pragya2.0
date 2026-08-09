@@ -945,55 +945,18 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
       </section>
 
       {/* SECTION 6: Explore Classes (Infinite Automatic Horizontal Carousel matching Reference Screenshot) */}
-      <section
-        className="about-explore-classes-section"
-        style={{
-          backgroundColor: '#FFFFFF',
-          padding: '96px 0 100px 0',
-          overflow: 'hidden'
-        }}
-      >
+      <section className="about-explore-classes-section">
         {/* Header Block */}
-        <div style={{ maxWidth: '1280px', margin: '0 auto 44px auto', padding: '0 32px' }}>
-          <span
-            style={{
-              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-              fontSize: '11.5px',
-              fontWeight: 800,
-              letterSpacing: '0.14em',
-              color: '#944426',
-              textTransform: 'uppercase',
-              display: 'block',
-              marginBottom: '10px'
-            }}
-          >
+        <div className="about-explore-classes-header">
+          <span className="about-explore-classes-tag">
             DISCOVER YOUR YOGA STYLE
           </span>
 
-          <h2
-            style={{
-              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-              fontSize: 'clamp(34px, 4.5vw, 56px)',
-              fontWeight: 700,
-              color: '#21201E',
-              lineHeight: 1.1,
-              letterSpacing: '-0.02em',
-              margin: '0 0 14px 0'
-            }}
-          >
+          <h2 className="about-explore-classes-title">
             Explore Classes
           </h2>
 
-          <p
-            style={{
-              fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-              fontSize: '15px',
-              color: '#6B655F',
-              lineHeight: 1.6,
-              margin: 0,
-              maxWidth: '600px'
-            }}
-          >
+          <p className="about-explore-classes-desc">
             Whatever your intention or level, Pragya Yog School offers a variety of classes to give you the ultimate yoga experience.
           </p>
         </div>
@@ -1001,23 +964,17 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
         {/* Automatic Infinite Horizontal Carousel Track */}
         <div
           ref={classScrollRef}
+          className="about-explore-classes-track"
           onMouseEnter={() => setIsClassCarouselHovered(true)}
           onMouseLeave={() => setIsClassCarouselHovered(false)}
           onTouchStart={() => setIsClassCarouselHovered(true)}
           onTouchEnd={() => setIsClassCarouselHovered(false)}
-          style={{
-            width: '100%',
-            overflowX: 'auto',
-            overflowY: 'hidden',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            padding: '12px 0 24px 0'
-          }}
         >
           <div style={{ display: 'flex', width: 'max-content' }}>
             {quadrupledClassStyles.map((item, idx) => (
               <div
                 key={idx}
+                className="explore-class-card"
                 onClick={() => {
                   if (onNavigateSection) {
                     onNavigateSection('classes');
@@ -1025,104 +982,29 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
                     onOpenBooking('class', item.title);
                   }
                 }}
-                style={{
-                  width: '580px',
-                  height: '380px',
-                  flexShrink: 0,
-                  marginRight: '24px',
-                  borderRadius: '20px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
-                  transition: 'transform 0.35s ease, box-shadow 0.35s ease'
-                }}
               >
                 {/* Background Image */}
                 <img
                   src={item.image}
                   alt={item.title}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: 'center',
-                    display: 'block'
-                  }}
+                  className="explore-class-card-img"
                 />
 
                 {/* Dark Gradient Overlay for High Contrast Text (Matching Reference Image) */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(to top, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.25) 55%, transparent 100%)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-end',
-                    padding: '36px 36px'
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      letterSpacing: '0.12em',
-                      color: 'rgba(255, 255, 255, 0.85)',
-                      textTransform: 'uppercase',
-                      marginBottom: '8px'
-                    }}
-                  >
+                <div className="explore-class-card-overlay">
+                  <span className="explore-class-card-tag">
                     {item.tag}
                   </span>
 
-                  <h3
-                    style={{
-                      fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                      fontSize: '36px',
-                      fontWeight: 700,
-                      color: '#FFFFFF',
-                      lineHeight: 1.15,
-                      margin: '0 0 10px 0',
-                      letterSpacing: '-0.01em'
-                    }}
-                  >
+                  <h3 className="explore-class-card-title">
                     {item.title}
                   </h3>
 
-                  <p
-                    style={{
-                      fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                      fontSize: '14px',
-                      color: 'rgba(255, 255, 255, 0.88)',
-                      lineHeight: 1.5,
-                      margin: '0 0 20px 0',
-                      maxWidth: '480px',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 1,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
+                  <p className="explore-class-card-subtitle">
                     {item.subtitle}
                   </p>
 
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontFamily: "'Neue Montreal', -apple-system, sans-serif",
-                      fontSize: '12.5px',
-                      fontWeight: 800,
-                      letterSpacing: '0.08em',
-                      color: '#FFFFFF',
-                      textTransform: 'uppercase'
-                    }}
-                  >
+                  <div className="explore-class-card-btn">
                     <span>BOOK NOW</span>
                     <ArrowRight size={15} color="#FFFFFF" />
                   </div>
@@ -1377,6 +1259,133 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
           border: 1px solid rgba(33, 32, 30, 0.08);
           transition: all 0.3s ease;
         }
+
+        /* SECTION 6: Explore Classes Responsive Styles */
+        .about-explore-classes-section {
+          background-color: #FFFFFF;
+          padding: 96px 0 100px 0;
+          overflow: hidden;
+        }
+        .about-explore-classes-header {
+          max-width: 1280px;
+          margin: 0 auto 44px auto;
+          padding: 0 32px;
+        }
+        .about-explore-classes-tag {
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+          font-size: 11.5px;
+          font-weight: 800;
+          letter-spacing: 0.14em;
+          color: #944426;
+          text-transform: uppercase;
+          display: block;
+          margin-bottom: 10px;
+        }
+        .about-explore-classes-title {
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+          font-size: clamp(30px, 4.5vw, 56px);
+          font-weight: 700;
+          color: #21201E;
+          line-height: 1.1;
+          letter-spacing: -0.02em;
+          margin: 0 0 14px 0;
+        }
+        .about-explore-classes-desc {
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+          font-size: 15px;
+          color: #6B655F;
+          line-height: 1.6;
+          margin: 0;
+          max-width: 600px;
+        }
+        .about-explore-classes-track {
+          width: 100%;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          -webkit-overflow-scrolling: touch;
+          padding: 12px 0 24px 0;
+        }
+        .about-explore-classes-track::-webkit-scrollbar {
+          display: none;
+        }
+        .explore-class-card {
+          width: 580px;
+          height: 380px;
+          flex-shrink: 0;
+          margin-right: 24px;
+          border-radius: 20px;
+          overflow: hidden;
+          position: relative;
+          cursor: pointer;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+          transition: transform 0.35s ease, box-shadow 0.35s ease;
+        }
+        .explore-class-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+        }
+        .explore-class-card-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          display: block;
+        }
+        .explore-class-card-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.3) 55%, transparent 100%);
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          padding: 36px;
+        }
+        .explore-class-card-tag {
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          color: rgba(255, 255, 255, 0.85);
+          text-transform: uppercase;
+          margin-bottom: 8px;
+        }
+        .explore-class-card-title {
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+          font-size: 36px;
+          font-weight: 700;
+          color: #FFFFFF;
+          line-height: 1.15;
+          margin: 0 0 10px 0;
+          letter-spacing: -0.01em;
+        }
+        .explore-class-card-subtitle {
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.88);
+          line-height: 1.5;
+          margin: 0 0 20px 0;
+          max-width: 480px;
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .explore-class-card-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-family: 'Neue Montreal', -apple-system, sans-serif;
+          font-size: 12.5px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          color: #FFFFFF;
+          text-transform: uppercase;
+        }
+
         .about-bottom-cta {
           position: relative;
           background-image: url('https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=1600&auto=format&fit=crop');
@@ -1587,6 +1596,77 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
             }
             .about-explore-classes-section {
               padding: 60px 0 70px 0 !important;
+            }
+          }
+
+          @media (max-width: 1024px) {
+            .explore-class-card {
+              width: 440px !important;
+              height: 340px !important;
+              margin-right: 20px !important;
+              border-radius: 18px !important;
+            }
+            .explore-class-card-overlay {
+              padding: 26px !important;
+            }
+            .explore-class-card-title {
+              font-size: 28px !important;
+            }
+          }
+
+          @media (max-width: 768px) {
+            .about-explore-classes-section {
+              padding: 48px 0 56px 0 !important;
+            }
+            .about-explore-classes-header {
+              padding: 0 20px !important;
+              margin-bottom: 24px !important;
+            }
+            .about-explore-classes-desc {
+              font-size: 14px !important;
+            }
+            .explore-class-card {
+              width: min(84vw, 340px) !important;
+              height: 320px !important;
+              margin-right: 16px !important;
+              border-radius: 16px !important;
+            }
+            .explore-class-card-overlay {
+              padding: 22px 20px !important;
+            }
+            .explore-class-card-tag {
+              font-size: 10px !important;
+              margin-bottom: 6px !important;
+            }
+            .explore-class-card-title {
+              font-size: 23px !important;
+              margin-bottom: 6px !important;
+            }
+            .explore-class-card-subtitle {
+              font-size: 13px !important;
+              margin-bottom: 14px !important;
+            }
+            .explore-class-card-btn {
+              font-size: 11.5px !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .about-explore-classes-header {
+              padding: 0 16px !important;
+            }
+            .explore-class-card {
+              width: calc(88vw - 12px) !important;
+              max-width: 320px !important;
+              height: 290px !important;
+              margin-right: 12px !important;
+              border-radius: 14px !important;
+            }
+            .explore-class-card-overlay {
+              padding: 18px 16px !important;
+            }
+            .explore-class-card-title {
+              font-size: 21px !important;
             }
           }
         }
