@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Calendar, Check, ArrowRight, ShieldCheck, Sparkles, Clock, BarChart2, MapPin, Heart, CheckCircle2 } from 'lucide-react';
 import { UpcomingEvent, BundleItem, PackageItem } from '../types';
-import { getUpcomingEvents, toggleEventFavorite, getRelatedBundlesForPackage } from '../services/api';
+import { getUpcomingEvents, toggleEventFavorite, getRelatedBundlesForPackage, getPackageDetail, cleanHtmlEntities, isTitleCompatible } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { FrequentlyBoughtTogether } from './FrequentlyBoughtTogether';
@@ -28,6 +28,7 @@ const splitEventTitle = (fullTitle: string) => {
 export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack, onOpenBooking, onSelectEvent }) => {
   const [otherEvents, setOtherEvents] = useState<UpcomingEvent[]>([]);
   const [bundles, setBundles] = useState<BundleItem[]>([]);
+  const [packageDetail, setPackageDetail] = useState<any>(null);
   const [isFavorited, setIsFavorited] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const { user } = useAuth();
@@ -35,6 +36,19 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
 
   useEffect(() => {
     let isMounted = true;
+
+    if (event?.id) {
+      getPackageDetail(event.id).then((data) => {
+        if (!isMounted) return;
+        if (data) {
+          setPackageDetail(data);
+          if (data.frequently_bought_together && Array.isArray(data.frequently_bought_together) && data.frequently_bought_together.length > 0) {
+            setBundles(data.frequently_bought_together);
+          }
+        }
+      }).catch((err) => console.error("getPackageDetail error:", err));
+    }
+
     getUpcomingEvents()
       .then((res) => {
         if (!isMounted) return;
@@ -48,7 +62,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
 
     getRelatedBundlesForPackage(event?.id, event?.title || event?.name).then((list) => {
       if (isMounted) {
-        setBundles(list);
+        setBundles((prev) => (prev && prev.length > 0 ? prev : list));
       }
     }).catch(() => {});
 
@@ -58,17 +72,29 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
   }, [event?.id, event?.title, event?.name]);
 
   const coverImage = event.image || event.banner_image?.url || "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1600&auto=format&fit=crop";
-  const title = event.title || event.name || 'Pragya Yog Masterclass';
-  const { titlePrefix, titleMain } = splitEventTitle(title);
-  const displayLevel = event.level || 'All Levels';
-  const displayDuration = event.duration || '60 - 90 min';
-  const displayFocus = event.focus || event.category || 'Mindful Movement & Posture';
-  const displayPrice = event.price || 'HK$ 680';
-  const displayLocation = event.location || 'Pragya Yog Studio';
+  const isDetailMatching = Boolean(
+    packageDetail &&
+    packageDetail.title &&
+    isTitleCompatible(event.title || event.name, packageDetail.title)
+  );
 
-  const numericPrice = typeof event.amount === 'number' && event.amount > 0 
-    ? event.amount 
-    : parseFloat(String(displayPrice).replace(/[^0-9.]/g, '')) || 680;
+  const title = (isDetailMatching && packageDetail?.title) ? packageDetail.title : (event.title || event.name || 'Pragya Yog Masterclass');
+  const { titlePrefix, titleMain } = splitEventTitle(title);
+  const displayLevel = (isDetailMatching && packageDetail?.class_access) ? packageDetail.class_access : (event.level || 'All Levels');
+  const displayDuration = (isDetailMatching && packageDetail?.duration_label) ? packageDetail.duration_label : (event.duration || '60 - 90 min');
+
+  const activeAmount = (isDetailMatching && packageDetail?.amount) ? packageDetail.amount : (event.amount || event.price);
+  const rawPriceStr = String(activeAmount || '680')
+    .replace(/₹|INR|Rs\.?/gi, '')
+    .replace(/HK\$\s*/gi, '')
+    .trim();
+
+  const numericPrice = typeof activeAmount === 'number' && activeAmount > 0 
+    ? activeAmount 
+    : parseFloat(rawPriceStr.replace(/[^0-9.]/g, '')) || 680;
+
+  const displayPrice = `HK$ ${numericPrice.toLocaleString()}`;
+  const displayLocation = event.location || 'Pragya Yog Studio';
 
   const handleReserveNow = () => {
     addToCart({
@@ -140,7 +166,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
           }}
         >
           <ArrowLeft size={15} />
-          <span>Back to All Events</span>
+          <span>Back</span>
         </button>
       </div>
 
@@ -206,7 +232,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
           <p
             style={{
               fontFamily: "'Neue Montreal', sans-serif",
-              fontSize: '15px',
+              fontSize: '15.5px',
               color: '#4A4540',
               lineHeight: 1.65,
               maxWidth: '680px',
@@ -215,7 +241,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
               padding: '0 8px'
             }}
           >
-            {heroSummary}
+            {cleanHtmlEntities(packageDetail?.description || event?.description) || heroSummary}
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '24px', flexWrap: 'wrap' }}>
@@ -280,22 +306,28 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
               margin: '0 auto',
             }}
           >
-            {/* Top-Left: Session */}
+            {/* Top-Left: Access Label / Pass */}
             <div style={{ textAlign: 'center', borderRight: '1px solid rgba(0, 0, 0, 0.08)', borderBottom: '1px solid rgba(0, 0, 0, 0.08)', padding: '14px 12px' }}>
-              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 700, color: '#21201E', lineHeight: 1.2 }}>1</span>
-              <span style={{ fontSize: '10px', color: '#7A756F', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px', display: 'block', fontWeight: 600 }}>SESSION</span>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '16px', fontWeight: 700, color: '#21201E', lineHeight: 1.2 }}>
+                {(packageDetail?.access_label || event?.access_label || '1 SESSION').toUpperCase()}
+              </span>
+              <span style={{ fontSize: '10px', color: '#7A756F', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px', display: 'block', fontWeight: 600 }}>PASS TYPE</span>
             </div>
 
-            {/* Top-Right: Duration */}
+            {/* Top-Right: Duration Label */}
             <div style={{ textAlign: 'center', borderBottom: '1px solid rgba(0, 0, 0, 0.08)', padding: '14px 12px' }}>
-              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '17px', fontWeight: 700, color: '#21201E', lineHeight: 1.2 }}>{displayDuration}</span>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '16px', fontWeight: 700, color: '#21201E', lineHeight: 1.2 }}>
+                {(packageDetail?.duration_label || event?.duration_label || displayDuration).toUpperCase()}
+              </span>
               <span style={{ fontSize: '10px', color: '#7A756F', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px', display: 'block', fontWeight: 600 }}>DURATION</span>
             </div>
 
-            {/* Bottom-Left: Level */}
+            {/* Bottom-Left: Class Access / Level */}
             <div style={{ textAlign: 'center', borderRight: '1px solid rgba(0, 0, 0, 0.08)', padding: '14px 12px' }}>
-              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '16px', fontWeight: 700, color: '#21201E', lineHeight: 1.2 }}>{displayLevel.toUpperCase()}</span>
-              <span style={{ fontSize: '10px', color: '#7A756F', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px', display: 'block', fontWeight: 600 }}>LEVEL</span>
+              <span style={{ display: 'block', fontFamily: "'Neue Montreal', sans-serif", fontSize: '15px', fontWeight: 700, color: '#21201E', lineHeight: 1.2 }}>
+                {(packageDetail?.class_access || displayLevel).toUpperCase()}
+              </span>
+              <span style={{ fontSize: '10px', color: '#7A756F', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px', display: 'block', fontWeight: 600 }}>CLASS ACCESS</span>
             </div>
 
             {/* Bottom-Right: Sanctuary */}
@@ -305,6 +337,84 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ event, onBack,
             </div>
           </div>
         </section>
+
+        {/* API Package Specs & Inclusions */}
+        {((packageDetail && (packageDetail.benefit || packageDetail.class_access || packageDetail.duration_label || packageDetail.access_label)) || (event && (event.benefit || event.class_access || event.duration_label || event.access_label))) && (
+          <section style={{ padding: '0 0 48px 0' }}>
+            <div style={{
+              backgroundColor: '#FAF6EE',
+              borderRadius: '24px',
+              padding: '28px 32px',
+              border: '1.5px solid rgba(148, 68, 38, 0.18)',
+              boxShadow: '0 6px 24px rgba(148, 68, 38, 0.05)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Sparkles size={18} color="#944426" />
+                <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '12px', fontWeight: 800, letterSpacing: '0.14em', color: '#944426', textTransform: 'uppercase' }}>
+                  VERIFIED PACKAGE ACCESS & SPECIFICATIONS
+                </span>
+              </div>
+              
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                {(packageDetail?.benefit || event?.benefit) && (
+                  <span style={{ backgroundColor: '#944426', color: '#FFFFFF', padding: '7px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 800, letterSpacing: '0.02em' }}>
+                    ✦ {packageDetail?.benefit || event?.benefit}
+                  </span>
+                )}
+                {(packageDetail?.class_access || event?.class_access) && (
+                  <span style={{ backgroundColor: '#FFFFFF', color: '#21201E', border: '1px solid rgba(0,0,0,0.12)', padding: '7px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 700 }}>
+                    {packageDetail?.class_access || event?.class_access}
+                  </span>
+                )}
+                {(packageDetail?.duration_label || event?.duration_label) && (
+                  <span style={{ backgroundColor: '#FFFFFF', color: '#21201E', border: '1px solid rgba(0,0,0,0.12)', padding: '7px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 700 }}>
+                    {packageDetail?.duration_label || event?.duration_label}
+                  </span>
+                )}
+                {(packageDetail?.access_label || event?.access_label) && (
+                  <span style={{ backgroundColor: '#FFFFFF', color: '#21201E', border: '1px solid rgba(0,0,0,0.12)', padding: '7px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 700 }}>
+                    {packageDetail?.access_label || event?.access_label}
+                  </span>
+                )}
+                {(packageDetail?.discount || event?.discount) && (
+                  <span style={{ backgroundColor: 'rgba(0, 181, 148, 0.12)', color: '#00B594', border: '1px solid rgba(0, 181, 148, 0.25)', padding: '7px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 800 }}>
+                    🏷 Save HK$ {packageDetail?.discount || event?.discount} {packageDetail?.discount_remarks || event?.discount_remarks ? `(${packageDetail?.discount_remarks || event?.discount_remarks})` : ''}
+                  </span>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* API Package Features / Inclusions Grid */}
+        {((packageDetail?.features && packageDetail.features.length > 0) || (event?.features && event.features.length > 0)) && (
+          <section style={{ padding: '0 0 56px 0' }}>
+            <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+              <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '11px', fontWeight: 800, letterSpacing: '0.18em', color: '#944426', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                PACKAGE FEATURES & INCLUSIONS
+              </span>
+              <h3 style={{ fontFamily: "var(--font-serif)", fontStyle: 'italic', fontSize: '30px', fontWeight: 400, color: '#21201E', margin: 0 }}>
+                What's Included in Your Sanctuary Pass
+              </h3>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', maxWidth: '840px', margin: '0 auto' }}>
+              {(packageDetail?.features || event?.features || []).map((feature: string, fIdx: number) => (
+                <div key={fIdx} style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '18px 22px', border: '1.5px solid rgba(0, 0, 0, 0.06)', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.02)' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(148, 68, 38, 0.12)', color: '#944426', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <CheckCircle2 size={16} />
+                  </div>
+                  <span style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '14.5px', fontWeight: 600, color: '#21201E' }}>
+                    {feature}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* SECTION 2: WHAT'S INSIDE */}
         <section style={{ padding: '56px 0', borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>

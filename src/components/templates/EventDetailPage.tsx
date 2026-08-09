@@ -17,18 +17,33 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({
 }) => {
   const metadata = pkg.metadata || {};
 
+  const rawPriceNum = String(pkg.discountPrice || pkg.price || (pkg as any).amount || '680')
+    .replace(/₹|INR|Rs\.?/gi, '')
+    .replace(/HK\$\s*/gi, '')
+    .trim();
+  const formattedPriceStr = `HK$ ${rawPriceNum}`;
+
   const mappedEvent: UpcomingEvent = {
     id: pkg.id,
     title: pkg.title,
     name: pkg.title,
     image: pkg.coverImage || 'https://images.unsplash.com/photo-1510894347713-da3ed8f4f92d?q=80&w=1600&auto=format&fit=crop',
-    price: pkg.discountPrice ? `${pkg.currency || 'HK$'} ${pkg.discountPrice}` : `${pkg.currency || 'HK$'} ${pkg.price}`,
+    price: formattedPriceStr,
+    amount: parseFloat(rawPriceNum) || undefined,
     location: metadata.venue || metadata.location || 'Pragya Yog Studio',
-    duration: metadata.eventTime || '02:00 PM – 05:00 PM',
+    duration: metadata.eventTime || (pkg as any).duration_label || '02:00 PM – 05:00 PM',
     level: pkg.badge || 'All Levels',
     description: pkg.description,
     focus: pkg.subtitle || 'Community Event',
-    date: metadata.eventDate || 'Upcoming Event'
+    date: metadata.eventDate || 'Upcoming Event',
+    benefit: (pkg as any).benefit,
+    class_access: (pkg as any).class_access,
+    duration_label: (pkg as any).duration_label,
+    access_label: (pkg as any).access_label,
+    features: pkg.features,
+    frequently_bought_together: (pkg as any).frequently_bought_together,
+    discount: (pkg as any).discount,
+    discount_remarks: (pkg as any).discount_remarks
   };
 
   return (

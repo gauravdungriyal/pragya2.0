@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Sparkles, RefreshCw, Zap, ShieldCheck, Heart, Award, ArrowUpRight, Calendar, Tag, Info, ShoppingBag, ArrowRight } from 'lucide-react';
-import { getPackages, getBundleList, trackBundleEvent, getDailyQuote } from '../services/api';
+import { getPackages, getBundleList, trackBundleEvent, getDailyQuote, cleanHtmlEntities } from '../services/api';
 import { PackageItem, BundleItem, DailyQuote } from '../types';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +14,8 @@ interface MembershipPageProps {
 
 export const MembershipPage: React.FC<MembershipPageProps> = ({
   onOpenBooking,
-  initialCategory = 'ALL'
+  onOpenPackageDetail,
+  initialCategory = 'Special Bundles'
 }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
@@ -665,8 +666,17 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
           >
             {filteredPackages.map((pkg, idx) => {
               const isPopular = idx === 1 || Boolean(pkg.packageID && pkg.packageID.includes('ANNUAL'));
-              const numericAmount = typeof pkg.amount === 'number' ? pkg.amount : parseFloat(String(pkg.amount)) || 0;
-              const periodText = pkg.period ? ` / ${pkg.period}` : ' / month';
+              const rawAmountStr = String(pkg.amount || (pkg as any).price || 0)
+                .replace(/₹|INR|Rs\.?/gi, '')
+                .replace(/HK\$\s*/gi, '')
+                .trim();
+              const numericAmount = typeof pkg.amount === 'number' && pkg.amount > 0 
+                ? pkg.amount 
+                : parseFloat(rawAmountStr) || 0;
+
+              const periodText = pkg.period 
+                ? ` / ${pkg.period}` 
+                : (pkg.duration_label ? ` · ${pkg.duration_label}` : (pkg.access_label ? ` · ${pkg.access_label}` : ''));
 
               const cardImages = [
                 "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop",
@@ -768,7 +778,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
                           marginBottom: '20px'
                         }}
                       >
-                        ${numericAmount} {periodText} {pkg.discount ? `| Save $${pkg.discount}` : ''}
+                        HK$ {numericAmount.toLocaleString()} {periodText} {pkg.discount ? `| Save HK$ ${pkg.discount}` : ''}
                       </div>
 
                       {/* Description */}
@@ -782,7 +792,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
                           minHeight: '44px'
                         }}
                       >
-                        {pkg.description || 'Access luxury yoga sanctuary amenities and expert guided classes.'}
+                        {cleanHtmlEntities(pkg.description) || 'Access luxury yoga sanctuary amenities and expert guided classes.'}
                       </p>
 
                       {/* Package Includes Subheading & List */}
@@ -833,32 +843,78 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
                     </div>
                   </div>
 
-                  {/* Action Button */}
-                  <div className="package-card-button-box" style={{ padding: '0 24px 24px 24px' }}>
+                  {/* Action Buttons: View Details & Add To Cart */}
+                  <div className="package-card-button-box" style={{ padding: '0 24px 24px 24px', display: 'flex', gap: '10px' }}>
                     <button
-                      onClick={() => addToCart({ id: pkg.id, title: pkg.title, price: pkg.amount, category: pkg.category || pkg.groupCategory })}
+                      onClick={() => {
+                        if (onOpenPackageDetail) {
+                          onOpenPackageDetail({
+                            ...pkg,
+                            id: String(pkg.id),
+                            type: 'event',
+                            title: pkg.title,
+                            coverImage: cardCoverImg,
+                            description: pkg.description,
+                            price: pkg.amount,
+                            currency: pkg.currency || 'HK$',
+                            badge: getCategoryBadgeLabel(pkg)
+                          });
+                        }
+                      }}
                       style={{
-                        width: '100%',
-                        backgroundColor: '#21201E',
-                        color: '#FFFFFF',
-                        border: 'none',
+                        flex: 1,
+                        backgroundColor: '#FFFFFF',
+                        color: '#21201E',
+                        border: '1.5px solid #21201E',
                         borderRadius: '999px',
-                        padding: '13px 18px',
+                        padding: '12px 10px',
                         fontSize: '12.5px',
                         fontWeight: 700,
-                        letterSpacing: '0.02em',
+                        letterSpacing: '0.01em',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
+                        gap: '6px',
+                        transition: 'all 0.25s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#21201E';
+                        e.currentTarget.style.color = '#FFFFFF';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#FFFFFF';
+                        e.currentTarget.style.color = '#21201E';
+                      }}
+                    >
+                      <Info size={14} />
+                      <span>View Details</span>
+                    </button>
+
+                    <button
+                      onClick={() => addToCart({ id: pkg.id, title: pkg.title, price: pkg.amount, category: pkg.category || pkg.groupCategory })}
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#21201E',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '999px',
+                        padding: '12px 10px',
+                        fontSize: '12.5px',
+                        fontWeight: 700,
+                        letterSpacing: '0.01em',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
                         boxShadow: '0 4px 16px rgba(33, 32, 30, 0.12)',
                         transition: 'all 0.25s ease'
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#944426'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#21201E'; }}
                     >
-                      <ShoppingBag size={15} />
+                      <ShoppingBag size={14} />
                       <span>Add To Cart</span>
                     </button>
                   </div>

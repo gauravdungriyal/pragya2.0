@@ -189,6 +189,14 @@ export interface UpcomingEvent {
   benefits?: { slug: string; label: string; icon: string }[];
   spots_label?: string;
   share_url?: string;
+  benefit?: string;
+  class_access?: string;
+  duration_label?: string;
+  access_label?: string;
+  features?: string[];
+  frequently_bought_together?: BundleItem[];
+  discount?: string;
+  discount_remarks?: string;
 }
 
 export interface DailyQuote {

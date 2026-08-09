@@ -1,6 +1,38 @@
 import { ClassScheduleItem, Instructor, PackageItem, UpcomingEvent, DailyQuote, FaqItem, FilterOptions, DynamicPackage, PackageType, PolicyItem } from '../types';
 import { API_BASE_URL } from '../config/apiConfig';
 
+export function cleanHtmlEntities(rawText?: string): string {
+  if (!rawText) return '';
+  let text = String(rawText);
+
+  // Decode common HTML entities & HTML tags
+  text = text
+    .replace(/&nbsp;/gi, ' • ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&ndash;/gi, '–')
+    .replace(/&mdash;/gi, '—')
+    .replace(/&rsquo;/gi, "'")
+    .replace(/&lsquo;/gi, "'")
+    .replace(/&ldquo;/gi, '"')
+    .replace(/&rdquo;/gi, '"')
+    .replace(/<[^>]*>?/gm, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (text.startsWith('•')) {
+    text = text.replace(/^•\s*/, '').trim();
+  }
+
+  const parts = text.split('•').map((s) => s.trim()).filter(Boolean);
+  if (parts.length > 1) {
+    return parts.join('  •  ');
+  }
+  return text;
+}
+
 async function fetchFromApi<T>(action: string, payload: Record<string, any> = {}): Promise<T | null> {
   try {
     const body = { action, ...payload };
@@ -298,7 +330,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "1-on-1 Health Consultation & Therapy",
         payment_type: 2,
         amount: 150,
-        currency: "₹",
+        currency: "HK$",
         benefit: "1-on-1 Personalized Session",
         class_access: "Private Studio Suite",
         duration_label: "90 Minutes",
@@ -318,7 +350,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "Private Movement & Sound Immersion (5 Sessions)",
         payment_type: 2,
         amount: 650,
-        currency: "₹",
+        currency: "HK$",
         discount_type: "bundle",
         discount: "100",
         discount_remarks: "Bundle Savings",
@@ -343,7 +375,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "Sanctuary Unlimited Monthly Pass",
         payment_type: 1,
         amount: 280,
-        currency: "₹",
+        currency: "HK$",
         benefit: "Unlimited Daily Access",
         class_access: "All Regular Classes",
         duration_label: "1 Month",
@@ -363,7 +395,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "Pragya Master Annual Regular Pass",
         payment_type: 1,
         amount: 2600,
-        currency: "₹",
+        currency: "HK$",
         discount_type: "fixed",
         discount: "400",
         discount_remarks: "Annual Savings",
@@ -388,7 +420,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "200-Hour Master Yoga Teacher Training (TTC)",
         payment_type: 1,
         amount: 1850,
-        currency: "₹",
+        currency: "HK$",
         discount_type: "fixed",
         discount: "200",
         discount_remarks: "Early Bird",
@@ -411,7 +443,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "300-Hour Advanced Multi-Style Teacher Training (TTC)",
         payment_type: 1,
         amount: 2400,
-        currency: "₹",
+        currency: "HK$",
         discount_type: "fixed",
         discount: "300",
         discount_remarks: "Advance Enrollment",
@@ -434,7 +466,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "50-Hour Yin Yoga & Restorative Immersion Course",
         payment_type: 1,
         amount: 550,
-        currency: "₹",
+        currency: "HK$",
         benefit: "YACEP Continuing Education Credits",
         class_access: "Yin Immersion Studio",
         duration_label: "50 Hours (7 Days)",
@@ -456,7 +488,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "Yog Therapy 2.0 – Realign Your Foundation",
         payment_type: 1,
         amount: 120,
-        currency: "₹",
+        currency: "HK$",
         benefit: "Structural Therapy Protocol",
         class_access: "Masterclass Access",
         duration_label: "3 Hours Intensive",
@@ -475,7 +507,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "Sacred Soundscapes: Chanting & Sound Healing",
         payment_type: 1,
         amount: 180,
-        currency: "₹",
+        currency: "HK$",
         benefit: "CET Certification of Completion",
         class_access: "Acoustic Sanctuary",
         duration_label: "6 Hours Immersion",
@@ -496,7 +528,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "Back Bend Intensive 2026",
         payment_type: 1,
         amount: 130,
-        currency: "₹",
+        currency: "HK$",
         discount_type: "fixed",
         discount: "20",
         benefit: "Thoracic & Shoulder Mobility",
@@ -517,7 +549,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "Pragya Boat Trip 2.0 – Ganges Dawn Meditation",
         payment_type: 1,
         amount: 45,
-        currency: "₹",
+        currency: "HK$",
         benefit: "Sacred Ganges Sunrise Sail",
         class_access: "Private River Cruise",
         duration_label: "3 Hours",
@@ -538,7 +570,7 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
         title: "Nepal Himalayan Sanctuary Retreat",
         payment_type: 1,
         amount: 2450,
-        currency: "₹",
+        currency: "HK$",
         benefit: "Luxury Suite & Organic Dining",
         class_access: "Retreat Sanctuary",
         duration_label: "9 Days / 8 Nights",
@@ -566,6 +598,24 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
       );
       if (!matchKey || !Array.isArray(merged[matchKey]) || merged[matchKey].length === 0) {
         merged[catKey] = fallback[catKey];
+      }
+    });
+
+    // Ensure all packages explicitly use HK$ currency and numeric amount
+    Object.keys(merged).forEach((cat) => {
+      if (Array.isArray(merged[cat])) {
+        merged[cat] = merged[cat].map((item: any) => {
+          const cleanAmt = typeof item.amount === 'number'
+            ? item.amount
+            : parseFloat(String(item.amount || item.price || 0).replace(/[^0-9.]/g, '')) || 0;
+          return {
+            ...item,
+            amount: cleanAmt > 0 ? cleanAmt : item.amount,
+            currency: 'HK$',
+            title: cleanHtmlEntities(item.title),
+            description: cleanHtmlEntities(item.description)
+          };
+        });
       }
     });
 
@@ -932,7 +982,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     subtitle: 'Yoga Alliance USA Certified Immersion Program',
     price: 185000,
     discountPrice: 165000,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'Yoga Alliance Certified',
     badgeColor: 'amber',
     coverImage: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
@@ -965,7 +1015,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     title: 'Yog Therapy 2.0 – Realign Your Foundation',
     subtitle: 'Intensive Structural Alignment & Rehabilitation Masterclass',
     price: 6000,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'Popular Workshop',
     badgeColor: 'emerald',
     coverImage: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80',
@@ -994,7 +1044,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     title: 'Sacred Soundscapes: CET-Certified Chanting & Kirtan',
     subtitle: 'Acoustic Sound Therapy & Vocal Resonance Immersion',
     price: 8600,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'CET Certified',
     badgeColor: 'amber',
     coverImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80',
@@ -1025,7 +1075,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     subtitle: '21-Day Guided Heart-Opening & Mobility Series',
     price: 6500,
     discountPrice: 5500,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'Early Bird Special',
     coverImage: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=1200&q=80',
     description: 'A 21-day structured journey to safely open thoracic spine mobility, strengthen posterior chain, and master deep backbends without lower back compression.',
@@ -1053,7 +1103,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     title: 'Pragya Boat Trip 2.0',
     subtitle: 'Ganga Sunrise River Meditative Experience',
     price: 1500,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'Popular Event',
     coverImage: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
     description: 'Sail down the sacred Ganges at dawn. Includes river pranayama, acoustic chanting, organic sattvic breakfast, and silent meditation.',
@@ -1082,7 +1132,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     title: 'Nepal Himalayan Sanctuary Retreat (Single Suite)',
     subtitle: '9-Day Luxury Mountain Meditation & Renewal Journey',
     price: 24375,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'Limited Availability',
     coverImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80',
     description: 'Immerse yourself in pristine Himalayan mountain air. Includes private luxury suite, daily organic sattvic dining, guided morning flow, and Buddhist monastery visits.',
@@ -1118,7 +1168,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     title: 'Unlimited Membership (12 Months)',
     subtitle: 'Full Year All-Access Sanctuary Pass',
     price: 21292,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'Best Value',
     coverImage: 'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?auto=format&fit=crop&w=1200&q=80',
     description: 'Complete 365-day unlimited access to all daily group classes, sound healing sessions, reformer pilates, and member-only events.',
@@ -1143,7 +1193,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     title: '8 Class / Month Membership',
     subtitle: 'Flexible Semi-Private Practice Pass',
     price: 8498,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'Most Popular',
     coverImage: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
     description: 'Ideal for practitioners attending twice a week. Unused class credits roll over for up to 30 days.',
@@ -1168,7 +1218,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     title: 'Professional 1-1 Health Consultation with Master Shoaib',
     subtitle: 'Personalized Neuro-Therapy & Spine Rehabilitation',
     price: 1250,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'Therapy Special',
     coverImage: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=1200&q=80',
     description: 'One-on-one diagnostic consultation focused on back pain recovery, spinal alignment, posture correction, and custom neuro-therapy protocols.',
@@ -1193,7 +1243,7 @@ export const INITIAL_DYNAMIC_PACKAGES: DynamicPackage[] = [
     title: '1-on-1 Private Session with Master Aarya',
     subtitle: 'Bespoke Asana Alignment & Subtle Energy Mastery',
     price: 1500,
-    currency: '₹',
+    currency: 'HK$',
     badge: 'Master Guide',
     coverImage: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80',
     description: 'Private immersion tailored to your personal goals. Includes advanced posture adjustments, personalized pranayama, and meditation instruction.',
@@ -1246,7 +1296,7 @@ function mapPhpPackageToDynamicPackage(item: any, catName: string): DynamicPacka
     subtitle: item.duration_label ? `${item.duration_label} · ${item.access_label || 'Sanctuary Pass'}` : (item.class_access || ''),
     price: basePrice || 1000,
     discountPrice: discountPrice,
-    currency: '₹',
+    currency: 'HK$',
     badge: item.discount_type ? 'Special Offer' : (item.promo_active ? 'Promo Deal' : undefined),
     coverImage: covers[pType],
     description: item.description || (item.benefit ? `Sanctuary Access: ${item.benefit} (${item.access_label || ''})` : 'Experience authentic traditional practice at Pragya Yog School Sanctuary.'),
@@ -1497,8 +1547,59 @@ export async function getBundleDetail(bundleId: string | number, token?: string)
 
 /** Get a single package's details */
 export async function getPackageDetail(packageId: string | number): Promise<any> {
-  const res = await fetchFromApi<any>('get-package-detail', { package_id: Number(packageId) });
-  return res?.data || null;
+  const reqId = Number(packageId);
+  if (isNaN(reqId) || reqId <= 0) return null;
+
+  const res = await fetchFromApi<any>('get-package-detail', { package_id: reqId });
+  if (res?.data && res.status !== false && res.status !== 'false') {
+    const fetchedId = Number(res.data.id || 0);
+
+    // If backend returned a fallback/unrelated package with a mismatched ID
+    if (fetchedId > 0 && reqId > 0 && fetchedId !== reqId) {
+      console.warn(`getPackageDetail: requested package ID ${reqId} but backend returned package ID ${fetchedId}. Filtering mismatch.`);
+      if (res.data.frequently_bought_together && Array.isArray(res.data.frequently_bought_together)) {
+        return {
+          id: String(reqId),
+          frequently_bought_together: res.data.frequently_bought_together
+        };
+      }
+      return null;
+    }
+
+    return {
+      ...res.data,
+      title: cleanHtmlEntities(res.data.title),
+      description: cleanHtmlEntities(res.data.description),
+      currency: 'HK$'
+    };
+  }
+  return null;
+}
+
+export function isTitleCompatible(pkgTitle: string, apiTitle: string): boolean {
+  if (!pkgTitle || !apiTitle) return false;
+  const p = pkgTitle.toLowerCase();
+  const a = apiTitle.toLowerCase();
+
+  // Strict check: TTC/Teacher vs Boat Trip
+  if ((p.includes('ttc') || p.includes('teacher')) && (a.includes('boat') || a.includes('trip') || a.includes('ganges'))) {
+    return false;
+  }
+  if ((p.includes('boat') || p.includes('trip') || p.includes('ganges')) && (a.includes('ttc') || a.includes('teacher'))) {
+    return false;
+  }
+
+  const normP = p.replace(/[^a-z0-9]/g, '');
+  const normA = a.replace(/[^a-z0-9]/g, '');
+  if (normP === normA) return true;
+
+  if (p.includes('ttc') && a.includes('ttc')) return true;
+  if (p.includes('teacher') && a.includes('teacher')) return true;
+  if (p.includes('workshop') && a.includes('workshop')) return true;
+  if (p.includes('retreat') && a.includes('retreat')) return true;
+  if (p.includes('private') && a.includes('private')) return true;
+
+  return normP.includes(normA) || normA.includes(normP);
 }
 
 /** Helper to normalize title strings for dash/hyphen/unicode agnostic matching */

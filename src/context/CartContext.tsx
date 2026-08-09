@@ -105,8 +105,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return [...prev, { ...item, quantity }];
     });
 
-    // Bug 22 fix: use item's currency field if provided, otherwise default to HK$
-    const currencyLabel = (item as any).currency === 'INR' ? '₹' : 'HK$';
+    const currencyLabel = 'HK$';
     showToast(item.title, `${currencyLabel} ${item.price.toLocaleString()}`);
   }, [user, showToast]);
 
@@ -123,7 +122,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         return [...prev, { ...item, quantity }];
       });
-      const currencyLabel = (item as any).currency === 'INR' ? '₹' : 'HK$';
+      const currencyLabel = 'HK$';
       showToast(item.title, `${currencyLabel} ${item.price.toLocaleString()}`);
       setPendingItem(null);
     }
