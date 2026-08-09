@@ -165,7 +165,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
         setBundlesList(bundles);
         // Record view analytics for bundles
         bundles.forEach((b) => {
-          if (b?.id) trackBundleEvent(b.id, 'view', user?.access_token).catch(() => {});
+          if (b?.id) trackBundleEvent(b.id, 'view', user?.access_token).catch(() => { });
         });
       }
       setLoading(false);
@@ -176,29 +176,89 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
     };
   }, [user?.access_token]);
 
-  const dataToUse = Object.keys(packagesData).length > 0 ? packagesData : fallbackPackages;
-  const categoriesList = ['ALL', 'Special Bundles', ...Object.keys(dataToUse).filter((c) => c !== 'Special Bundles')];
+  // Fixed category tabs specified by API & design: Private, Regular, TTC, Workshop, Event, Retreat
+  const categoriesList = ['ALL', 'Special Bundles', 'Private', 'Regular', 'TTC', 'Workshop', 'Event', 'Retreat'];
 
-  // Flatten packages list based on filter category
-  const allFlattenedPackages: (PackageItem & { groupCategory: string })[] = [];
-  Object.entries(dataToUse).forEach(([categoryKey, pkgItems]) => {
+  // Deduplicate and flatten packages across all categories
+  const packageMap = new Map<string | number, PackageItem & { groupCategory: string }>();
+  Object.entries(packagesData).forEach(([categoryKey, pkgItems]) => {
     if (Array.isArray(pkgItems)) {
       pkgItems.forEach((pkg) => {
-        allFlattenedPackages.push({
-          ...pkg,
-          groupCategory: categoryKey
-        });
+        const uniqueKey = pkg.id || pkg.packageID || `${categoryKey}-${pkg.title}`;
+        if (!packageMap.has(uniqueKey)) {
+          packageMap.set(uniqueKey, {
+            ...pkg,
+            groupCategory: categoryKey
+          });
+        }
       });
     }
   });
 
+  const allFlattenedPackages = Array.from(packageMap.values());
+
+  const isCategoryMatch = (p: PackageItem & { groupCategory: string }, activeTab: string): boolean => {
+    const active = activeTab.trim().toLowerCase();
+    const group = (p.groupCategory || '').trim().toLowerCase();
+    const direct = (p.category || '').trim().toLowerCase();
+    const pType = (p.type || '').trim().toLowerCase();
+
+    if (active === 'ttc') {
+      return (
+        group === 'ttc' || group === 'teacher training' || group === 'teacher_training' || group.includes('ttc') || group.includes('teacher') ||
+        direct === 'ttc' || direct === 'teacher training' || direct === 'teacher_training' || direct.includes('ttc') || direct.includes('teacher') ||
+        pType === 'teacher_training'
+      );
+    }
+
+    if (active === 'regular') {
+      return (
+        group === 'regular' || group === 'membership' || group.includes('unlimited') || group.includes('regular') ||
+        direct === 'regular' || direct === 'membership' || direct.includes('regular') ||
+        pType === 'regular'
+      );
+    }
+
+    if (active === 'private') {
+      return (
+        group === 'private' || group.includes('private') ||
+        direct === 'private' || direct.includes('private') ||
+        pType === 'private'
+      );
+    }
+
+    if (active === 'workshop') {
+      return group.includes('workshop') || direct.includes('workshop') || pType === 'workshop';
+    }
+
+    if (active === 'event') {
+      return group.includes('event') || direct.includes('event') || pType === 'event';
+    }
+
+    if (active === 'retreat') {
+      return group.includes('retreat') || direct.includes('retreat') || pType === 'retreat';
+    }
+
+    return group === active || direct === active || pType === active;
+  };
+
+  const getCategoryBadgeLabel = (p: PackageItem & { groupCategory?: string }): string => {
+    const cat = (p.groupCategory || p.category || '').trim().toLowerCase();
+    const type = (p.type || '').trim().toLowerCase();
+
+    if (cat === 'private' || cat.includes('private') || type === 'private') return 'Private';
+    if (cat === 'regular' || cat === 'membership' || cat.includes('unlimited') || cat.includes('regular') || type === 'regular') return 'Regular';
+    if (cat === 'ttc' || cat.includes('ttc') || cat.includes('teacher') || type === 'teacher_training') return 'TTC';
+    if (cat === 'workshop' || cat.includes('workshop') || type === 'workshop') return 'Workshop';
+    if (cat === 'event' || cat.includes('event') || type === 'event') return 'Event';
+    if (cat === 'retreat' || cat.includes('retreat') || type === 'retreat') return 'Retreat';
+
+    return p.groupCategory || p.category || 'Regular';
+  };
+
   const filteredPackages = activeCategory === 'ALL'
     ? allFlattenedPackages
-    : allFlattenedPackages.filter((p) => {
-        const cat = (p.groupCategory || '').toLowerCase();
-        const active = (activeCategory || '').toLowerCase();
-        return cat === active || cat.includes(active) || active.includes(cat);
-      });
+    : allFlattenedPackages.filter((p) => isCategoryMatch(p, activeCategory));
 
   // Live currentDate string formatted from local date
   const currentDateStr = new Date().toLocaleDateString('en-US', {
@@ -210,7 +270,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
 
   return (
     <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E' }}>
-      
+
       {/* Top Banner Header */}
       <section
         className="membership-top-banner"
@@ -452,7 +512,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
                         justifyContent: 'space-between',
                         position: 'relative',
                         boxShadow: '0 8px 28px rgba(148, 68, 38, 0.12)',
-                        border: '2px solid #D9A726',
+                        border: '1px solid rgba(0, 0, 0, 0.08)',
                         transition: 'transform 0.3s ease, box-shadow 0.3s ease'
                       }}
                     >
@@ -550,7 +610,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
                       <div className="package-card-button-box" style={{ padding: '0 24px 24px 24px' }}>
                         <button
                           onClick={() => {
-                            trackBundleEvent(bundle.id, 'click', user?.access_token).catch(() => {});
+                            trackBundleEvent(bundle.id, 'click', user?.access_token).catch(() => { });
                             addToCart({
                               id: `bundle-${bundle.id}`,
                               title: `${bundle.name} (Special Bundle)`,
@@ -607,7 +667,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
               const isPopular = idx === 1 || Boolean(pkg.packageID && pkg.packageID.includes('ANNUAL'));
               const numericAmount = typeof pkg.amount === 'number' ? pkg.amount : parseFloat(String(pkg.amount)) || 0;
               const periodText = pkg.period ? ` / ${pkg.period}` : ' / month';
-              
+
               const cardImages = [
                 "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop",
                 "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop",
@@ -627,8 +687,8 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     position: 'relative',
-                    boxShadow: isPopular ? '0 12px 32px rgba(198, 108, 80, 0.18)' : '0 6px 24px rgba(0, 0, 0, 0.04)',
-                    border: isPopular ? '2px solid #C66C50' : '1px solid rgba(0, 0, 0, 0.08)',
+                    boxShadow: '0 6px 24px rgba(0, 0, 0, 0.04)',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease'
                   }}
                 >
@@ -646,8 +706,8 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
                           position: 'absolute',
                           top: '16px',
                           right: '16px',
-                          backgroundColor: isPopular ? 'rgba(198, 108, 80, 0.15)' : 'rgba(255, 255, 255, 0.92)',
-                          color: isPopular ? '#C66C50' : '#21201E',
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          color: '#21201E',
                           borderRadius: '999px',
                           padding: '4px 14px',
                           fontSize: '11px',
@@ -657,13 +717,13 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
                           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                         }}
                       >
-                        {isPopular ? 'POPULAR RITUAL' : pkg.groupCategory || 'CLASSIC CHOICE'}
+                        {getCategoryBadgeLabel(pkg)}
                       </div>
                     </div>
 
                     {/* Card Inner Content Area */}
                     <div className="package-card-inner" style={{ padding: '24px 24px 20px 24px' }}>
-                      
+
                       {/* Sub-Category Upper Label */}
                       <div
                         style={{
@@ -676,7 +736,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
                           marginBottom: '6px'
                         }}
                       >
-                        {pkg.groupCategory === 'Membership' ? 'SIGNATURE SANCTUARY MEMBERSHIP' : 'PRAGYA YOG SPECIAL BUNDLE'}
+                        {getCategoryBadgeLabel(pkg)}
                       </div>
 
                       {/* Card Title */}

@@ -22,7 +22,6 @@ import { MembershipPage } from './components/MembershipPage';
 import { EventsPage } from './components/EventsPage';
 import { EventDetailPage } from './components/EventDetailPage';
 import { ScrollProgressBar } from './components/ScrollUI';
-import { AdminStandalonePage } from './components/admin/AdminStandalonePage';
 import { AIChatWidget } from './components/AIChatWidget';
 import { AiAssistantPage } from './components/AiAssistantPage';
 import { PackageDetailPage } from './components/PackageDetailPage';
@@ -34,7 +33,7 @@ import { PolicyPage } from './components/PolicyPage';
 import { Instructor, UpcomingEvent, DynamicPackage } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'admin' | 'ai-assistant' | 'community' | 'cart' | 'policy'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'ai-assistant' | 'community' | 'cart' | 'policy'>('home');
   const [membershipCategory, setMembershipCategory] = useState<string>('ALL');
   const [selectedPolicyId, setSelectedPolicyId] = useState<number>(3);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
@@ -319,25 +318,7 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('navigate-to-cart', handleCartNav);
   }, []);
 
-  useEffect(() => {
-    const path = window.location.pathname;
-    const hash = window.location.hash;
-    const search = window.location.search;
-    if (path.includes('pragya-admin') || hash.includes('pragya-admin') || search.includes('admin=true')) {
-      setCurrentView('admin');
-    }
-  }, []);
 
-  if (currentView === 'admin') {
-    return (
-      <AdminStandalonePage
-        onBackToSite={() => {
-          setCurrentView('home');
-          window.history.pushState(null, '', '/');
-        }}
-      />
-    );
-  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F5EFE5' }}>

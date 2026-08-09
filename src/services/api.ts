@@ -290,113 +290,289 @@ export async function getTeachers(): Promise<Instructor[]> {
 
 // 4. Packages & Bundles
 export async function getPackages(): Promise<Record<string, PackageItem[]>> {
-  const res = await fetchFromApi<any>('get-packages');
-  if (res && res.data && typeof res.data === 'object') {
-    return res.data;
-  }
-  return {
-    "Unlimited Memberships": [
-      {
-        id: 101,
-        packageID: "MEM-UNLIM-1M",
-        title: "Sanctuary Unlimited Monthly",
-        payment_type: 1,
-        amount: 280,
-        discount_type: "",
-        discount: "",
-        discount_remarks: "",
-        discount_start: null,
-        discount_end: null,
-        frequency: 1,
-        period: "month",
-        duration_type: 2,
-        duration_length: 1,
-        category: "Membership",
-        description: "Unlimited access to all studio yoga, pilates, and meditation classes with exclusive luxury amenities.",
-        features: ["Unlimited Mat & Reformer Classes", "Complimentary Hydrotherapy Access", "1 Monthly Private 1-on-1 Session", "15% Off Workshops & Retreats", "Guest Pass (2/month)"]
-      },
-      {
-        id: 102,
-        packageID: "MEM-ANNUAL",
-        title: "Pragya Master Annual Membership",
-        payment_type: 1,
-        amount: 2600,
-        discount_type: "fixed",
-        discount: "400",
-        discount_remarks: "Annual Savings",
-        discount_start: null,
-        discount_end: null,
-        frequency: 12,
-        period: "year",
-        duration_type: 2,
-        duration_length: 12,
-        category: "Membership",
-        description: "Our signature annual commitment for dedicated practitioners seeking complete holistic transformation.",
-        features: ["Unlimited Access to All Locations", "Personalized Health & Ayurvedic Consult", "Unlimited Guest Passes", "VIP Concierge & Preferred Booking", "Complimentary Mat & Towel Service"]
-      }
-    ],
-    "Private Sessions": [
+  const fallback: Record<string, PackageItem[]> = {
+    "Private": [
       {
         id: 12795,
         packageID: "PRIV-HEALTH-1",
-        title: "Professional 1-1 Health Consultation with Master Faculty",
+        title: "1-on-1 Health Consultation & Therapy",
         payment_type: 2,
         amount: 150,
-        discount_type: "",
-        discount: "",
-        discount_remarks: "",
-        discount_start: null,
-        discount_end: null,
-        frequency: 1,
-        period: "session",
-        duration_type: 1,
-        duration_length: 1,
+        currency: "₹",
+        benefit: "1-on-1 Personalized Session",
+        class_access: "Private Studio Suite",
+        duration_label: "90 Minutes",
+        access_label: "Single Session",
         category: "Private",
-        description: "Personalized 90-minute bio-individual health, postural, and yogic consultation.",
-        features: ["Comprehensive Postural & Bio-Analysis", "Customized Daily Asana & Pranayama Plan", "Ayurvedic Lifestyle Assessment", "Direct Q&A with Master Teacher"]
+        description: "Personalized 90-minute bio-individual health, postural, and yogic therapy consultation.",
+        features: [
+          "Comprehensive Postural & Bio-Analysis",
+          "Customized Daily Asana & Pranayama Plan",
+          "Ayurvedic Lifestyle Assessment",
+          "Direct Q&A with Master Teacher"
+        ]
       },
       {
         id: 12796,
         packageID: "PRIV-5PACK",
-        title: "Private 1-on-1 Movement & Sound Immersion (5 Sessions)",
+        title: "Private Movement & Sound Immersion (5 Sessions)",
         payment_type: 2,
         amount: 650,
+        currency: "₹",
         discount_type: "bundle",
         discount: "100",
-        discount_remarks: "",
-        discount_start: null,
-        discount_end: null,
-        frequency: 5,
-        period: "package",
-        duration_type: 1,
-        duration_length: 5,
+        discount_remarks: "Bundle Savings",
+        benefit: "5 Private Sessions Pack",
+        class_access: "Private Suite Access",
+        duration_label: "5 x 75 Minutes",
+        access_label: "5 Sessions Pack",
         category: "Private",
-        description: "Five dedicated 75-minute sessions tailored to your physical goals, injury recovery, or advanced practice.",
-        features: ["1-on-1 Asana Alignment & Modification", "Personalized Sound & Breathwork", "Flexible Schedule Booking", "Private Suite Access"]
+        description: "Five dedicated 75-minute sessions tailored to physical goals, injury recovery, or advanced practice.",
+        features: [
+          "1-on-1 Asana Alignment & Modification",
+          "Personalized Sound & Breathwork Reset",
+          "Flexible Schedule Priority Booking",
+          "Private Sanctuary Suite Access"
+        ]
       }
     ],
-    "Class Packs": [
+    "Regular": [
       {
-        id: 201,
-        packageID: "PACK-10",
-        title: "10-Class Sanctuary Pass",
+        id: 101,
+        packageID: "MEM-UNLIM-1M",
+        title: "Sanctuary Unlimited Monthly Pass",
         payment_type: 1,
-        amount: 220,
-        discount_type: "",
-        discount: "",
-        discount_remarks: "",
-        discount_start: null,
-        discount_end: null,
-        frequency: 10,
-        period: "3 months",
-        duration_type: 1,
-        duration_length: 10,
-        category: "Group",
-        description: "Flexible class pack valid for all morning, afternoon, and evening group sessions.",
-        features: ["Valid for 3 Months", "Shareable with 1 Friend", "Priority Waitlist Status"]
+        amount: 280,
+        currency: "₹",
+        benefit: "Unlimited Daily Access",
+        class_access: "All Regular Classes",
+        duration_label: "1 Month",
+        access_label: "Monthly Pass",
+        category: "Regular",
+        description: "Unlimited access to all studio yoga, pilates, and meditation group sessions.",
+        features: [
+          "Unlimited Group Classes",
+          "Free Mat Storage & Amenities",
+          "15% Off Workshops & Retreats",
+          "2 Guest Passes Per Month"
+        ]
+      },
+      {
+        id: 102,
+        packageID: "MEM-ANNUAL",
+        title: "Pragya Master Annual Regular Pass",
+        payment_type: 1,
+        amount: 2600,
+        currency: "₹",
+        discount_type: "fixed",
+        discount: "400",
+        discount_remarks: "Annual Savings",
+        benefit: "Full 365 Days Access",
+        class_access: "All Regular Classes",
+        duration_label: "12 Months",
+        access_label: "Annual Membership",
+        category: "Regular",
+        description: "Complete 1-year unlimited access with VIP perks, free alignment checkups, and preferred seats.",
+        features: [
+          "Full 365 Days Unlimited Access",
+          "Complimentary Private Alignment Session",
+          "Unlimited Guest Passes",
+          "Free Mat & Towel Amenities"
+        ]
+      }
+    ],
+    "TTC": [
+      {
+        id: 12760,
+        packageID: "TTC-200HR",
+        title: "200-Hour Master Yoga Teacher Training (TTC)",
+        payment_type: 1,
+        amount: 1850,
+        currency: "₹",
+        discount_type: "fixed",
+        discount: "200",
+        discount_remarks: "Early Bird",
+        benefit: "Yoga Alliance USA Certification",
+        class_access: "TTC Intensive Modules",
+        duration_label: "200 Hours (28 Days)",
+        access_label: "Full Certification",
+        category: "TTC",
+        description: "Comprehensive 200-Hour Yoga Teacher Training Course accredited by Yoga Alliance USA.",
+        features: [
+          "200-Hour RYT International Certification",
+          "Comprehensive Printed & Digital Manuals",
+          "Anatomy & Biomechanics Labs",
+          "Lifetime Alumni Mentorship Network"
+        ]
+      },
+      {
+        id: 12761,
+        packageID: "TTC-300HR",
+        title: "300-Hour Advanced Multi-Style Teacher Training (TTC)",
+        payment_type: 1,
+        amount: 2400,
+        currency: "₹",
+        discount_type: "fixed",
+        discount: "300",
+        discount_remarks: "Advance Enrollment",
+        benefit: "500-Hour RYT Pathway Certification",
+        class_access: "Advanced TTC Sanctuary Studio",
+        duration_label: "300 Hours (35 Days)",
+        access_label: "Advanced Master Certification",
+        category: "TTC",
+        description: "Advanced 300-Hour immersion for certified teachers focusing on therapeutic sequencing, advanced pranayama, and philosophy.",
+        features: [
+          "300-Hour Advanced RYT Accreditation",
+          "Mastery of Advanced Asana Adjustments",
+          "Therapeutic Yoga Protocols & Bio-Mechanics",
+          "1-on-1 Mentorship with Grand Master Faculty"
+        ]
+      },
+      {
+        id: 12762,
+        packageID: "TTC-50HR-YIN",
+        title: "50-Hour Yin Yoga & Restorative Immersion Course",
+        payment_type: 1,
+        amount: 550,
+        currency: "₹",
+        benefit: "YACEP Continuing Education Credits",
+        class_access: "Yin Immersion Studio",
+        duration_label: "50 Hours (7 Days)",
+        access_label: "Specialist Certification",
+        category: "TTC",
+        description: "Specialized 7-day Yin Yoga immersion covering meridian line anatomy, fascia science, and deep restorative sequencing.",
+        features: [
+          "50-Hour YACEP Continuing Education Credits",
+          "Fascial Anatomy & Meridian Science Labs",
+          "Myofascial Release Techniques",
+          "Sound Bath Integration Practices"
+        ]
+      }
+    ],
+    "Workshop": [
+      {
+        id: 12794,
+        packageID: "WRK-REALIGN",
+        title: "Yog Therapy 2.0 – Realign Your Foundation",
+        payment_type: 1,
+        amount: 120,
+        currency: "₹",
+        benefit: "Structural Therapy Protocol",
+        class_access: "Masterclass Access",
+        duration_label: "3 Hours Intensive",
+        access_label: "Workshop Pass",
+        category: "Workshop",
+        description: "Deconstruct structural imbalances. Learn spine rehab, pelvic alignment, and therapeutic protocols.",
+        features: [
+          "Interactive Clinical Therapy Session",
+          "Personalized Biomechanical Assessment",
+          "Take-home Practice Routine PDF"
+        ]
+      },
+      {
+        id: 12798,
+        packageID: "WRK-SOUND",
+        title: "Sacred Soundscapes: Chanting & Sound Healing",
+        payment_type: 1,
+        amount: 180,
+        currency: "₹",
+        benefit: "CET Certification of Completion",
+        class_access: "Acoustic Sanctuary",
+        duration_label: "6 Hours Immersion",
+        access_label: "CET Workshop",
+        category: "Workshop",
+        description: "Immerse in ancient Vedic mantras, singing bowl acoustics, and vocal resonance techniques.",
+        features: [
+          "CET Certification of Completion",
+          "Tibetan Bowl & Gong Meditation",
+          "Sanskrit Pronunciation & Guide"
+        ]
+      }
+    ],
+    "Event": [
+      {
+        id: 12791,
+        packageID: "EVT-BACKBEND",
+        title: "Back Bend Intensive 2026",
+        payment_type: 1,
+        amount: 130,
+        currency: "₹",
+        discount_type: "fixed",
+        discount: "20",
+        benefit: "Thoracic & Shoulder Mobility",
+        class_access: "Special Event Hall",
+        duration_label: "21-Day Event Series",
+        access_label: "Intensive Pass",
+        category: "Event",
+        description: "21-day structured journey to safely open thoracic spine mobility and master deep backbends.",
+        features: [
+          "7 Dedicated In-person Sessions",
+          "Thoracic Mobility & Shoulder Stacking",
+          "Daily Practice Tracker"
+        ]
+      },
+      {
+        id: 12792,
+        packageID: "EVT-BOAT",
+        title: "Pragya Boat Trip 2.0 – Ganges Dawn Meditation",
+        payment_type: 1,
+        amount: 45,
+        currency: "₹",
+        benefit: "Sacred Ganges Sunrise Sail",
+        class_access: "Private River Cruise",
+        duration_label: "3 Hours",
+        access_label: "Event Ticket",
+        category: "Event",
+        description: "Sail down the sacred Ganges at dawn with river pranayama, acoustic chanting, and sattvic breakfast.",
+        features: [
+          "Private Boat Cruise on River Ganges",
+          "Guided Dawn Meditation & Breathwork",
+          "Organic Herbal Tea & Breakfast Box"
+        ]
+      }
+    ],
+    "Retreat": [
+      {
+        id: 12725,
+        packageID: "RET-NEPAL",
+        title: "Nepal Himalayan Sanctuary Retreat",
+        payment_type: 1,
+        amount: 2450,
+        currency: "₹",
+        benefit: "Luxury Suite & Organic Dining",
+        class_access: "Retreat Sanctuary",
+        duration_label: "9 Days / 8 Nights",
+        access_label: "Full Retreat Pass",
+        category: "Retreat",
+        description: "Immerse in pristine Himalayan mountain air with private luxury suite, organic dining, and sound healing.",
+        features: [
+          "9 Days / 8 Nights Luxury Suite Stay",
+          "3 Daily Gourmet Sattvic Meals",
+          "Daily Hatha & Yin Sound Healing",
+          "Guided Monastery Tours & Mountain Treks"
+        ]
       }
     ]
   };
+
+  const res = await fetchFromApi<any>('get-packages');
+  if (res && res.data && typeof res.data === 'object' && Object.keys(res.data).length > 0) {
+    const merged: Record<string, PackageItem[]> = { ...res.data };
+
+    // Fill fallback packages if any category in the live API response is empty ([])
+    Object.keys(fallback).forEach((catKey) => {
+      const matchKey = Object.keys(merged).find(
+        (k) => k.trim().toLowerCase() === catKey.trim().toLowerCase()
+      );
+      if (!matchKey || !Array.isArray(merged[matchKey]) || merged[matchKey].length === 0) {
+        merged[catKey] = fallback[catKey];
+      }
+    });
+
+    return merged;
+  }
+
+  return fallback;
 }
 
 // 5. Upcoming Events & Retreats
