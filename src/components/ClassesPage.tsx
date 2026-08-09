@@ -1067,7 +1067,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                     const keyStr = `${y}-${m}-${dayStr}`;
 
                     const rawDayItems = weeklySchedules[keyStr] || [];
-                    const displayDayItems = rawDayItems.length > 0 ? rawDayItems : (dIdx % 2 === 0 ? fallbackClasses.slice(0, 3) : fallbackClasses.slice(2, 5));
+                    const displayDayItems = rawDayItems.length > 0 ? rawDayItems : fallbackClasses;
 
                     // Filter items according to active filters
                     const filteredDayItems = displayDayItems.filter((item) => {
