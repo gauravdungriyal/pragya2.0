@@ -1018,7 +1018,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
             {quadrupledClassStyles.map((item, idx) => (
               <div
                 key={idx}
-                onClick={() => onOpenBooking('class', item.title)}
+                onClick={() => {
+                  if (onNavigateSection) {
+                    onNavigateSection('classes');
+                  } else {
+                    onOpenBooking('class', item.title);
+                  }
+                }}
                 style={{
                   width: '580px',
                   height: '380px',
@@ -1117,7 +1123,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
                       textTransform: 'uppercase'
                     }}
                   >
-                    <span>LEARN MORE</span>
+                    <span>BOOK NOW</span>
                     <ArrowRight size={15} color="#FFFFFF" />
                   </div>
                 </div>
