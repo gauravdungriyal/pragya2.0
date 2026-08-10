@@ -234,3 +234,24 @@ export interface PolicyItem {
   [key: string]: any;
 }
 
+export type MerchandiseCategory = 'mats' | 'apparel' | 'props' | 'wellness' | 'meditation';
+
+export interface MerchandiseItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  category: MerchandiseCategory;
+  price: number;
+  discountPrice?: number;
+  currency?: string;
+  image: string;
+  badge?: string;
+  badgeColor?: string;
+  description: string;
+  specs?: string[];
+  isActive: boolean;
+  isFeatured?: boolean;
+  stockStatus?: 'In Stock' | 'Limited Stock' | 'Pre-Order';
+  materialInfo?: string;
+}
+

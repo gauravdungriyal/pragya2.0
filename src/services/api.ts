@@ -1,4 +1,4 @@
-import { ClassScheduleItem, Instructor, PackageItem, UpcomingEvent, DailyQuote, FaqItem, FilterOptions, DynamicPackage, PackageType, PolicyItem } from '../types';
+import { ClassScheduleItem, Instructor, PackageItem, UpcomingEvent, DailyQuote, FaqItem, FilterOptions, DynamicPackage, PackageType, PolicyItem, MerchandiseItem, MerchandiseCategory } from '../types';
 import { API_BASE_URL } from '../config/apiConfig';
 
 export function cleanHtmlEntities(rawText?: string): string {
@@ -2275,4 +2275,224 @@ export async function getEvents(): Promise<UpcomingEvent[]> {
     console.warn('Failed to fetch events from API:', err);
   }
   return [];
+}
+
+// ─────────────────────────────────────────────────────────────
+// MERCHANDISE STORE CRUD & INITIAL DATA
+// ─────────────────────────────────────────────────────────────
+const MERCHANDISE_STORAGE_KEY = 'pragya_merchandise_items_v1';
+
+export const INITIAL_MERCHANDISE_ITEMS: MerchandiseItem[] = [
+  {
+    id: 'merch-101',
+    title: 'Pragya Pro Alignment Jute & Rubber Yoga Mat',
+    subtitle: '5mm Heavy Duty Cushioning with Laser Etched Alignment Markers',
+    category: 'mats',
+    price: 680,
+    discountPrice: 780,
+    currency: 'HK$',
+    image: 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=1000&q=80',
+    badge: 'Best Seller',
+    badgeColor: 'amber',
+    description: 'Engineered for ultimate stability and sweat-resistant grip. Crafted from 100% natural tree rubber and organic jute fibers with laser-guided posture alignment lines.',
+    specs: [
+      '5mm Ultra-Density Cushioning for Joint Protection',
+      'Laser-Etched Alignment Guidelines',
+      '100% Sustainable Tree Rubber & Jute Core',
+      'Sweat-Proof Non-Slip Textured Surface'
+    ],
+    materialInfo: '100% Natural Rubber + Jute Matrix (PVC Free)',
+    isActive: true,
+    isFeatured: true,
+    stockStatus: 'In Stock'
+  },
+  {
+    id: 'merch-102',
+    title: 'Hand-Hammered Himalayan 7-Metal Singing Bowl Set',
+    subtitle: 'Acoustic Sound Therapy Set with Leather Striker & Silk Cushion',
+    category: 'meditation',
+    price: 1250,
+    discountPrice: 1450,
+    currency: 'HK$',
+    image: 'https://images.unsplash.com/photo-1593811167562-9cef47bfc4d7?auto=format&fit=crop&w=1000&q=80',
+    badge: 'Sound Therapy Grade',
+    badgeColor: 'amber',
+    description: 'Forged by master artisans in the Nepal Himalayas using traditional 7-metal alloy harmonic tuning. Produces deep, sustained resonant tones ideal for chakra balancing and meditation.',
+    specs: [
+      'Harmonically Tuned to F Frequency (Heart/Crown Resonance)',
+      'Includes Rosewood & Suede Leather Striker Pad',
+      'Hand-Embroidered Silk Cushion Included',
+      '7-Inch Diameter Heavy Gauge Alloy'
+    ],
+    materialInfo: 'Authentic 7-Metal Sacred Alloy (Copper, Tin, Bronze, Silver)',
+    isActive: true,
+    isFeatured: true,
+    stockStatus: 'In Stock'
+  },
+  {
+    id: 'merch-103',
+    title: 'Organic Cotton Himalayan Practice Kurta & Dhoti Set',
+    subtitle: '100% GOTS Certified Breathable Yogic Attire for Men & Women',
+    category: 'apparel',
+    price: 520,
+    currency: 'HK$',
+    image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1000&q=80',
+    badge: '100% Organic',
+    badgeColor: 'emerald',
+    description: 'Hand-loomed in Rishikesh using unbleached organic cotton. Designed with loose, unrestrictive cuts allowing complete freedom of movement during Pranayama and Asana practice.',
+    specs: [
+      'GOTS Certified 100% Unbleached Organic Cotton',
+      'Ultra-Breathable Airflow Stitching',
+      'Unisex Relaxed Fit with Adjustable Waist Drawstring',
+      'Pre-shrunk Natural Plant Dye Finish'
+    ],
+    materialInfo: '100% Organic Handloom Cotton',
+    isActive: true,
+    isFeatured: true,
+    stockStatus: 'In Stock'
+  },
+  {
+    id: 'merch-104',
+    title: 'Ergonomic Buckwheat Meditation Zafu Cushion',
+    subtitle: 'Spinal Realignment Cushion for Seated Pranayama & Dhyana',
+    category: 'meditation',
+    price: 450,
+    currency: 'HK$',
+    image: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1000&q=80',
+    badge: 'Ergonomic Posture',
+    badgeColor: 'amber',
+    description: 'Conforms naturally to hip contours, tilting the pelvis forward to relieve lower back pressure during extended meditation sessions. Filled with triple-cleaned organic buckwheat hulls.',
+    specs: [
+      'Adjustable Organic Buckwheat Hulls Fill',
+      'Removable & Machine Washable Canvas Outer Cover',
+      'Sturdy Carry Handle for Travel',
+      'Supports Healthy Lumbar Alignment'
+    ],
+    materialInfo: 'Heavy-duty Organic Canvas + Buckwheat Hulls',
+    isActive: true,
+    isFeatured: false,
+    stockStatus: 'In Stock'
+  },
+  {
+    id: 'merch-105',
+    title: 'Pure Ayurvedic Tamra Copper Water Bottle (900ml)',
+    subtitle: 'Hand-Engraved Pure Copper Hydration Vessel',
+    category: 'wellness',
+    price: 280,
+    currency: 'HK$',
+    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=1000&q=80',
+    badge: 'Ayurvedic Grade',
+    badgeColor: 'emerald',
+    description: 'Imbues drinking water with natural copper ions according to classical Ayurvedic Tamra Jal traditions. Features a silicone leak-proof cap and protective lacquer coat.',
+    specs: [
+      '99.9% Pure Food Grade Copper Construction',
+      'Silicone O-Ring Leak Proof Screw Top Cap',
+      'Naturally Antimicrobial & Water Alkalizing',
+      'Hand-Hammered Floral Engraving'
+    ],
+    materialInfo: '99.9% Pure Tested Copper',
+    isActive: true,
+    isFeatured: true,
+    stockStatus: 'In Stock'
+  },
+  {
+    id: 'merch-106',
+    title: 'Natural High-Density Cork Yoga Blocks (Set of 2)',
+    subtitle: 'Sustainable Eco-Cork Blocks for Deep Support & Extension',
+    category: 'props',
+    price: 320,
+    currency: 'HK$',
+    image: 'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=1000&q=80',
+    badge: 'Eco-Sustainable',
+    badgeColor: 'emerald',
+    description: 'Superior grip and firm support compared to foam blocks. Harvested naturally without cutting cork trees, featuring rounded countoured edges for wrist & back comfort.',
+    specs: [
+      'Set of 2 Heavy Duty High Density Cork Blocks',
+      'Beveled Edges for Comfort Grip',
+      'Naturally Antimicrobial & Odor Resistant',
+      'Dimensions: 9" x 6" x 4"'
+    ],
+    materialInfo: '100% Sustainable Renewable Cork',
+    isActive: true,
+    isFeatured: false,
+    stockStatus: 'In Stock'
+  },
+  {
+    id: 'merch-107',
+    title: '108 Himalayan Rudraksha & Sandalwood Japa Mala',
+    subtitle: 'Hand-Knotted Sacred Beads for Mantra Chanting & Mindfulness',
+    category: 'meditation',
+    price: 390,
+    currency: 'HK$',
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1000&q=80',
+    badge: 'Hand-Knotted',
+    badgeColor: 'amber',
+    description: 'String of 108 authentic Panchmukhi Rudraksha seeds hand-knotted between aromatic Mysore Sandalwood spacers and finished with a traditional silk tassel.',
+    specs: [
+      '108 Authentic Panchmukhi Rudraksha Beads',
+      'Aromatic Natural Mysore Sandalwood Spacers',
+      'Hand-Knotted Silk Cord for Durability',
+      'Traditional Silk Tassel Guru Bead'
+    ],
+    materialInfo: 'Natural Rudraksha Seeds + Sandalwood',
+    isActive: true,
+    isFeatured: false,
+    stockStatus: 'In Stock'
+  },
+  {
+    id: 'merch-108',
+    title: 'Pragya Bamboo Soft Savasana & Meditation Wrap',
+    subtitle: 'Therapeutic Thermal Layer for Deep Post-Practice Relaxation',
+    category: 'apparel',
+    price: 480,
+    currency: 'HK$',
+    image: 'https://images.unsplash.com/photo-1510894347713-fc3ed6fdf539?auto=format&fit=crop&w=1000&q=80',
+    badge: 'Ultra-Soft Bamboo',
+    badgeColor: 'amber',
+    description: 'Wrap yourself in buttery-soft bamboo thermal fabric to retain body heat during Savasana or Nidra practices. Naturally breathable and hypo-allergenic.',
+    specs: [
+      '95% Organic Bamboo Viscose + 5% Elastane',
+      'Hypoallergenic & Antibacterial Properties',
+      'Versatile Drape Style for Studio & Home',
+      'Compact & Lightweight Carry Size'
+    ],
+    materialInfo: 'Organic Bamboo Viscose Fabric',
+    isActive: true,
+    isFeatured: false,
+    stockStatus: 'In Stock'
+  }
+];
+
+export async function getMerchandiseItems(): Promise<MerchandiseItem[]> {
+  try {
+    const stored = localStorage.getItem(MERCHANDISE_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn('Failed to parse merchandise items from storage:', e);
+  }
+  return INITIAL_MERCHANDISE_ITEMS;
+}
+
+export async function saveMerchandiseItem(item: MerchandiseItem): Promise<MerchandiseItem[]> {
+  const current = await getMerchandiseItems();
+  const idx = current.findIndex(m => m.id === item.id);
+  let updated: MerchandiseItem[];
+  if (idx >= 0) {
+    updated = [...current];
+    updated[idx] = item;
+  } else {
+    updated = [item, ...current];
+  }
+  localStorage.setItem(MERCHANDISE_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+}
+
+export async function deleteMerchandiseItem(id: string): Promise<MerchandiseItem[]> {
+  const current = await getMerchandiseItems();
+  const updated = current.filter(m => m.id !== id);
+  localStorage.setItem(MERCHANDISE_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
 }

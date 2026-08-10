@@ -10,7 +10,7 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onNavigateSection: (sectionId: string) => void;
   currentView?: string;
-  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers' | 'membership' | 'events' | 'ai-assistant' | 'cart' | 'admin') => void;
+  onViewChange?: (view: 'home' | 'about' | 'classes' | 'teachers' | 'membership' | 'events' | 'merchandise' | 'ai-assistant' | 'cart' | 'admin') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { user, profile } = useAuth();
   const { cartCount, openCart } = useCart();
   const [activeTab, setActiveTab] = useState(
-    currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : currentView === 'membership' ? 'Membership & Packages' : currentView === 'events' ? 'Events' : currentView === 'community' ? 'Community' : 'Home'
+    currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : currentView === 'membership' ? 'Membership & Packages' : currentView === 'events' ? 'Events' : currentView === 'merchandise' ? 'Shop' : currentView === 'community' ? 'Community' : 'Home'
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -66,6 +66,8 @@ export const Header: React.FC<HeaderProps> = ({
       setActiveTab('Membership & Packages');
     } else if (currentView === 'events') {
       setActiveTab('Events');
+    } else if (currentView === 'merchandise') {
+      setActiveTab('Shop');
     } else if (currentView === 'community') {
       setActiveTab('Community');
     } else if (currentView === 'home') {
@@ -76,6 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
   const navItems = [
     { label: 'Home', id: 'hero', type: 'section' },
     { label: 'About', id: 'about', type: 'page' },
+    { label: 'Shop', id: 'merchandise', type: 'page' },
     { label: 'Events', id: 'events', type: 'page' },
     { label: 'Classes', id: 'classes', type: 'page' },
     { label: 'Teachers', id: 'teachers', type: 'page' },
@@ -104,6 +107,9 @@ export const Header: React.FC<HeaderProps> = ({
 
     if (item.label === 'About' || item.id === 'about') {
       if (onViewChange) onViewChange('about');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (item.label === 'Shop' || item.id === 'merchandise') {
+      if (onViewChange) onViewChange('merchandise');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item.label === 'Classes' || item.id === 'classes') {
       if (onViewChange) onViewChange('classes');
@@ -245,33 +251,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right: Action Buttons */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-        <button
-          onClick={handleScheduleRedirect}
-          className="hdr-action-btn"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            backgroundColor: 'rgba(255, 255, 255, 0.65)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            border: '1px solid rgba(33, 32, 30, 0.25)',
-            color: '#21201E',
-            borderRadius: '999px',
-            padding: '0 16px',
-            height: '36px',
-            fontSize: '11px',
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          <Calendar size={13} color="#21201E" />
-          <span>SCHEDULE</span>
-        </button>
-
         {/* Shopping Cart Button */}
         <button
           onClick={() => onViewChange && onViewChange('cart')}

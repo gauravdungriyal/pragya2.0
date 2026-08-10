@@ -30,12 +30,13 @@ import { PackageReserveModal } from './components/PackageReserveModal';
 import { GuestBookingModal } from './components/GuestBookingModal';
 import { CartPage } from './components/CartPage';
 import { PolicyPage } from './components/PolicyPage';
+import { MerchandiseStorePage } from './components/MerchandiseStorePage';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLogin } from './components/admin/AdminLogin';
 import { Instructor, UpcomingEvent, DynamicPackage } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'ai-assistant' | 'community' | 'cart' | 'policy' | 'admin'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'merchandise' | 'ai-assistant' | 'community' | 'cart' | 'policy' | 'admin'>('home');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('pragya_admin_auth') === 'true';
   });
@@ -470,6 +471,8 @@ export const App: React.FC = () => {
             onViewChange={(view) => handleViewChange(view as any)}
             onOpenBooking={handleOpenBooking}
           />
+        ) : currentView === 'merchandise' ? (
+          <MerchandiseStorePage onBackToHome={() => handleViewChange('home')} />
         ) : currentView === 'policy' ? (
           <PolicyPage
             policyId={selectedPolicyId}

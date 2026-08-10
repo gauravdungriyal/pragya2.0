@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Package, Calendar, Plus, Edit2, Trash2, CheckCircle, XCircle, Star, Layers, Tag, CheckSquare, Square } from 'lucide-react';
-import { DynamicPackage, UpcomingEvent, BundleItem } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { Package, Calendar, Plus, Edit2, Trash2, CheckCircle, XCircle, Star, Layers, Tag, CheckSquare, Square, ShoppingBag } from 'lucide-react';
+import { DynamicPackage, UpcomingEvent, BundleItem, MerchandiseItem } from '../../types';
 import { PackageModal } from './PackageModal';
 import { EventModal } from './EventModal';
+import { MerchandiseModal } from './MerchandiseModal';
+import { getMerchandiseItems, saveMerchandiseItem, deleteMerchandiseItem } from '../../services/api';
 
 interface PackageManagerProps {
   packages: DynamicPackage[];
@@ -25,7 +27,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
   onDeleteEvent,
   onSaveBundle,
 }) => {
-  const [subTab, setSubTab] = useState<'packages' | 'bundles' | 'events'>('packages');
+  const [subTab, setSubTab] = useState<'packages' | 'bundles' | 'events' | 'merchandise'>('packages');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
 
   const [packageModalOpen, setPackageModalOpen] = useState(false);
@@ -34,11 +36,34 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<UpcomingEvent | null>(null);
 
+  // Merchandise State
+  const [merchandiseItems, setMerchandiseItems] = useState<MerchandiseItem[]>([]);
+  const [merchandiseModalOpen, setMerchandiseModalOpen] = useState(false);
+  const [selectedMerchandise, setSelectedMerchandise] = useState<MerchandiseItem | null>(null);
+
   // Bundle Configurator State
   const [selectedPackageIds, setSelectedPackageIds] = useState<string[]>([]);
   const [newBundleTitle, setNewBundleTitle] = useState('');
   const [newBundlePrice, setNewBundlePrice] = useState<number>(0);
   const [newBundleOrigPrice, setNewBundleOrigPrice] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchMerch = async () => {
+      const data = await getMerchandiseItems();
+      setMerchandiseItems(data);
+    };
+    fetchMerch();
+  }, []);
+
+  const handleSaveMerchandise = async (item: MerchandiseItem) => {
+    const updated = await saveMerchandiseItem(item);
+    setMerchandiseItems(updated);
+  };
+
+  const handleDeleteMerchandise = async (id: string) => {
+    const updated = await deleteMerchandiseItem(id);
+    setMerchandiseItems(updated);
+  };
 
   const filteredPackages = packages.filter((pkg) => {
     if (categoryFilter === 'ALL') return true;
@@ -74,6 +99,16 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
   const handleOpenEditEvent = (evt: UpcomingEvent) => {
     setSelectedEvent(evt);
     setEventModalOpen(true);
+  };
+
+  const handleOpenAddMerchandise = () => {
+    setSelectedMerchandise(null);
+    setMerchandiseModalOpen(true);
+  };
+
+  const handleOpenEditMerchandise = (item: MerchandiseItem) => {
+    setSelectedMerchandise(item);
+    setMerchandiseModalOpen(true);
   };
 
   // Toggle package selection in Bundle Configurator
@@ -158,6 +193,26 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
           </button>
 
           <button
+            onClick={() => setSubTab('merchandise')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '12px',
+              fontWeight: 800,
+              fontSize: '13px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              border: subTab === 'merchandise' ? 'none' : '1px solid #E7E5E4',
+              backgroundColor: subTab === 'merchandise' ? '#B45309' : '#F5F5F4',
+              color: subTab === 'merchandise' ? '#FFFFFF' : '#44403C',
+            }}
+          >
+            <ShoppingBag className="w-4 h-4" /> Store Merchandise ({merchandiseItems.length})
+          </button>
+
+          <button
             onClick={() => setSubTab('bundles')}
             style={{
               padding: '10px 20px',
@@ -220,6 +275,28 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
           </button>
         )}
 
+        {subTab === 'merchandise' && (
+          <button
+            onClick={handleOpenAddMerchandise}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#B45309',
+              color: '#FFFFFF',
+              fontWeight: 800,
+              borderRadius: '12px',
+              fontSize: '14px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              border: 'none',
+              boxShadow: '0 3px 10px rgba(180,83,9,0.3)',
+            }}
+          >
+            <Plus className="w-4 h-4" /> Add Merchandise Item
+          </button>
+        )}
+
         {subTab === 'events' && (
           <button
             onClick={handleOpenAddEvent}
@@ -274,7 +351,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
             ))}
           </div>
 
-          {/* Package Grid with Generous Outer Gaps & Padding */}
+          {/* Package Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px' }}>
             {filteredPackages.map((pkg) => (
               <div
@@ -341,7 +418,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
                   )}
                 </div>
 
-                {/* Footer Controls with Padding & Margin */}
+                {/* Footer Controls */}
                 <div style={{ paddingTop: '16px', marginTop: '12px', borderTop: '1px solid #F5F5F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <button
                     onClick={() => onSavePackage({ ...pkg, isActive: !pkg.isActive })}
@@ -377,7 +454,96 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 2: INTERACTIVE BUNDLE CONFIGURATOR */}
+      {/* TAB 2: STORE MERCHANDISE MANAGER */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {subTab === 'merchandise' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '28px' }}>
+            {merchandiseItems.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E7E5E4',
+                  borderRadius: '20px',
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '20px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 12px', borderRadius: '999px', backgroundColor: '#FEF3C7', color: '#78350F', border: '1px solid #FDE68A' }}>
+                      {item.category.toUpperCase()}
+                    </span>
+                    <span style={{ fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '999px', backgroundColor: item.isActive ? '#ECFDF5' : '#FEF2F2', color: item.isActive ? '#065F46' : '#991B1B', border: item.isActive ? '1px solid #A7F3D0' : '1px solid #FECDD3' }}>
+                      {item.isActive ? 'Active' : 'Hidden'}
+                    </span>
+                  </div>
+
+                  <div style={{ height: '140px', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#FAF7F2' }}>
+                    <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+
+                  <div>
+                    <h3 style={{ fontWeight: 800, color: '#1C1917', fontSize: '17px', margin: '4px 0 2px 0', lineHeight: '1.4' }}>{item.title}</h3>
+                    {item.subtitle && <p style={{ fontSize: '12px', color: '#78716C', margin: 0 }}>{item.subtitle}</p>}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                    <span style={{ fontSize: '22px', fontWeight: 900, color: '#B45309' }}>
+                      {item.currency || 'HK$'} {item.price}
+                    </span>
+                    {item.discountPrice && (
+                      <span style={{ fontSize: '12px', color: '#A8A29E', textDecoration: 'line-through', fontWeight: 600 }}>
+                        ${item.discountPrice}
+                      </span>
+                    )}
+                  </div>
+
+                </div>
+
+                <div style={{ paddingTop: '14px', borderTop: '1px solid #F5F5F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <button
+                    onClick={() => handleSaveMerchandise({ ...item, isActive: !item.isActive })}
+                    style={{ fontSize: '12px', color: '#57534E', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    {item.isActive ? <XCircle className="w-4 h-4 text-rose-500" /> : <CheckCircle className="w-4 h-4 text-emerald-600" />}
+                    {item.isActive ? 'Hide Item' : 'Show Item'}
+                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={() => handleOpenEditMerchandise(item)}
+                      style={{ padding: '8px 12px', backgroundColor: '#FEF3C7', color: '#92400E', borderRadius: '10px', border: '1px solid #FDE68A', cursor: 'pointer' }}
+                      title="Edit Product"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMerchandise(item.id)}
+                      style={{ padding: '8px 12px', backgroundColor: '#FEF2F2', color: '#991B1B', borderRadius: '10px', border: '1px solid #FECDD3', cursor: 'pointer' }}
+                      title="Delete Product"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            ))}
+          </div>
+
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* TAB 3: INTERACTIVE BUNDLE CONFIGURATOR */}
       {/* ───────────────────────────────────────────────────────────── */}
       {subTab === 'bundles' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -562,7 +728,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 3: EVENT SPOTLIGHT */}
+      {/* TAB 4: EVENT SPOTLIGHT */}
       {/* ───────────────────────────────────────────────────────────── */}
       {subTab === 'events' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
@@ -618,6 +784,13 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
         onClose={() => setEventModalOpen(false)}
         onSave={onSaveEvent}
         initialData={selectedEvent}
+      />
+
+      <MerchandiseModal
+        isOpen={merchandiseModalOpen}
+        onClose={() => setMerchandiseModalOpen(false)}
+        onSave={handleSaveMerchandise}
+        initialData={selectedMerchandise}
       />
 
     </div>
