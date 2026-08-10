@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Phone, Mail, MapPin, Facebook, Twitter, Youtube, Linkedin, Instagram } from 'lucide-react';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 interface NewsletterFooterProps {
   onNavigateSection?: (sectionId: string) => void;
@@ -10,8 +11,12 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
   onNavigateSection,
   onOpenBooking
 }) => {
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
   const quickLinks = [
-    { label: 'Pragya Connect Community', section: 'community' },
     { label: 'Contact Us', section: 'faq' },
     { label: 'Website Terms', section: 'terms' },
     { label: 'Studio Guidelines', section: 'guidelines' },
@@ -108,7 +113,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
               </div>
               <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <a
-                  href="#"
+                  href="https://apps.apple.com/hk/app/pragya-yog/id6749165851?l=en-GB"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -135,7 +140,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                 </a>
 
                 <a
-                  href="#"
+                  href="https://play.google.com/store/apps/details?id=com.pyshk.apps"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -189,8 +194,6 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                         '_blank',
                         'noopener,noreferrer'
                       );
-                    } else if (link.section === 'community') {
-                      window.open('https://pragya-connect.vercel.app/', '_blank', 'noopener,noreferrer');
                     } else if (onNavigateSection) {
                       onNavigateSection(link.section);
                     }
@@ -268,7 +271,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
               <a
-                href="https://maps.google.com/?q=1303-04,+13/F+Tak+Woo+House,+13+Wo+On+Lane,+Central,+Hong+Kong"
+                href={`https://maps.google.com/?q=${encodeURIComponent(siteConfig.footer.address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -285,10 +288,10 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                 title="View studio location on Google Maps"
               >
                 <MapPin size={16} style={{ marginTop: '2px', flexShrink: 0, color: '#D9AE29' }} />
-                <span>1303-04, 13/F Tak Woo House, 13 Wo On Lane, Central, Hong Kong</span>
+                <span>{siteConfig.footer.address}</span>
               </a>
               <a
-                href="tel:+85267082503"
+                href={`tel:${siteConfig.footer.phone}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -302,10 +305,10 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                 title="Call studio phone number"
               >
                 <Phone size={16} style={{ flexShrink: 0, color: '#D9AE29' }} />
-                <span>+852 6708 2503</span>
+                <span>{siteConfig.footer.phone}</span>
               </a>
               <a
-                href="mailto:info@pyshk.com"
+                href={`mailto:${siteConfig.footer.email}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -319,7 +322,7 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                 title="Send email to Pragya Yog School"
               >
                 <Mail size={16} style={{ flexShrink: 0, color: '#D9AE29' }} />
-                <span>info@pyshk.com</span>
+                <span>{siteConfig.footer.email}</span>
               </a>
             </div>
 
@@ -338,106 +341,72 @@ export const NewsletterFooter: React.FC<NewsletterFooterProps> = ({
                 SOCIAL MEDIA
               </div>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <a
-                  href="https://www.facebook.com/pragyahk"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Facebook"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    backgroundColor: '#FFFFFF',
-                    color: '#00381F',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'transform 0.2s ease, background-color 0.2s ease'
-                  }}
-                  className="social-icon-btn"
-                >
-                  <Facebook size={16} />
-                </a>
-                <a
-                  href="https://www.x.com/pragyahk"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Twitter (X)"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    backgroundColor: '#FFFFFF',
-                    color: '#00381F',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'transform 0.2s ease, background-color 0.2s ease'
-                  }}
-                  className="social-icon-btn"
-                >
-                  <Twitter size={16} />
-                </a>
-                <a
-                  href="https://www.youtube.com/@pys_hk"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="YouTube"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    backgroundColor: '#FFFFFF',
-                    color: '#00381F',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'transform 0.2s ease, background-color 0.2s ease'
-                  }}
-                  className="social-icon-btn"
-                >
-                  <Youtube size={16} />
-                </a>
-                <a
-                  href="https://www.linkedin.com/company/pyshk"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="LinkedIn"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    backgroundColor: '#FFFFFF',
-                    color: '#00381F',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'transform 0.2s ease, background-color 0.2s ease'
-                  }}
-                  className="social-icon-btn"
-                >
-                  <Linkedin size={16} />
-                </a>
-                <a
-                  href="https://www.instagram.com/pragyahk"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Instagram"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    backgroundColor: '#FFFFFF',
-                    color: '#00381F',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'transform 0.2s ease, background-color 0.2s ease'
-                  }}
-                  className="social-icon-btn"
-                >
-                  <Instagram size={16} />
-                </a>
+                {siteConfig.footer.facebookUrl && (
+                  <a
+                    href={siteConfig.footer.facebookUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Facebook"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      backgroundColor: '#FFFFFF',
+                      color: '#00381F',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'transform 0.2s ease, background-color 0.2s ease'
+                    }}
+                    className="social-icon-btn"
+                  >
+                    <Facebook size={16} />
+                  </a>
+                )}
+                {siteConfig.footer.instagramUrl && (
+                  <a
+                    href={siteConfig.footer.instagramUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Instagram"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      backgroundColor: '#FFFFFF',
+                      color: '#00381F',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'transform 0.2s ease, background-color 0.2s ease'
+                    }}
+                    className="social-icon-btn"
+                  >
+                    <Instagram size={16} />
+                  </a>
+                )}
+                {siteConfig.footer.youtubeUrl && (
+                  <a
+                    href={siteConfig.footer.youtubeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="YouTube"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      backgroundColor: '#FFFFFF',
+                      color: '#00381F',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'transform 0.2s ease, background-color 0.2s ease'
+                    }}
+                    className="social-icon-btn"
+                  >
+                    <Youtube size={16} />
+                  </a>
+                )}
               </div>
             </div>
           </div>

@@ -16,6 +16,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { getTeachers, getScheduleByDate, getUpcomingEvents } from '../services/api';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 interface AboutPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
@@ -23,6 +24,11 @@ interface AboutPageProps {
 }
 
 export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateSection }) => {
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
   const benefits = [
     'Enhances flexibility, strength, and joint mobility',
     'Improves circulation and subtle energy flow',

@@ -1,29 +1,38 @@
-import React from 'react';
-import { Dumbbell, Command, Layers, Heart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Dumbbell, Command, Layers, Heart, Sparkles, CheckCircle2, Award, Shield, Star, Zap } from 'lucide-react';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
+
+const iconMap: Record<string, React.ComponentType<any>> = {
+  Dumbbell,
+  Command,
+  Layers,
+  Heart,
+  Sparkles,
+  CheckCircle2,
+  Award,
+  Shield,
+  Star,
+  Zap,
+};
 
 export const WhyChooseUs: React.FC = () => {
-  const features = [
-    {
-      icon: Dumbbell,
-      title: 'Improved Core Strength',
-      description: 'Develop strength and balance through precise, core-centered movements.'
-    },
-    {
-      icon: Command,
-      title: 'Increased Flexibility',
-      description: 'Expand your mobility with smooth and intentional motion towards inner harmony.'
-    },
-    {
-      icon: Layers,
-      title: 'Better Posture',
-      description: 'Align your spine and develop awareness for daily posture improvements.'
-    },
-    {
-      icon: Heart,
-      title: 'Low-Impact Fitness',
-      description: 'Safe and effective Yog & Pilates workouts suitable for all ages and levels.'
-    }
-  ];
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
+
+  const whyChooseData = siteConfig.whyChooseUs || {
+    subtitle: '— VALUE —',
+    title: 'Why Choose Pragya Yog School',
+    description: 'Discover the transformative benefits of yog & pilates for body, mind, and lifestyle.',
+    features: [
+      { id: 1, title: 'Improved Core Strength', description: 'Develop strength and balance through precise, core-centered movements.', iconName: 'Dumbbell' },
+      { id: 2, title: 'Increased Flexibility', description: 'Expand your mobility with smooth and intentional motion towards inner harmony.', iconName: 'Command' },
+      { id: 3, title: 'Better Posture', description: 'Align your spine and develop awareness for daily posture improvements.', iconName: 'Layers' },
+      { id: 4, title: 'Low-Impact Fitness', description: 'Safe and effective Yog & Pilates workouts suitable for all ages and levels.', iconName: 'Heart' },
+    ]
+  };
 
   return (
     <section
@@ -48,15 +57,15 @@ export const WhyChooseUs: React.FC = () => {
         <div className="why-us-header">
           <div className="why-us-title-group reveal-left">
             <span className="why-us-subtitle">
-              — VALUE —
+              {whyChooseData.subtitle}
             </span>
             <h2 className="why-us-heading">
-              Why Choose Pragya Yog School
+              {whyChooseData.title}
             </h2>
           </div>
 
           <p className="why-us-description reveal-right">
-            Discover the transformative benefits of yog &amp; pilates for body, mind, and lifestyle.
+            {whyChooseData.description}
           </p>
         </div>
 
@@ -82,10 +91,10 @@ export const WhyChooseUs: React.FC = () => {
 
           {/* Feature List Cards */}
           <div className="why-us-feature-list">
-            {features.map((item, i) => {
-              const Icon = item.icon;
+            {whyChooseData.features.map((item, i) => {
+              const Icon = iconMap[item.iconName] || Dumbbell;
               return (
-                <div key={item.title} className={`why-us-card reveal-on-scroll delay-${i + 1}`}>
+                <div key={item.id || item.title} className={`why-us-card reveal-on-scroll delay-${i + 1}`}>
                   <div className="icon-badge">
                     <Icon size={18} />
                   </div>

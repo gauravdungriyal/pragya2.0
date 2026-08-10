@@ -98,7 +98,10 @@ export const PackageModal: React.FC<PackageModalProps> = ({
 
   const handleAddFeature = () => setFeatures([...features, '']);
   const handleRemoveFeature = (index: number) => {
-    setFeatures(features.filter((_, i) => i !== index));
+    const feat = features[index];
+    if (!feat.trim() || window.confirm(`⚠️ WARNING: Are you sure you want to remove feature "${feat}"?`)) {
+      setFeatures(features.filter((_, i) => i !== index));
+    }
   };
   const handleFeatureChange = (index: number, val: string) => {
     const updated = [...features];

@@ -6,13 +6,11 @@ import { CustomerProfile, CustomerDetailModal } from './CustomerDetailModal';
 interface BookingCrmManagerProps {
   bookings: BookingRecord[];
   customers: CustomerProfile[];
-  onUpdateBookingStatus: (id: string, status: BookingRecord['status'], notes?: string, date?: string) => void;
 }
 
 export const BookingCrmManager: React.FC<BookingCrmManagerProps> = ({
   bookings,
   customers,
-  onUpdateBookingStatus,
 }) => {
   const [activeTab, setActiveTab] = useState<'bookings' | 'crm'>('bookings');
   const [searchTerm, setSearchTerm] = useState('');
@@ -355,7 +353,6 @@ export const BookingCrmManager: React.FC<BookingCrmManagerProps> = ({
         isOpen={bookingDrawerOpen}
         onClose={() => setBookingDrawerOpen(false)}
         booking={selectedBooking}
-        onUpdateStatus={onUpdateBookingStatus}
       />
 
       <CustomerDetailModal

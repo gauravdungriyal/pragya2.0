@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { user, profile } = useAuth();
   const { cartCount, openCart } = useCart();
   const [activeTab, setActiveTab] = useState(
-    currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : currentView === 'membership' ? 'Membership & Packages' : currentView === 'events' ? 'Events' : currentView === 'merchandise' ? 'Shop' : currentView === 'community' ? 'Community' : 'Home'
+    currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : currentView === 'membership' ? 'Membership & Packages' : currentView === 'events' ? 'Events' : currentView === 'merchandise' ? 'Shop' : 'Home'
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -68,8 +68,6 @@ export const Header: React.FC<HeaderProps> = ({
       setActiveTab('Events');
     } else if (currentView === 'merchandise') {
       setActiveTab('Shop');
-    } else if (currentView === 'community') {
-      setActiveTab('Community');
     } else if (currentView === 'home') {
       setActiveTab('Home');
     }
@@ -82,8 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Events', id: 'events', type: 'page' },
     { label: 'Classes', id: 'classes', type: 'page' },
     { label: 'Teachers', id: 'teachers', type: 'page' },
-    { label: 'Membership & Packages', id: 'membership', type: 'page' },
-    { label: 'Community', id: 'community', type: 'page' }
+    { label: 'Membership & Packages', id: 'membership', type: 'page' }
   ];
 
   const handleScheduleRedirect = () => {
@@ -126,8 +123,6 @@ export const Header: React.FC<HeaderProps> = ({
     } else if (item.label === 'AI Assistant' || item.id === 'ai-assistant') {
       if (onViewChange) onViewChange('ai-assistant');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (item.label === 'Community' || item.id === 'community') {
-      window.open('https://pragya-connect.vercel.app/', '_blank', 'noopener,noreferrer');
     } else if (item.label === 'Home') {
       if (onViewChange) onViewChange('home');
       window.scrollTo({ top: 0, behavior: 'smooth' });

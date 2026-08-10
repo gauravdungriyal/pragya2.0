@@ -1,69 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Calendar, Plus, Edit2, Trash2, CheckCircle, XCircle, Star, Layers, Tag, CheckSquare, Square, ShoppingBag } from 'lucide-react';
+import { Package, Calendar, Star, Layers, ShoppingBag, ShieldCheck, Tag } from 'lucide-react';
 import { DynamicPackage, UpcomingEvent, BundleItem, MerchandiseItem } from '../../types';
-import { PackageModal } from './PackageModal';
-import { EventModal } from './EventModal';
-import { MerchandiseModal } from './MerchandiseModal';
-import { getMerchandiseItems, saveMerchandiseItem, deleteMerchandiseItem } from '../../services/api';
+import { getMerchandiseItems } from '../../services/api';
 
 interface PackageManagerProps {
   packages: DynamicPackage[];
   events: UpcomingEvent[];
   bundles: BundleItem[];
-  onSavePackage: (pkg: DynamicPackage) => void;
-  onDeletePackage: (id: string) => void;
-  onSaveEvent: (evt: UpcomingEvent) => void;
-  onDeleteEvent: (id: string) => void;
-  onSaveBundle: (bundle: BundleItem) => void;
 }
 
 export const PackageManager: React.FC<PackageManagerProps> = ({
   packages,
   events,
   bundles,
-  onSavePackage,
-  onDeletePackage,
-  onSaveEvent,
-  onDeleteEvent,
-  onSaveBundle,
 }) => {
-  const [subTab, setSubTab] = useState<'packages' | 'bundles' | 'events' | 'merchandise'>('packages');
+  const [subTab, setSubTab] = useState<'packages' | 'merchandise' | 'bundles' | 'events'>('packages');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
-
-  const [packageModalOpen, setPackageModalOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<DynamicPackage | null>(null);
-
-  const [eventModalOpen, setEventModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<UpcomingEvent | null>(null);
-
-  // Merchandise State
   const [merchandiseItems, setMerchandiseItems] = useState<MerchandiseItem[]>([]);
-  const [merchandiseModalOpen, setMerchandiseModalOpen] = useState(false);
-  const [selectedMerchandise, setSelectedMerchandise] = useState<MerchandiseItem | null>(null);
-
-  // Bundle Configurator State
-  const [selectedPackageIds, setSelectedPackageIds] = useState<string[]>([]);
-  const [newBundleTitle, setNewBundleTitle] = useState('');
-  const [newBundlePrice, setNewBundlePrice] = useState<number>(0);
-  const [newBundleOrigPrice, setNewBundleOrigPrice] = useState<number>(0);
+  const [isLoadingMerch, setIsLoadingMerch] = useState(false);
 
   useEffect(() => {
     const fetchMerch = async () => {
-      const data = await getMerchandiseItems();
-      setMerchandiseItems(data);
+      setIsLoadingMerch(true);
+      try {
+        const data = await getMerchandiseItems();
+        if (data) {
+          setMerchandiseItems(data);
+        }
+      } catch (err) {
+        console.warn('Failed to load merchandise in Admin View:', err);
+      } finally {
+        setIsLoadingMerch(false);
+      }
     };
     fetchMerch();
   }, []);
-
-  const handleSaveMerchandise = async (item: MerchandiseItem) => {
-    const updated = await saveMerchandiseItem(item);
-    setMerchandiseItems(updated);
-  };
-
-  const handleDeleteMerchandise = async (id: string) => {
-    const updated = await deleteMerchandiseItem(id);
-    setMerchandiseItems(updated);
-  };
 
   const filteredPackages = packages.filter((pkg) => {
     if (categoryFilter === 'ALL') return true;
@@ -81,94 +52,10 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
     return pkg.type === categoryFilter;
   });
 
-  const handleOpenAddPackage = () => {
-    setSelectedPackage(null);
-    setPackageModalOpen(true);
-  };
-
-  const handleOpenEditPackage = (pkg: DynamicPackage) => {
-    setSelectedPackage(pkg);
-    setPackageModalOpen(true);
-  };
-
-  const handleOpenAddEvent = () => {
-    setSelectedEvent(null);
-    setEventModalOpen(true);
-  };
-
-  const handleOpenEditEvent = (evt: UpcomingEvent) => {
-    setSelectedEvent(evt);
-    setEventModalOpen(true);
-  };
-
-  const handleOpenAddMerchandise = () => {
-    setSelectedMerchandise(null);
-    setMerchandiseModalOpen(true);
-  };
-
-  const handleOpenEditMerchandise = (item: MerchandiseItem) => {
-    setSelectedMerchandise(item);
-    setMerchandiseModalOpen(true);
-  };
-
-  // Toggle package selection in Bundle Configurator
-  const togglePackageForBundle = (pkg: DynamicPackage) => {
-    setSelectedPackageIds((prev) => {
-      const isSelected = prev.includes(pkg.id);
-      const nextIds = isSelected ? prev.filter((id) => id !== pkg.id) : [...prev, pkg.id];
-      
-      const selectedPkgs = packages.filter((p) => nextIds.includes(p.id));
-      const autoTitle = selectedPkgs.map((p) => p.title).join(' + ');
-      const origSum = selectedPkgs.reduce((sum, p) => sum + (p.price || 0), 0);
-
-      setNewBundleTitle(autoTitle);
-      setNewBundleOrigPrice(origSum);
-      return nextIds;
-    });
-  };
-
-  const handleAddBundleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newBundleTitle.trim() || newBundlePrice <= 0) return;
-
-    const selectedPkgs = packages.filter((p) => selectedPackageIds.includes(p.id));
-    const origTotal = newBundleOrigPrice || selectedPkgs.reduce((sum, p) => sum + (p.price || 0), 0) || newBundlePrice;
-    const calcSavings = origTotal > newBundlePrice ? origTotal - newBundlePrice : 0;
-
-    const newBundle: BundleItem = {
-      id: `bndl-${Date.now()}`,
-      name: newBundleTitle.trim(),
-      original_price: origTotal,
-      discounted_price: Number(newBundlePrice),
-      final_price: Number(newBundlePrice),
-      bundle_discount: calcSavings,
-      savings: calcSavings,
-      packages: selectedPkgs.map((p) => ({
-        id: Number(p.id) || Date.now(),
-        packageID: p.id,
-        title: p.title,
-        price: p.price,
-        amount: p.price,
-        payment_type: 1,
-        category: p.type,
-      }) as any),
-    };
-
-    onSaveBundle(newBundle);
-    setSelectedPackageIds([]);
-    setNewBundleTitle('');
-    setNewBundlePrice(0);
-    setNewBundleOrigPrice(0);
-  };
-
-  const selectedPkgsCount = selectedPackageIds.length;
-  const currentOrigTotal = newBundleOrigPrice;
-  const currentSavings = currentOrigTotal > newBundlePrice && newBundlePrice > 0 ? currentOrigTotal - newBundlePrice : 0;
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
-      {/* Tab Switcher & Action Bar */}
+      {/* Sub-Tab Navigation Bar */}
       <div style={{ backgroundColor: '#FFFFFF', padding: '20px 28px', borderRadius: '16px', border: '1px solid #E7E5E4', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
         
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
@@ -189,7 +76,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
               color: subTab === 'packages' ? '#FFFFFF' : '#44403C',
             }}
           >
-            <Package className="w-4 h-4" /> Dynamic Packages ({packages.length})
+            <Package className="w-4 h-4" /> Live Packages ({packages.length})
           </button>
 
           <button
@@ -209,7 +96,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
               color: subTab === 'merchandise' ? '#FFFFFF' : '#44403C',
             }}
           >
-            <ShoppingBag className="w-4 h-4" /> Store Merchandise ({merchandiseItems.length})
+            <ShoppingBag className="w-4 h-4" /> Merchandise Store ({merchandiseItems.length})
           </button>
 
           <button
@@ -229,7 +116,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
               color: subTab === 'bundles' ? '#FFFFFF' : '#44403C',
             }}
           >
-            <Layers className="w-4 h-4" /> Bundles & Cross-sells ({bundles.length})
+            <Layers className="w-4 h-4" /> Live Bundles ({bundles.length})
           </button>
 
           <button
@@ -249,79 +136,18 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
               color: subTab === 'events' ? '#FFFFFF' : '#44403C',
             }}
           >
-            <Calendar className="w-4 h-4" /> Event Spotlight ({events.length})
+            <Calendar className="w-4 h-4" /> Scheduled Events ({events.length})
           </button>
         </div>
 
-        {subTab === 'packages' && (
-          <button
-            onClick={handleOpenAddPackage}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#B45309',
-              color: '#FFFFFF',
-              fontWeight: 800,
-              borderRadius: '12px',
-              fontSize: '14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: 'none',
-              boxShadow: '0 3px 10px rgba(180,83,9,0.3)',
-            }}
-          >
-            <Plus className="w-4 h-4" /> Add Package
-          </button>
-        )}
+        <span style={{ fontSize: '12px', color: '#047857', fontWeight: 800, backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '6px 14px', borderRadius: '999px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <ShieldCheck className="w-4 h-4 text-emerald-600" /> API Single Source of Truth
+        </span>
 
-        {subTab === 'merchandise' && (
-          <button
-            onClick={handleOpenAddMerchandise}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#B45309',
-              color: '#FFFFFF',
-              fontWeight: 800,
-              borderRadius: '12px',
-              fontSize: '14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: 'none',
-              boxShadow: '0 3px 10px rgba(180,83,9,0.3)',
-            }}
-          >
-            <Plus className="w-4 h-4" /> Add Merchandise Item
-          </button>
-        )}
-
-        {subTab === 'events' && (
-          <button
-            onClick={handleOpenAddEvent}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#B45309',
-              color: '#FFFFFF',
-              fontWeight: 800,
-              borderRadius: '12px',
-              fontSize: '14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: 'none',
-              boxShadow: '0 3px 10px rgba(180,83,9,0.3)',
-            }}
-          >
-            <Plus className="w-4 h-4" /> Add Event
-          </button>
-        )}
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 1: DYNAMIC PACKAGES MANAGER */}
+      {/* TAB 1: DYNAMIC PACKAGES CATALOG VIEWER */}
       {/* ───────────────────────────────────────────────────────────── */}
       {subTab === 'packages' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -351,7 +177,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
             ))}
           </div>
 
-          {/* Package Grid */}
+          {/* Package Grid (Read-Only) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px' }}>
             {filteredPackages.map((pkg) => (
               <div
@@ -365,9 +191,8 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   gap: '24px',
-                  minHeight: '340px',
+                  minHeight: '320px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                  transition: 'all 0.2s ease',
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -383,7 +208,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
                         </span>
                       )}
                       <span style={{ fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '999px', backgroundColor: pkg.isActive ? '#ECFDF5' : '#FEF2F2', color: pkg.isActive ? '#065F46' : '#991B1B', border: pkg.isActive ? '1px solid #A7F3D0' : '1px solid #FECDD3' }}>
-                        {pkg.isActive ? 'Active' : 'Hidden'}
+                        {pkg.isActive ? 'Active API' : 'Hidden'}
                       </span>
                     </div>
                   </div>
@@ -408,7 +233,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
 
                   {pkg.features && pkg.features.length > 0 && (
                     <ul style={{ margin: '4px 0 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {pkg.features.slice(0, 3).map((f, i) => (
+                      {pkg.features.slice(0, 4).map((f, i) => (
                         <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '13px', color: '#44403C', lineHeight: '1.5' }}>
                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#B45309', marginTop: '7px', flexShrink: 0 }} />
                           <span>{f}</span>
@@ -418,32 +243,9 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
                   )}
                 </div>
 
-                {/* Footer Controls */}
-                <div style={{ paddingTop: '16px', marginTop: '12px', borderTop: '1px solid #F5F5F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <button
-                    onClick={() => onSavePackage({ ...pkg, isActive: !pkg.isActive })}
-                    style={{ fontSize: '12px', color: '#57534E', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, background: 'none', border: 'none', cursor: 'pointer' }}
-                  >
-                    {pkg.isActive ? <XCircle className="w-4 h-4 text-rose-500" /> : <CheckCircle className="w-4 h-4 text-emerald-600" />}
-                    {pkg.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      onClick={() => handleOpenEditPackage(pkg)}
-                      style={{ padding: '8px 12px', backgroundColor: '#FEF3C7', color: '#92400E', borderRadius: '10px', border: '1px solid #FDE68A', cursor: 'pointer' }}
-                      title="Edit Package"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDeletePackage(pkg.id)}
-                      style={{ padding: '8px 12px', backgroundColor: '#FEF2F2', color: '#991B1B', borderRadius: '10px', border: '1px solid #FECDD3', cursor: 'pointer' }}
-                      title="Delete Package"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                <div style={{ paddingTop: '16px', marginTop: '12px', borderTop: '1px solid #F5F5F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#78716C' }}>
+                  <span>ID: <code style={{ color: '#1C1917', fontWeight: 700 }}>#{pkg.id}</code></span>
+                  <span style={{ fontWeight: 700, color: '#B45309' }}>Live Store Offering</span>
                 </div>
 
               </div>
@@ -454,227 +256,79 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 2: STORE MERCHANDISE MANAGER */}
+      {/* TAB 2: STORE MERCHANDISE CATALOG VIEWER */}
       {/* ───────────────────────────────────────────────────────────── */}
       {subTab === 'merchandise' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '28px' }}>
-            {merchandiseItems.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #E7E5E4',
-                  borderRadius: '20px',
-                  padding: '24px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '20px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 12px', borderRadius: '999px', backgroundColor: '#FEF3C7', color: '#78350F', border: '1px solid #FDE68A' }}>
-                      {item.category.toUpperCase()}
-                    </span>
-                    <span style={{ fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '999px', backgroundColor: item.isActive ? '#ECFDF5' : '#FEF2F2', color: item.isActive ? '#065F46' : '#991B1B', border: item.isActive ? '1px solid #A7F3D0' : '1px solid #FECDD3' }}>
-                      {item.isActive ? 'Active' : 'Hidden'}
-                    </span>
-                  </div>
-
-                  <div style={{ height: '140px', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#FAF7F2' }}>
-                    <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-
-                  <div>
-                    <h3 style={{ fontWeight: 800, color: '#1C1917', fontSize: '17px', margin: '4px 0 2px 0', lineHeight: '1.4' }}>{item.title}</h3>
-                    {item.subtitle && <p style={{ fontSize: '12px', color: '#78716C', margin: 0 }}>{item.subtitle}</p>}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                    <span style={{ fontSize: '22px', fontWeight: 900, color: '#B45309' }}>
-                      {item.currency || 'HK$'} {item.price}
-                    </span>
-                    {item.discountPrice && (
-                      <span style={{ fontSize: '12px', color: '#A8A29E', textDecoration: 'line-through', fontWeight: 600 }}>
-                        ${item.discountPrice}
+          {isLoadingMerch ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#78716C', fontWeight: 700 }}>Fetching Store Merchandise from API...</div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '28px' }}>
+              {merchandiseItems.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E7E5E4',
+                    borderRadius: '20px',
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '20px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 12px', borderRadius: '999px', backgroundColor: '#FEF3C7', color: '#78350F', border: '1px solid #FDE68A' }}>
+                        {item.category.toUpperCase()}
                       </span>
-                    )}
+                      <span style={{ fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '999px', backgroundColor: item.isActive ? '#ECFDF5' : '#FEF2F2', color: item.isActive ? '#065F46' : '#991B1B', border: item.isActive ? '1px solid #A7F3D0' : '1px solid #FECDD3' }}>
+                        {item.isActive ? 'In Stock' : 'Out of Stock'}
+                      </span>
+                    </div>
+
+                    <div style={{ height: '140px', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#FAF7F2' }}>
+                      <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+
+                    <div>
+                      <h3 style={{ fontWeight: 800, color: '#1C1917', fontSize: '17px', margin: '4px 0 2px 0', lineHeight: '1.4' }}>{item.title}</h3>
+                      {item.subtitle && <p style={{ fontSize: '12px', color: '#78716C', margin: 0 }}>{item.subtitle}</p>}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <span style={{ fontSize: '22px', fontWeight: 900, color: '#B45309' }}>
+                        {item.currency || 'HK$'} {item.price}
+                      </span>
+                      {item.discountPrice && (
+                        <span style={{ fontSize: '12px', color: '#A8A29E', textDecoration: 'line-through', fontWeight: 600 }}>
+                          ${item.discountPrice}
+                        </span>
+                      )}
+                    </div>
+
+                  </div>
+
+                  <div style={{ paddingTop: '14px', borderTop: '1px solid #F5F5F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#78716C' }}>
+                    <span>Product Code: <code style={{ color: '#1C1917', fontWeight: 700 }}>#{item.id}</code></span>
+                    <span style={{ fontWeight: 700, color: '#047857' }}>Store Catalog</span>
                   </div>
 
                 </div>
-
-                <div style={{ paddingTop: '14px', borderTop: '1px solid #F5F5F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <button
-                    onClick={() => handleSaveMerchandise({ ...item, isActive: !item.isActive })}
-                    style={{ fontSize: '12px', color: '#57534E', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, background: 'none', border: 'none', cursor: 'pointer' }}
-                  >
-                    {item.isActive ? <XCircle className="w-4 h-4 text-rose-500" /> : <CheckCircle className="w-4 h-4 text-emerald-600" />}
-                    {item.isActive ? 'Hide Item' : 'Show Item'}
-                  </button>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      onClick={() => handleOpenEditMerchandise(item)}
-                      style={{ padding: '8px 12px', backgroundColor: '#FEF3C7', color: '#92400E', borderRadius: '10px', border: '1px solid #FDE68A', cursor: 'pointer' }}
-                      title="Edit Product"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMerchandise(item.id)}
-                      style={{ padding: '8px 12px', backgroundColor: '#FEF2F2', color: '#991B1B', borderRadius: '10px', border: '1px solid #FECDD3', cursor: 'pointer' }}
-                      title="Delete Product"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            ))}
-          </div>
-
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 3: INTERACTIVE BUNDLE CONFIGURATOR */}
+      {/* TAB 3: LIVE BUNDLES VIEWER */}
       {/* ───────────────────────────────────────────────────────────── */}
       {subTab === 'bundles' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-          
-          {/* Bundle Creator Card */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '28px', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            
-            <div>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Tag className="w-5 h-5 text-amber-700" /> Create Custom Cross-Sell Bundle
-              </h3>
-              <p style={{ fontSize: '13px', color: '#78716C', margin: '4px 0 0 0' }}>
-                Select 2 or more store packages below to bundle them together with a discounted price.
-              </p>
-            </div>
-
-            {/* Step 1: Package Selector Grid */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#44403C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Step 1: Choose Packages to Include ({selectedPkgsCount} Selected)
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px' }}>
-                {packages.map((pkg) => {
-                  const isSelected = selectedPackageIds.includes(pkg.id);
-                  return (
-                    <div
-                      key={pkg.id}
-                      onClick={() => togglePackageForBundle(pkg)}
-                      style={{
-                        padding: '14px 18px',
-                        borderRadius: '14px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        border: isSelected ? '2px solid #B45309' : '1px solid #E7E5E4',
-                        backgroundColor: isSelected ? '#FEF3C7' : '#FAF7F2',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '12px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        {isSelected ? (
-                          <CheckSquare className="w-5 h-5 text-amber-700 shrink-0" />
-                        ) : (
-                          <Square className="w-5 h-5 text-stone-400 shrink-0" />
-                        )}
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: '13px', color: '#1C1917' }}>{pkg.title}</div>
-                          <div style={{ fontSize: '11px', color: '#78716C', textTransform: 'uppercase', fontWeight: 700, marginTop: '2px' }}>
-                            {pkg.type === 'teacher_training' || pkg.type === 'ttc' ? 'TTC' : pkg.type}
-                          </div>
-                        </div>
-                      </div>
-                      <span style={{ fontWeight: 900, fontSize: '14px', color: '#1C1917' }}>
-                        ${pkg.price}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Step 2: Bundle Title & Price Configuration */}
-            <form onSubmit={handleAddBundleSubmit} style={{ borderTop: '1px solid #F5F5F4', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', backgroundColor: '#F5F5F4', padding: '14px 20px', borderRadius: '14px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#57534E' }}>
-                  Combined Original Price: <span style={{ color: '#1C1917', fontWeight: 900 }}>HKD ${currentOrigTotal.toLocaleString()}</span>
-                </span>
-                {currentSavings > 0 && (
-                  <span style={{ fontSize: '12px', fontWeight: 800, backgroundColor: '#ECFDF5', color: '#047857', padding: '4px 12px', borderRadius: '999px', border: '1px solid #A7F3D0' }}>
-                    🎉 Customer Savings: HKD ${currentSavings.toLocaleString()}
-                  </span>
-                )}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label style={{ display: 'block', color: '#44403C', fontWeight: 700, marginBottom: '6px', fontSize: '13px' }}>Bundle Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newBundleTitle}
-                    onChange={(e) => setNewBundleTitle(e.target.value)}
-                    placeholder="e.g. 200-Hr TTC + 1 Month Pass"
-                    style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', color: '#1C1917', outline: 'none' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', color: '#44403C', fontWeight: 700, marginBottom: '6px', fontSize: '13px' }}>Special Bundle Price (HKD) *</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={newBundlePrice || ''}
-                    onChange={(e) => setNewBundlePrice(Number(e.target.value))}
-                    placeholder="e.g. 19500"
-                    style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', color: '#1C1917', outline: 'none' }}
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={selectedPkgsCount === 0 || !newBundleTitle.trim() || newBundlePrice <= 0}
-                style={{
-                  padding: '14px 28px',
-                  backgroundColor: selectedPkgsCount === 0 || !newBundleTitle.trim() || newBundlePrice <= 0 ? '#E7E5E4' : '#B45309',
-                  color: selectedPkgsCount === 0 || !newBundleTitle.trim() || newBundlePrice <= 0 ? '#A8A29E' : '#FFFFFF',
-                  fontWeight: 800,
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: selectedPkgsCount === 0 || !newBundleTitle.trim() || newBundlePrice <= 0 ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: selectedPkgsCount === 0 ? 'none' : '0 3px 10px rgba(180,83,9,0.3)',
-                }}
-              >
-                <Plus className="w-4 h-4" /> Create Bundle Offer
-              </button>
-
-            </form>
-
-          </div>
-
-          {/* Active Bundles List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
             {bundles.map((bundle) => (
               <div key={bundle.id} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
@@ -710,25 +364,19 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
                       </span>
                     )}
                   </div>
-
-                  <button
-                    onClick={() => onSaveBundle}
-                    style={{ padding: '8px 12px', backgroundColor: '#FEF2F2', color: '#991B1B', borderRadius: '10px', border: '1px solid #FECDD3', cursor: 'pointer' }}
-                    title="Delete Bundle"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#78716C', backgroundColor: '#FAF7F2', padding: '4px 10px', borderRadius: '8px', border: '1px solid #E7E5E4' }}>
+                    Live Bundle API
+                  </span>
                 </div>
 
               </div>
             ))}
           </div>
-
         </div>
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 4: EVENT SPOTLIGHT */}
+      {/* TAB 4: SCHEDULED EVENTS SPOTLIGHT */}
       {/* ───────────────────────────────────────────────────────────── */}
       {subTab === 'events' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
@@ -739,7 +387,7 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
                   <span style={{ backgroundColor: '#FEF3C7', color: '#78350F', padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: 800, border: '1px solid #FDE68A' }}>
                     {evt.category || 'Event'}
                   </span>
-                  <span style={{ fontSize: '12px', fontWeight: 900, color: '#B45309' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 900, color: '#B45309' }}>
                     {evt.price || (evt.amount ? `$${evt.amount}` : 'Free')}
                   </span>
                 </div>
@@ -747,51 +395,21 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
                 <h3 style={{ fontWeight: 800, color: '#1C1917', fontSize: '17px', margin: '2px 0 0 0', lineHeight: '1.4' }}>
                   {evt.title || evt.name}
                 </h3>
+                {evt.description && (
+                  <p style={{ fontSize: '13px', color: '#78716C', margin: 0, lineHeight: '1.5' }}>{evt.description}</p>
+                )}
               </div>
 
-              <div style={{ paddingTop: '14px', borderTop: '1px solid #F5F5F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <button
-                  onClick={() => handleOpenEditEvent(evt)}
-                  style={{ padding: '8px 16px', backgroundColor: '#FEF3C7', color: '#92400E', borderRadius: '10px', fontSize: '12px', fontWeight: 800, border: '1px solid #FDE68A', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <Edit2 className="w-3.5 h-3.5" /> Edit Details
-                </button>
-
-                <button
-                  onClick={() => onDeleteEvent(evt.id)}
-                  style={{ padding: '8px 12px', backgroundColor: '#FEF2F2', color: '#991B1B', borderRadius: '10px', border: '1px solid #FECDD3', cursor: 'pointer' }}
-                  title="Delete Event"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+              <div style={{ paddingTop: '14px', borderTop: '1px solid #F5F5F4', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#44403C' }}>
+                {evt.date && <div>📅 Date: <strong>{evt.date}</strong> {evt.time ? `(${evt.time})` : ''}</div>}
+                {evt.location && <div>📍 Location: <strong>{evt.location}</strong></div>}
+                {evt.instructor_name && <div>🧘 Instructor: <strong>{evt.instructor_name}</strong></div>}
               </div>
 
             </div>
           ))}
         </div>
       )}
-
-      {/* Modals */}
-      <PackageModal
-        isOpen={packageModalOpen}
-        onClose={() => setPackageModalOpen(false)}
-        onSave={onSavePackage}
-        initialData={selectedPackage}
-      />
-
-      <EventModal
-        isOpen={eventModalOpen}
-        onClose={() => setEventModalOpen(false)}
-        onSave={onSaveEvent}
-        initialData={selectedEvent}
-      />
-
-      <MerchandiseModal
-        isOpen={merchandiseModalOpen}
-        onClose={() => setMerchandiseModalOpen(false)}
-        onSave={handleSaveMerchandise}
-        initialData={selectedMerchandise}
-      />
 
     </div>
   );

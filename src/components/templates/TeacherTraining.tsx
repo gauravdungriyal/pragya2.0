@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Award, BookOpen, Clock, GraduationCap, Heart, MapPin, Sparkles, CheckCircle2, ShieldCheck, ShoppingBag, User, ShoppingCart, ChevronDown } from 'lucide-react';
 import { DynamicPackage, BundleItem } from '../../types';
 import { getPackageDetail, getRelatedBundlesForPackage, cleanHtmlEntities, isTitleCompatible, toggleEventFavorite } from '../../services/api';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../../services/siteConfig';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { FrequentlyBoughtTogether } from '../FrequentlyBoughtTogether';
@@ -21,6 +22,12 @@ export const TeacherTraining: React.FC<TeacherTrainingProps> = ({
 }) => {
   const { user } = useAuth();
   const { addToCart, cartCount, openCart } = useCart();
+
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
 
   const [packageDetail, setPackageDetail] = useState<any>(null);
   const [bundles, setBundles] = useState<BundleItem[]>([]);

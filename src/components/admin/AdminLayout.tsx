@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Shield, ArrowLeft, DollarSign, Users, Ticket, UserCheck, RefreshCw } from 'lucide-react';
-import { PackageManager } from './PackageManager';
-import { BookingCrmManager } from './BookingCrmManager';
+import { Package, Shield, ArrowLeft, DollarSign, Users, Ticket, UserCheck, RefreshCw, Sparkles } from 'lucide-react';
+import { ContentManager } from './ContentManager';
 import { BookingRecord } from './BookingDetailDrawer';
 import { CustomerProfile } from './CustomerDetailModal';
 import { DynamicPackage, UpcomingEvent, BundleItem } from '../../types';
 import {
   getDynamicPackages,
-  saveDynamicPackage,
-  deleteDynamicPackage,
   getEvents,
   getBundleList,
   getTeachers,
@@ -21,7 +18,7 @@ interface AdminLayoutProps {
 }
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ onExitAdmin }) => {
-  const [activeModule, setActiveModule] = useState<'packages' | 'bookings'>('packages');
+  const [activeModule, setActiveModule] = useState<'cms'>('cms');
 
   const [packages, setPackages] = useState<DynamicPackage[]>([]);
   const [events, setEvents] = useState<UpcomingEvent[]>([]);
@@ -140,78 +137,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onExitAdmin }) => {
     loadRealApiData();
   }, []);
 
-  const handleSavePackage = async (pkg: DynamicPackage) => {
-    // Save to real API endpoint via saveDynamicPackage
-    const res = await saveDynamicPackage(pkg);
-    if (res && res.package) {
-      setPackages((prev) => {
-        const idx = prev.findIndex((p) => p.id === res.package.id);
-        if (idx >= 0) {
-          const copy = [...prev];
-          copy[idx] = res.package;
-          return copy;
-        }
-        return [res.package, ...prev];
-      });
-    } else {
-      setPackages((prev) => {
-        const idx = prev.findIndex((p) => p.id === pkg.id);
-        if (idx >= 0) {
-          const copy = [...prev];
-          copy[idx] = pkg;
-          return copy;
-        }
-        return [pkg, ...prev];
-      });
-    }
-  };
-
-  const handleDeletePackage = async (id: string) => {
-    await deleteDynamicPackage(id);
-    setPackages((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  const handleSaveEvent = (evt: UpcomingEvent) => {
-    setEvents((prev) => {
-      const idx = prev.findIndex((e) => e.id === evt.id);
-      if (idx >= 0) {
-        const copy = [...prev];
-        copy[idx] = evt;
-        return copy;
-      }
-      return [evt, ...prev];
-    });
-  };
-
-  const handleDeleteEvent = (id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
-  };
-
-  const handleSaveBundle = (bndl: BundleItem) => {
-    setBundles((prev) => [bndl, ...prev]);
-  };
-
-  const handleUpdateBookingStatus = (
-    id: string,
-    status: BookingRecord['status'],
-    notes?: string,
-    date?: string
-  ) => {
-    setBookings((prev) =>
-      prev.map((b) => {
-        if (b.id === id) {
-          return {
-            ...b,
-            status,
-            notes: notes !== undefined ? notes : b.notes,
-            date: date || b.date,
-          };
-        }
-        return b;
-      })
-    );
-  };
-
+  // Read-only metrics calculation
   const totalRevenue = bookings
     .filter((b) => b.status === 'Confirmed' || b.status === 'Completed')
     .reduce((acc, curr) => acc + (curr.amount || 0), 0);
@@ -234,7 +160,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onExitAdmin }) => {
                 color: '#292524',
                 borderRadius: '12px',
                 fontSize: '13px',
-                fontWeight: 700,
+                fontWeight: 500,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
@@ -249,168 +175,23 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onExitAdmin }) => {
             <div style={{ height: '24px', width: '1px', backgroundColor: '#E7E5E4' }} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#FEF3C7', color: '#92400E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#FEF3C7', color: '#92400E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
                 <Shield className="w-5 h-5" />
               </div>
               <div>
-                <h1 style={{ fontWeight: 800, fontSize: '19px', color: '#1C1917', margin: 0, lineHeight: '1.2' }}>Pragya Admin Panel</h1>
-                <p style={{ fontSize: '12px', color: '#78716C', margin: '3px 0 0 0' }}>Real-time API Store & Operations Center</p>
+                <h1 style={{ fontWeight: 400, fontFamily: 'var(--font-sans)', fontSize: '19px', color: '#1C1917', margin: 0, lineHeight: '1.2' }}>Pragya Admin Panel</h1>
+                <p style={{ fontSize: '12px', color: '#78716C', margin: '3px 0 0 0' }}>Website Content & Branding Manager</p>
               </div>
             </div>
 
-            {USE_DEMO_API && (
-              <span style={{ padding: '6px 14px', borderRadius: '999px', backgroundColor: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', fontSize: '12px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981' }} /> Live API Connected
-              </span>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <button
-              onClick={loadRealApiData}
-              disabled={isLoading}
-              style={{
-                padding: '8px 14px',
-                backgroundColor: '#FAF7F2',
-                color: '#78350F',
-                borderRadius: '10px',
-                fontSize: '12px',
-                fontWeight: 800,
-                border: '1px solid #FDE68A',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-              {isLoading ? 'Syncing API...' : 'Sync Live Data'}
-            </button>
-
-            <div style={{ borderLeft: '1px solid #E7E5E4', paddingLeft: '20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div>
-                <div style={{ fontSize: '11px', color: '#A8A29E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Revenue</div>
-                <div style={{ fontSize: '17px', fontWeight: 900, color: '#B45309', marginTop: '2px' }}>HKD ${totalRevenue.toLocaleString()}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '11px', color: '#A8A29E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pending Bookings</div>
-                <div style={{ fontSize: '17px', fontWeight: 900, color: '#B45309', marginTop: '2px' }}>{pendingBookingsCount}</div>
-              </div>
-            </div>
           </div>
 
         </div>
       </header>
 
       {/* ── Main Canvas Container with Spacious Spacing ───────────── */}
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '36px 28px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-        
-        {/* KPI Cards Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-          
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 800, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <DollarSign className="w-4 h-4 text-amber-600" /> Total Revenue
-            </div>
-            <div style={{ fontSize: '30px', fontWeight: 900, color: '#1C1917', letterSpacing: '-0.02em', margin: '4px 0' }}>HKD ${totalRevenue.toLocaleString()}</div>
-            <div style={{ fontSize: '12px', color: '#A8A29E', fontWeight: 600 }}>Live ledger API transactions</div>
-          </div>
-
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 800, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Package className="w-4 h-4 text-amber-600" /> Active API Packages
-            </div>
-            <div style={{ fontSize: '30px', fontWeight: 900, color: '#1C1917', letterSpacing: '-0.02em', margin: '4px 0' }}>{packages.filter(p => p.isActive).length}</div>
-            <div style={{ fontSize: '12px', color: '#A8A29E', fontWeight: 600 }}>Fetched from API get-packages</div>
-          </div>
-
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 800, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Ticket className="w-4 h-4 text-amber-600" /> Total Bookings
-            </div>
-            <div style={{ fontSize: '30px', fontWeight: 900, color: '#1C1917', letterSpacing: '-0.02em', margin: '4px 0' }}>{bookings.length}</div>
-            <div style={{ fontSize: '12px', color: '#A8A29E', fontWeight: 600 }}>Live API class schedule records</div>
-          </div>
-
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 800, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Users className="w-4 h-4 text-amber-600" /> Customer Profiles
-            </div>
-            <div style={{ fontSize: '30px', fontWeight: 900, color: '#1C1917', letterSpacing: '-0.02em', margin: '4px 0' }}>{customers.length}</div>
-            <div style={{ fontSize: '12px', color: '#A8A29E', fontWeight: 600 }}>Registered member API records</div>
-          </div>
-
-        </div>
-
-        {/* Primary Navigation Tabs */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px', borderBottom: '2px solid #E7E5E4', paddingBottom: '16px', margin: '8px 0' }}>
-          
-          <button
-            onClick={() => setActiveModule('packages')}
-            style={{
-              padding: '12px 24px',
-              borderRadius: '14px',
-              fontWeight: 800,
-              fontSize: '14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              border: activeModule === 'packages' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: activeModule === 'packages' ? '#B45309' : '#FFFFFF',
-              color: activeModule === 'packages' ? '#FFFFFF' : '#44403C',
-              boxShadow: activeModule === 'packages' ? '0 4px 12px rgba(180,83,9,0.25)' : 'none',
-            }}
-          >
-            <Package className="w-5 h-5" /> Package, Membership & Event Manager
-          </button>
-
-          <button
-            onClick={() => setActiveModule('bookings')}
-            style={{
-              padding: '12px 24px',
-              borderRadius: '14px',
-              fontWeight: 800,
-              fontSize: '14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              border: activeModule === 'bookings' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: activeModule === 'bookings' ? '#B45309' : '#FFFFFF',
-              color: activeModule === 'bookings' ? '#FFFFFF' : '#44403C',
-              boxShadow: activeModule === 'bookings' ? '0 4px 12px rgba(180,83,9,0.25)' : 'none',
-            }}
-          >
-            <UserCheck className="w-5 h-5" /> Bookings, Orders & Member CRM
-          </button>
-
-        </div>
-
-        {/* Module Content */}
-        <div style={{ paddingTop: '8px' }}>
-          {activeModule === 'packages' ? (
-            <PackageManager
-              packages={packages}
-              events={events}
-              bundles={bundles}
-              onSavePackage={handleSavePackage}
-              onDeletePackage={handleDeletePackage}
-              onSaveEvent={handleSaveEvent}
-              onDeleteEvent={handleDeleteEvent}
-              onSaveBundle={handleSaveBundle}
-            />
-          ) : (
-            <BookingCrmManager
-              bookings={bookings}
-              customers={customers}
-              onUpdateBookingStatus={handleUpdateBookingStatus}
-            />
-          )}
-        </div>
-
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '36px 28px' }}>
+        <ContentManager />
       </main>
 
     </div>

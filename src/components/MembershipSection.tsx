@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { getPackages } from '../services/api';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 import { PackageItem } from '../types';
 
 interface MembershipSectionProps {
@@ -8,8 +9,20 @@ interface MembershipSectionProps {
 }
 
 export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBooking }) => {
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [isAnnual, setIsAnnual] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
+
+  const perksConfig = siteConfig.membershipPerks || {
+    basicPerks: ['Access to group classes', 'Studio equipment included', 'Flexible class scheduling'],
+    standardPerks: ['Unlimited classes every week', 'Free trial workshop access', 'Priority booking for members'],
+    premiumPerks: ['Access all pilates sessions', 'One private class monthly', 'Access to private events'],
+    standardBadge: 'MOST POPULAR',
+  };
 
   const defaultPlans = [
     {
@@ -19,7 +32,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
       annualPrice: 39,
       description: 'Perfect for beginners joining 2 classes weekly.',
       isFeatured: false,
-      features: [
+      features: perksConfig.basicPerks && perksConfig.basicPerks.length > 0 ? perksConfig.basicPerks : [
         'Access to group classes',
         'Studio equipment included',
         'Flexible class scheduling'
@@ -28,12 +41,12 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
     {
       id: 'standard',
       name: 'Standard Plan',
-      badge: 'MOST POPULAR',
+      badge: perksConfig.standardBadge || 'MOST POPULAR',
       monthlyPrice: 79,
       annualPrice: 65,
       description: 'Ideal for regular practitioners with unlimited classes.',
       isFeatured: true,
-      features: [
+      features: perksConfig.standardPerks && perksConfig.standardPerks.length > 0 ? perksConfig.standardPerks : [
         'Unlimited classes every week',
         'Free trial workshop access',
         'Priority booking for members'
@@ -46,7 +59,7 @@ export const MembershipSection: React.FC<MembershipSectionProps> = ({ onOpenBook
       annualPrice: 105,
       description: 'Best for members seeking full access and perks.',
       isFeatured: false,
-      features: [
+      features: perksConfig.premiumPerks && perksConfig.premiumPerks.length > 0 ? perksConfig.premiumPerks : [
         'Access all pilates sessions.',
         'One private class monthly.',
         'Access to private events.'

@@ -8,6 +8,7 @@ import { WellnessJourney } from './components/WellnessJourney';
 import { ProgramsEvents } from './components/ProgramsEvents';
 import { InteractiveSchedule } from './components/InteractiveSchedule';
 import { TeachersShowcase } from './components/TeachersShowcase';
+import { GiftOfYoga } from './components/GiftOfYoga';
 import { LocationsSection } from './components/LocationsSection';
 import { FaqSection } from './components/FaqSection';
 import { NewsletterFooter } from './components/NewsletterFooter';
@@ -25,7 +26,6 @@ import { ScrollProgressBar } from './components/ScrollUI';
 import { AIChatWidget } from './components/AIChatWidget';
 import { AiAssistantPage } from './components/AiAssistantPage';
 import { PackageDetailPage } from './components/PackageDetailPage';
-import { PragyaConnectPage } from './components/PragyaConnectPage';
 import { PackageReserveModal } from './components/PackageReserveModal';
 import { GuestBookingModal } from './components/GuestBookingModal';
 import { CartPage } from './components/CartPage';
@@ -36,7 +36,7 @@ import { AdminLogin } from './components/admin/AdminLogin';
 import { Instructor, UpcomingEvent, DynamicPackage } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'merchandise' | 'ai-assistant' | 'community' | 'cart' | 'policy' | 'admin'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'merchandise' | 'ai-assistant' | 'cart' | 'policy' | 'admin'>('home');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('pragya_admin_auth') === 'true';
   });
@@ -464,8 +464,6 @@ export const App: React.FC = () => {
             onBackToHome={() => handleViewChange('home')}
             onOpenBooking={handleOpenBooking}
           />
-        ) : currentView === 'community' ? (
-          <PragyaConnectPage onOpenBooking={handleOpenBooking} />
         ) : currentView === 'cart' ? (
           <CartPage
             onViewChange={(view) => handleViewChange(view as any)}
@@ -489,7 +487,7 @@ export const App: React.FC = () => {
 
             <WhyChooseUs />
 
-            <TeachersShowcase onOpenTeacherModal={handleOpenTeacherDetail} />
+            <GiftOfYoga />
 
             <ProgramsEvents
               onOpenBooking={handleOpenBooking}

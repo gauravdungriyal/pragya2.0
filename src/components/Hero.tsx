@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getDailyQuotes, DEFAULT_QUOTES } from '../services/api';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 import { DailyQuote } from '../types';
 
 interface HeroProps {
@@ -8,18 +9,23 @@ interface HeroProps {
   onViewChange?: (view: any) => void;
 }
 
-const HERO_DESKTOP_IMAGES = [
-  'https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=2000&auto=format&fit=crop',
-  '/hero1.webp',
-  '/hero3.webp?v=2'
-];
-
 export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, onViewChange }) => {
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quotesList, setQuotesList] = useState<DailyQuote[]>(DEFAULT_QUOTES);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [isQuoteFading, setIsQuoteFading] = useState(false);
   const [isQuoteHovered, setIsQuoteHovered] = useState(false);
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
+
+  const heroImages = siteConfig.hero.images.length > 0 ? siteConfig.hero.images : [
+    'https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=2000&auto=format&fit=crop',
+    '/hero1.webp',
+    '/hero3.webp?v=2'
+  ];
 
   useEffect(() => {
     getDailyQuotes().then((data) => {
@@ -43,17 +49,17 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
 
   useEffect(() => {
     // Preload desktop hero images for smooth transition
-    HERO_DESKTOP_IMAGES.forEach((src) => {
+    heroImages.forEach((src) => {
       const img = new Image();
       img.src = src;
     });
 
     const timer = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % HERO_DESKTOP_IMAGES.length);
-    }, 3000);
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 3500);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [heroImages.length]);
 
   return (
     <section
@@ -73,9 +79,9 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
       }}
     >
       {/* Desktop Full-Screen Cover Background Image Layer (Auto-rotating Slideshow) */}
-      {HERO_DESKTOP_IMAGES.map((imageSrc, index) => (
+      {heroImages.map((imageSrc, index) => (
         <div
-          key={imageSrc}
+          key={imageSrc + index}
           className="hero-bg-desktop"
           style={{
             position: 'absolute',
@@ -143,7 +149,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
             letterSpacing: '-0.02em'
           }}
         >
-          Stronger Core, <span style={{ fontFamily: "var(--font-accent)", fontStyle: 'italic', fontWeight: 400 }}>Stronger You</span>
+          {siteConfig.hero.mainTitle}
         </h1>
 
         {/* Subtitle Paragraph */}
@@ -153,13 +159,13 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
             fontFamily: "'Neue Montreal', -apple-system, sans-serif",
             fontSize: '15px',
             color: '#4A4640',
-            maxWidth: '540px',
+            maxWidth: '580px',
             margin: '0 auto 32px auto',
             lineHeight: 1.6,
             fontWeight: 400
           }}
         >
-          Strengthen your body, calm your mind, and embrace mindful movement with our expert-led pilates sessions.
+          {siteConfig.hero.subtitle}
         </p>
 
         {/* CTA Button */}
@@ -195,7 +201,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenBooking, onNavigateSection, on
               e.currentTarget.style.transform = 'translateY(0px)';
             }}
           >
-            BOOK YOUR SESSION
+            {siteConfig.hero.ctaPrimaryText.toUpperCase()}
           </button>
         </div>
       </div>

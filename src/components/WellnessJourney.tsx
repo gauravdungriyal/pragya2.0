@@ -1,58 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Sparkles, ArrowRight } from 'lucide-react';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 interface WellnessJourneyProps {
   onOpenBooking: (type?: string, title?: string) => void;
 }
 
 export const WellnessJourney: React.FC<WellnessJourneyProps> = ({ onOpenBooking }) => {
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [activeStep, setActiveStep] = useState(0);
 
-  const steps = [
-    {
-      num: "01",
-      title: "Bio-Individual Consult",
-      subtitle: "Understanding your unique constitution",
-      description: "Begin with a 1-on-1 assessment with our master teachers. We analyze your posture, joint range, stress patterns, and energy levels to design your personalized path.",
-      bullets: ["Postural & Mobility Scan", "Stress & Nervous System Baseline", "Ayurvedic Dosha Profile"],
-      image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop"
-    },
-    {
-      num: "02",
-      title: "Foundation & Core Alignment",
-      subtitle: "Building physical resilience",
-      description: "Master breath-led movement mechanics through tailored Hatha and Reformer Pilates practices designed to unlock joint freedom and build core stability.",
-      bullets: ["Diaphragmatic Breath Integration", "Pelvic & Spine Realignment", "Injury-Prevention Fundamentals"],
-      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop"
-    },
-    {
-      num: "03",
-      title: "Pranayama & Sound Recovery",
-      subtitle: "Calming the central nervous system",
-      description: "Transition into high-frequency vibrational sound baths, cold contrast hydrotherapy, and advanced Kundalini Kriyas to clear mental fatigue.",
-      bullets: ["Multi-Frequency Quartz Sound Bath", "Guided Contrast Hydro Therapy", "Deep Vagus Nerve Reset"],
-      image: "https://images.unsplash.com/photo-1512290900673-70024421191e?q=80&w=800&auto=format&fit=crop"
-    },
-    {
-      num: "04",
-      title: "Mastery & Daily Ikigai",
-      subtitle: "Living in effortless balance",
-      description: "Embody your practice seamlessly into daily life with advanced flow classes, weekend retreats, and lifelong participation in our supportive community.",
-      bullets: ["Advanced Asana & Meditation", "Seasonal Detox & Retreat Access", "Lifetime Community Circle"],
-      image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop"
-    }
-  ];
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
+
+  const journeyData = siteConfig.wellnessJourney || {
+    badge: 'TRANSFORMATION PATHWAY',
+    title: 'Your Path to Inner Peace',
+    subtitle: 'A structured, 4-stage journey engineered to restore vitality, clarity, and physical strength.',
+    steps: [
+      {
+        num: "01",
+        title: "Bio-Individual Consult",
+        subtitle: "Understanding your unique constitution",
+        description: "Begin with a 1-on-1 assessment with our master teachers. We analyze your posture, joint range, stress patterns, and energy levels to design your personalized path.",
+        bullets: ["Postural & Mobility Scan", "Stress & Nervous System Baseline", "Ayurvedic Dosha Profile"],
+        image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop"
+      },
+      {
+        num: "02",
+        title: "Foundation & Core Alignment",
+        subtitle: "Building physical resilience",
+        description: "Master breath-led movement mechanics through tailored Hatha and Reformer Pilates practices designed to unlock joint freedom and build core stability.",
+        bullets: ["Diaphragmatic Breath Integration", "Pelvic & Spine Realignment", "Injury-Prevention Fundamentals"],
+        image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop"
+      },
+      {
+        num: "03",
+        title: "Pranayama & Sound Recovery",
+        subtitle: "Calming the central nervous system",
+        description: "Transition into high-frequency vibrational sound baths, cold contrast hydrotherapy, and advanced Kundalini Kriyas to clear mental fatigue.",
+        bullets: ["Multi-Frequency Quartz Sound Bath", "Guided Contrast Hydro Therapy", "Deep Vagus Nerve Reset"],
+        image: "https://images.unsplash.com/photo-1512290900673-70024421191e?q=80&w=800&auto=format&fit=crop"
+      },
+      {
+        num: "04",
+        title: "Mastery & Daily Ikigai",
+        subtitle: "Living in effortless balance",
+        description: "Embody your practice seamlessly into daily life with advanced flow classes, weekend retreats, and lifelong participation in our supportive community.",
+        bullets: ["Advanced Asana & Meditation", "Seasonal Detox & Retreat Access", "Lifetime Community Circle"],
+        image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop"
+      }
+    ]
+  };
+
+  const steps = journeyData.steps && journeyData.steps.length > 0 ? journeyData.steps : [];
 
   return (
     <section id="journey" className="section" style={{ backgroundColor: '#F5EFE5' }}>
       <div className="container">
         <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 56px auto' }}>
           <span className="badge-pill badge-terracotta" style={{ marginBottom: '16px' }}>
-            The Wellness Journey
+            {journeyData.badge}
           </span>
           <h2 className="heading-1" style={{ color: '#272727', marginBottom: '18px' }}>
-            Your 4-Stage Pathway to Transformation
+            {journeyData.title}
           </h2>
+          <p className="body-regular" style={{ color: '#666666' }}>
+            {journeyData.subtitle}
+          </p>
           <p className="subheadline">
             Whether you are stepping onto the mat for the first time or deepening a lifelong practice, our structured pathway ensures clear, sustainable progress.
           </p>

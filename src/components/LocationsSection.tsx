@@ -1,21 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Phone, Sparkles, Check, Navigation } from 'lucide-react';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 interface LocationsSectionProps {
   onOpenBooking: (type?: string, title?: string) => void;
 }
 
 export const LocationsSection: React.FC<LocationsSectionProps> = ({ onOpenBooking }) => {
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [activeLocation, setActiveLocation] = useState(0);
 
-  const locations = [
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
+
+  const locations = siteConfig.locations.length > 0 ? siteConfig.locations : [
     {
       id: 1,
       name: "The Lotus Main Sanctuary & Spa",
       address: "108 Serenity Way, Sanctuary Heights",
       city: "Downtown City Center",
       hours: "Mon - Sun: 06:00 AM - 09:30 PM",
-      phone: "+1 (800) 772-4921",
+      phone: "+852 9876 5431",
       image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=1000&auto=format&fit=crop",
       amenities: [
         "2 Main Asana Practice Suites",
@@ -26,42 +32,10 @@ export const LocationsSection: React.FC<LocationsSectionProps> = ({ onOpenBookin
         "Manduka Eco-Mat & Towel Vault",
         "Private Member Lockers & Rain Showers"
       ]
-    },
-    {
-      id: 2,
-      name: "Oceanfront Beachfront Pavilion",
-      address: "Beachside Promenade, Deck 4",
-      city: "Coastal Sanctuary Shore",
-      hours: "Sat - Sun: 06:30 AM - 11:00 AM",
-      phone: "+1 (800) 772-4922",
-      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1000&auto=format&fit=crop",
-      amenities: [
-        "Open-Air Oceanfront Deck",
-        "Sunrise & Sunset Hatha Sessions",
-        "Acoustic Sound Bath Lawn",
-        "Cold-Pressed Juice Bar",
-        "Direct Beach Access"
-      ]
-    },
-    {
-      id: 3,
-      name: "Himalayan Retreat & Academy",
-      address: "Mountain Crest Valley, Gate 2",
-      city: "Himalayan Foothills Sanctuary",
-      hours: "Seasonal Retreats & Trainings",
-      phone: "+1 (800) 772-4923",
-      image: "https://images.unsplash.com/photo-1512290900673-70024421191e?q=80&w=1000&auto=format&fit=crop",
-      amenities: [
-        "200h & 300h Teacher Training Halls",
-        "Organic Farm-to-Table Dining",
-        "Silent Meditation Forest Path",
-        "Private Eco-Villas",
-        "Ayurvedic Panchakarma Spa"
-      ]
     }
   ];
 
-  const loc = locations[activeLocation];
+  const loc = locations[activeLocation] || locations[0];
 
   return (
     <section id="locations" className="section" style={{ backgroundColor: '#FAF6F0' }}>

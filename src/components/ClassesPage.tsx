@@ -1187,15 +1187,10 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                                       textAlign: 'center'
                                     }}
                                   >
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11.5px', fontWeight: 800, lineHeight: 1.2 }}>
-                                      <Clock size={11} color="#944426" />
-                                      <span>{startTime}</span>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 800, lineHeight: 1.2, flexWrap: 'wrap', justifyContent: 'center' }}>
+                                      <Clock size={11} color="#944426" style={{ flexShrink: 0 }} />
+                                      <span>{endTime ? `${startTime} – ${endTime}` : startTime}</span>
                                     </div>
-                                    {endTime && (
-                                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#7A351C', lineHeight: 1.2, marginTop: '2px' }}>
-                                        to {endTime}
-                                      </div>
-                                    )}
                                   </div>
 
                                   {/* Class Title */}
