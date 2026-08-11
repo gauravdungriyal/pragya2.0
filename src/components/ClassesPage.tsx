@@ -421,7 +421,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               lineHeight: 1.1
             }}
           >
-            Discover Your <span style={{ fontFamily: "var(--font-accent)", fontStyle: 'italic', fontWeight: 400 }}>Ideal</span> Yoga <span style={{ fontFamily: "var(--font-accent)", fontStyle: 'italic', fontWeight: 400 }}>Practice</span>
+            Discover Your <span style={{ fontFamily: "var(--font-accent)", fontStyle: 'italic', fontWeight: 400 }}>Ideal</span> Yog Practice
           </h2>
           <p style={{ fontFamily: "var(--font-sans)", fontSize: '16px', color: '#6B655F', margin: 0 }}>
             Join a class that matches your pace, your goals, and your lifestyle
