@@ -184,6 +184,18 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
     };
   }, [selectedDate, scheduleViewMode, user]);
 
+  // Force Daily View on mobile screens (width <= 768px)
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setScheduleViewMode('day');
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -694,8 +706,8 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                 </div>
               )}
             </div>
-            {/* VIEW SWITCHER PILL (Daily vs Weekly) */}
-            <div style={{ display: 'inline-flex', backgroundColor: '#EDE6DA', borderRadius: '999px', padding: '4px', gap: '4px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)' }}>
+            {/* VIEW SWITCHER PILL (Daily vs Weekly - Desktop/Tablet only) */}
+            <div className="schedule-view-switcher" style={{ display: 'inline-flex', backgroundColor: '#EDE6DA', borderRadius: '999px', padding: '4px', gap: '4px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)' }}>
               <button
                 type="button"
                 onClick={() => setScheduleViewMode('day')}
@@ -1056,6 +1068,9 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
 
         /* Mobile View Rules - Ultra Compact Daily Schedule View */
         @media (max-width: 768px) {
+          .schedule-view-switcher {
+            display: none !important;
+          }
           #schedule {
             padding: 32px 0 40px 0 !important;
           }
