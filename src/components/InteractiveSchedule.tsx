@@ -125,16 +125,74 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
     }
   ];
 
+  // View Mode: 'day' or 'week'
+  const [scheduleViewMode, setScheduleViewMode] = useState<'day' | 'week'>('day');
+  const [weeklySchedules, setWeeklySchedules] = useState<Record<string, ClassScheduleItem[]>>({});
+  const [weeklyLoading, setWeeklyLoading] = useState<boolean>(false);
+
+  const getWeekDays = (baseDate: Date) => {
+    const day = baseDate.getDay();
+    const diffToMon = day === 0 ? -6 : 1 - day;
+    const monday = new Date(baseDate);
+    monday.setDate(baseDate.getDate() + diffToMon);
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  };
+
+  const weekDays = getWeekDays(selectedDate);
+
+  // Fetch 7-day weekly schedule when viewMode is 'week'
+  useEffect(() => {
+    if (scheduleViewMode !== 'week') return;
+    let isMounted = true;
+    setWeeklyLoading(true);
+
+    const promises = weekDays.map((d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${y}-${m}-${dayStr}`;
+
+      const fetchFn = user
+        ? getScheduleByDate(dateStr, undefined, user.access_token)
+        : getScheduleByDate(dateStr);
+
+      return fetchFn.then((res) => ({
+        dateStr,
+        schedules: res && Array.isArray(res.schedules) ? res.schedules : []
+      }));
+    });
+
+    Promise.all(promises).then((results) => {
+      if (!isMounted) return;
+      const map: Record<string, ClassScheduleItem[]> = {};
+      results.forEach((r) => {
+        map[r.dateStr] = r.schedules;
+      });
+      setWeeklySchedules(map);
+      setWeeklyLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedDate, scheduleViewMode, user]);
+
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    // Bug 3 fix: use local date parts to avoid UTC timezone shift (e.g. UTC+5:30 shifting date back by 1)
+    // Bug 3 fix: use local date parts to avoid UTC timezone shift
     const y = selectedDate.getFullYear();
     const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
     const d = String(selectedDate.getDate()).padStart(2, '0');
     const dateStr = `${y}-${m}-${d}`;
 
-    // Use JWT endpoint when user is logged in for richer data (spots remaining, user booking status)
     const fetchFn = user
       ? getScheduleByDate(dateStr, undefined, user.access_token)
       : getScheduleByDate(dateStr);
@@ -636,112 +694,357 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                 </div>
               )}
             </div>
+            {/* VIEW SWITCHER PILL (Daily vs Weekly) */}
+            <div style={{ display: 'inline-flex', backgroundColor: '#EDE6DA', borderRadius: '999px', padding: '4px', gap: '4px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)' }}>
+              <button
+                type="button"
+                onClick={() => setScheduleViewMode('day')}
+                style={{
+                  backgroundColor: scheduleViewMode === 'day' ? '#063928' : 'transparent',
+                  color: scheduleViewMode === 'day' ? '#FFFFFF' : '#6B655F',
+                  border: 'none',
+                  borderRadius: '999px',
+                  padding: '8px 18px',
+                  fontSize: '12.5px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                <Calendar size={14} />
+                <span>Daily View</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setScheduleViewMode('week')}
+                style={{
+                  backgroundColor: scheduleViewMode === 'week' ? '#063928' : 'transparent',
+                  color: scheduleViewMode === 'week' ? '#FFFFFF' : '#6B655F',
+                  border: 'none',
+                  borderRadius: '999px',
+                  padding: '8px 18px',
+                  fontSize: '12.5px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                <Calendar size={14} />
+                <span>Weekly View</span>
+              </button>
+            </div>
           </div>
 
-          {/* Loading Indicator */}
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: '#944426' }}>
-              <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px auto', display: 'block' }} />
-              <p style={{ fontFamily: "'Neue Montreal', sans-serif", color: '#757069' }}>Loading live class schedule...</p>
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px', backgroundColor: '#FFFFFF', borderRadius: '16px', color: '#7A756F' }}>
-              No sessions scheduled for this filter. Select another date or clear filter.
-            </div>
-          ) : (
-            <div className="schedule-list-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {filteredItems.map((item, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => onOpenBooking('class', item.title || item.className, item)}
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '16px',
-                    padding: '24px 32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '24px',
-                    flexWrap: 'wrap',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-                    transition: 'all 0.25s ease'
-                  }}
-                  className="schedule-row-grid"
-                >
-                  {/* Time & Room (Stacked Start & End Time) */}
-                  <div className="sch-row-time" style={{ minWidth: '100px', flexShrink: 0 }}>
-                    {(() => {
-                      const rawTiming = item.timing || item.time || '';
-                      const parts = rawTiming.split(/\s*-\s*|\s*to\s*/i);
-                      const startTime = parts[0]?.trim() || rawTiming;
-                      const endTime = parts[1]?.trim() || '';
-                      return (
-                        <>
-                          <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: '#944426', lineHeight: 1.2 }}>
-                            {startTime}
-                          </div>
-                          {endTime && (
-                            <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: '#6B655F', lineHeight: 1.2 }}>
-                              {endTime}
-                            </div>
-                          )}
-                          <div style={{ fontSize: '11.5px', color: '#8A8580', fontWeight: 500, marginTop: '2px' }}>
-                            {item.room || 'Woo House'}
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-
-                  <div className="sch-row-main" style={{ flexGrow: 1, minWidth: '140px' }}>
-                    <h4 style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: '0 0 4px 0' }}>
-                      {item.title || item.className}
-                    </h4>
-                    <div style={{ fontSize: '13.5px', color: '#6B655F' }}>
-                      Guided by {item.instructor}
-                    </div>
-                  </div>
-
-                  <div className="sch-row-badge">
-                    <span
-                      style={{
-                        backgroundColor: '#F5EFE5',
-                        color: '#944426',
-                        padding: '6px 16px',
-                        borderRadius: '999px',
-                        fontSize: '12.5px',
-                        fontWeight: 700,
-                        letterSpacing: '0.02em'
-                      }}
-                    >
-                      {item.levels || item.duration || 'All Levels'}
-                    </span>
-                  </div>
-
-                  <button
-                    className="sch-row-btn"
+          {/* WEEKLY VIEW or DAILY VIEW BRANCH */}
+          {scheduleViewMode === 'week' ? (
+            <div className="weekly-schedule-container-desktop" style={{ width: '100%' }}>
+              {weeklyLoading ? (
+                <div style={{ textAlign: 'center', padding: '60px', color: '#944426' }}>
+                  <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px auto', display: 'block' }} />
+                  <p style={{ fontFamily: "var(--font-sans)", color: '#8A8580', fontSize: '14.5px' }}>
+                    Loading 7-Day Weekly Timetable...
+                  </p>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto', paddingBottom: '12px' }}>
+                  <div
                     style={{
-                      border: 'none',
-                      backgroundColor: '#21201E',
-                      color: '#FFFFFF',
-                      borderRadius: '999px',
-                      padding: '10px 24px',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(7, minmax(180px, 1fr))',
+                      gap: '12px',
+                      minWidth: '1050px',
+                      alignItems: 'stretch'
                     }}
                   >
-                    <span>Book</span>
-                    <ArrowUpRight size={15} />
-                  </button>
+                    {weekDays.map((dateObj, dIdx) => {
+                      const y = dateObj.getFullYear();
+                      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                      const dayStr = String(dateObj.getDate()).padStart(2, '0');
+                      const keyStr = `${y}-${m}-${dayStr}`;
+
+                      const rawDayItems = weeklySchedules[keyStr] || [];
+                      const displayDayItems = rawDayItems;
+
+                      // Filter items according to active filters
+                      const filteredDayItems = displayDayItems.filter((item) => {
+                        const itemLevel = ((item as any).levels || (item as any).level || '').toLowerCase();
+                        const itemInstructor = ((item as any).instructor || '').toLowerCase();
+                        const itemRoom = ((item as any).room || '').toLowerCase();
+
+                        if (levelFilter !== 'ALL' && levelFilter !== '' && !itemLevel.includes(levelFilter.toLowerCase())) return false;
+                        if (instructorFilter !== '' && !itemInstructor.includes(instructorFilter.toLowerCase())) return false;
+                        if (locationFilter !== '' && !itemRoom.includes(locationFilter.toLowerCase())) return false;
+                        return true;
+                      });
+
+                      const isToday = dateObj.toDateString() === new Date().toDateString();
+                      const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                      const dateNum = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                      return (
+                        <div
+                          key={keyStr}
+                          style={{
+                            backgroundColor: isToday ? '#FFFFFF' : '#FAF6F0',
+                            borderRadius: '20px',
+                            border: isToday ? '2px solid #944426' : '1px solid #EBE4D8',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            boxShadow: isToday ? '0 10px 28px rgba(148, 68, 38, 0.14)' : 'none',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          {/* Column Day Header */}
+                          <div
+                            style={{
+                              backgroundColor: isToday ? '#063928' : '#F5EFE5',
+                              color: isToday ? '#FFFFFF' : '#21201E',
+                              padding: '14px 10px',
+                              textAlign: 'center',
+                              borderBottom: '1px solid #EBE4D8'
+                            }}
+                          >
+                            <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', opacity: 0.85 }}>
+                              {dayName}
+                            </div>
+                            <div style={{ fontSize: '14px', fontWeight: 700, marginTop: '2px' }}>
+                              {dateNum}
+                            </div>
+                            {isToday && (
+                              <span style={{ display: 'inline-block', fontSize: '9px', fontWeight: 900, backgroundColor: '#D97706', color: '#FFFFFF', padding: '2px 8px', borderRadius: '999px', marginTop: '4px', textTransform: 'uppercase' }}>
+                                TODAY
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Class Slot Cards Column */}
+                          <div style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
+                            {filteredDayItems.length === 0 ? (
+                              <div style={{ textAlign: 'center', padding: '32px 6px', fontSize: '12px', color: '#8A8580', fontStyle: 'italic' }}>
+                                No sessions
+                              </div>
+                            ) : (
+                              filteredDayItems.map((clsItem, cIdx) => {
+                                const title = clsItem.title || 'Yoga Class';
+                                const timing = (clsItem as any).timing || '09:00 AM';
+                                const instructor = clsItem.instructor || 'Teacher';
+                                const room = (clsItem as any).room || 'Woo House';
+                                const classColor = (clsItem.color && clsItem.color.trim() !== '') 
+                                  ? clsItem.color 
+                                  : title.toLowerCase().includes('back') ? '#D97706'
+                                  : title.toLowerCase().includes('yin') || title.toLowerCase().includes('sound') ? '#7C3AED'
+                                  : title.toLowerCase().includes('gentle') || title.toLowerCase().includes('hatha') ? '#059669'
+                                  : title.toLowerCase().includes('vinyasa') || title.toLowerCase().includes('power') ? '#944426'
+                                  : title.toLowerCase().includes('restorative') ? '#0284C7'
+                                  : '#D97706';
+
+                                const parts = (timing || '').split(/\s*-\s*|\s*to\s*/i);
+                                const startTime = parts[0]?.trim() || timing;
+                                const endTime = parts[1]?.trim() || '';
+
+                                return (
+                                  <div
+                                    key={cIdx}
+                                    onClick={() => onOpenBooking('class', title, clsItem)}
+                                    style={{
+                                      backgroundColor: '#FAF7F2',
+                                      borderRadius: '16px',
+                                      padding: '12px 10px 12px 14px',
+                                      border: '1px solid #EBE4D8',
+                                      borderLeft: `4px solid ${classColor}`,
+                                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.04)',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'flex-start',
+                                      textAlign: 'left',
+                                      gap: '6px',
+                                      position: 'relative',
+                                      cursor: 'pointer',
+                                      transition: 'transform 0.25s ease, box-shadow 0.25s ease'
+                                    }}
+                                    className="weekly-slot-card"
+                                  >
+                                    {/* Top Row: Time & Top-Right Floating BOOK Button */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '4px' }}>
+                                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', letterSpacing: '-0.01em' }}>
+                                        {endTime ? `${startTime} - ${endTime}` : startTime}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onOpenBooking('class', title, clsItem);
+                                        }}
+                                        style={{
+                                          backgroundColor: '#1E293B',
+                                          color: '#FFFFFF',
+                                          border: 'none',
+                                          borderRadius: '999px',
+                                          padding: '3px 9px',
+                                          fontSize: '10px',
+                                          fontWeight: 800,
+                                          cursor: 'pointer',
+                                          letterSpacing: '0.06em',
+                                          boxShadow: '0 2px 6px rgba(30, 41, 59, 0.25)',
+                                          flexShrink: 0
+                                        }}
+                                      >
+                                        BOOK
+                                      </button>
+                                    </div>
+
+                                    {/* Title Row with Bullet Dot */}
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', width: '100%', margin: '2px 0' }}>
+                                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: classColor, marginTop: '5px', flexShrink: 0 }} />
+                                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 700, color: classColor, lineHeight: 1.25 }}>
+                                        {title}
+                                      </div>
+                                    </div>
+
+                                    {/* Instructor & Room Info */}
+                                    <div style={{ fontSize: '11px', color: '#334155', fontWeight: 600, lineHeight: 1.3 }}>
+                                      By {instructor} {room ? `📍 ${room}` : ''}
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
-          )}
+          ) : (
+            /* DAILY VIEW */
+            loading ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: '#944426' }}>
+                <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px auto', display: 'block' }} />
+                <p style={{ fontFamily: "'Neue Montreal', sans-serif", color: '#757069' }}>Loading live class schedule...</p>
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px', backgroundColor: '#FFFFFF', borderRadius: '16px', color: '#7A756F' }}>
+                No sessions scheduled for this filter. Select another date or clear filter.
+              </div>
+            ) : (
+            <div className="schedule-list-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {filteredItems.map((item, idx) => {
+                const classColor = (item.color && item.color.trim() !== '') 
+                  ? item.color 
+                  : (item.title || '').toLowerCase().includes('yin') || (item.title || '').toLowerCase().includes('sound') ? '#7C3AED'
+                  : (item.title || '').toLowerCase().includes('gentle') || (item.title || '').toLowerCase().includes('hatha') ? '#059669'
+                  : (item.title || '').toLowerCase().includes('vinyasa') || (item.title || '').toLowerCase().includes('power') ? '#944426'
+                  : (item.title || '').toLowerCase().includes('restorative') ? '#0284C7'
+                  : '#944426';
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => onOpenBooking('class', item.title || item.className, item)}
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '16px',
+                      padding: '24px 32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '24px',
+                      flexWrap: 'wrap',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                      borderLeft: `5px solid ${classColor}`,
+                      transition: 'all 0.25s ease'
+                    }}
+                    className="schedule-row-grid"
+                  >
+                    {/* Time & Room (Stacked Start & End Time) */}
+                    <div className="sch-row-time" style={{ minWidth: '100px', flexShrink: 0 }}>
+                      {(() => {
+                        const rawTiming = item.timing || item.time || '';
+                        const parts = rawTiming.split(/\s*-\s*|\s*to\s*/i);
+                        const startTime = parts[0]?.trim() || rawTiming;
+                        const endTime = parts[1]?.trim() || '';
+                        return (
+                          <>
+                            <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: classColor, lineHeight: 1.2 }}>
+                              {startTime}
+                            </div>
+                            {endTime && (
+                              <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: '#6B655F', lineHeight: 1.2 }}>
+                                {endTime}
+                              </div>
+                            )}
+                            <div style={{ fontSize: '11.5px', color: '#8A8580', fontWeight: 500, marginTop: '2px' }}>
+                              {item.room || 'Woo House'}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="sch-row-main" style={{ flexGrow: 1, minWidth: '140px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: classColor, display: 'inline-block', flexShrink: 0 }} />
+                        <h4 style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: 0 }}>
+                          {item.title || item.className}
+                        </h4>
+                      </div>
+                      <div style={{ fontSize: '13.5px', color: '#6B655F' }}>
+                        Guided by {item.instructor}
+                      </div>
+                    </div>
+
+                    <div className="sch-row-badge">
+                      <span
+                        style={{
+                          backgroundColor: `${classColor}15`,
+                          color: classColor,
+                          border: `1px solid ${classColor}30`,
+                          padding: '6px 16px',
+                          borderRadius: '999px',
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          letterSpacing: '0.02em'
+                        }}
+                      >
+                        {item.levels || item.duration || 'All Levels'}
+                      </span>
+                    </div>
+
+                    <button
+                      className="sch-row-btn"
+                      style={{
+                        border: 'none',
+                        backgroundColor: '#21201E',
+                        color: '#FFFFFF',
+                        borderRadius: '999px',
+                        padding: '10px 24px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span>Book</span>
+                      <ArrowUpRight size={15} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
         </div>
       </div>
 

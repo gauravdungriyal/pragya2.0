@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Sparkles, Image as ImageIcon, MapPin, BookOpen, Share2, Check, Plus, Trash2, Loader2 } from 'lucide-react';
+import { Save, Sparkles, Image as ImageIcon, MapPin, BookOpen, Share2, Check, Plus, Trash2, Loader2, Calendar, Ticket } from 'lucide-react';
 import {
   getSiteConfig,
   saveSiteConfig,
@@ -8,18 +8,30 @@ import {
   SiteConfig,
   StudioLocation,
 } from '../../services/siteConfig';
+import { getUpcomingEvents } from '../../services/api';
+import { UpcomingEvent } from '../../types';
 
 export const ContentManager: React.FC = () => {
-  const [subTab, setSubTab] = useState<'hero' | 'whyus' | 'journey' | 'perks' | 'locations' | 'about' | 'courses' | 'footer'>('hero');
+  const [subTab, setSubTab] = useState<'hero' | 'events' | 'whyus' | 'journey' | 'perks' | 'locations' | 'about' | 'courses' | 'footer'>('hero');
   const [config, setConfig] = useState<SiteConfig>(getSiteConfig());
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [allEvents, setAllEvents] = useState<UpcomingEvent[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
   useEffect(() => {
     fetchSiteConfigFromFirebase().then((liveConfig) => {
       if (liveConfig) {
         setConfig(liveConfig);
       }
+    });
+
+    setIsLoadingEvents(true);
+    getUpcomingEvents().then((eventsData) => {
+      if (eventsData && eventsData.length > 0) {
+        setAllEvents(eventsData);
+      }
+      setIsLoadingEvents(false);
     });
   }, []);
 
@@ -99,6 +111,25 @@ export const ContentManager: React.FC = () => {
             }}
           >
             <ImageIcon className="w-4 h-4" /> Hero Banner & Badge
+          </button>
+
+          <button
+            onClick={() => setSubTab('events')}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '12px',
+              fontWeight: 500,
+              fontSize: '13px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              border: subTab === 'events' ? 'none' : '1px solid #E7E5E4',
+              backgroundColor: subTab === 'events' ? '#B45309' : '#F5F5F4',
+              color: subTab === 'events' ? '#FFFFFF' : '#44403C',
+            }}
+          >
+            <Ticket className="w-4 h-4" /> Homepage Upcoming Events ({allEvents.length})
           </button>
 
           <button
@@ -335,7 +366,143 @@ export const ContentManager: React.FC = () => {
               />
             </div>
           </div>
+        </div>
+      )}
 
+      {/* SUB-TAB: HOMEPAGE UPCOMING EVENTS FILTER */}
+      {subTab === 'events' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans), "Neue Montreal", sans-serif', color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Ticket className="w-5 h-5 text-amber-700" /> Homepage "Upcoming Events" Visibility Manager
+                </h3>
+                <p style={{ fontSize: '13px', color: '#78716C', margin: '4px 0 0 0' }}>
+                  Select (tick ✓) which events from the API should be displayed on the Homepage slider. Unticked events will be hidden.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allIds = allEvents.map((e) => String(e.id));
+                    setConfig({
+                      ...config,
+                      upcomingEventsConfig: { enabledEventIds: allIds },
+                    });
+                  }}
+                  style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 400, border: '1px solid #D6D3D1', backgroundColor: '#F5F5F4', color: '#292524', cursor: 'pointer' }}
+                >
+                  ✓ Select All ({allEvents.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfig({
+                      ...config,
+                      upcomingEventsConfig: { enabledEventIds: ['__none__'] },
+                    });
+                  }}
+                  style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 400, border: '1px solid #FECDD3', backgroundColor: '#FEF2F2', color: '#991B1B', cursor: 'pointer' }}
+                >
+                  Deselect All
+                </button>
+              </div>
+            </div>
+
+            {isLoadingEvents ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#78716C' }}>
+                <Loader2 className="w-6 h-6 animate-spin" style={{ margin: '0 auto 8px auto', display: 'block' }} />
+                Fetching events from API...
+              </div>
+            ) : allEvents.length === 0 ? (
+              <div style={{ padding: '30px', textAlign: 'center', color: '#78716C', backgroundColor: '#FAF7F2', borderRadius: '12px' }}>
+                No events found in API.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                {allEvents.map((evt) => {
+                  const eventId = String(evt.id);
+                  const enabledList = config.upcomingEventsConfig?.enabledEventIds || [];
+                  // Default: if enabledList is empty, all events are ticked by default
+                  const isChecked = enabledList.length === 0 ? true : enabledList.includes(eventId);
+
+                  return (
+                    <div
+                      key={eventId}
+                      onClick={() => {
+                        const effective = (enabledList.length === 0)
+                          ? allEvents.map((e) => String(e.id))
+                          : [...enabledList];
+
+                        let next: string[];
+                        if (effective.includes(eventId)) {
+                          next = effective.filter((id) => id !== eventId);
+                        } else {
+                          next = [...effective, eventId];
+                        }
+
+                        setConfig({
+                          ...config,
+                          upcomingEventsConfig: { enabledEventIds: next },
+                        });
+                      }}
+                      style={{
+                        border: isChecked ? '2px solid #059669' : '1px solid #E7E5E4',
+                        backgroundColor: isChecked ? '#F0FDF4' : '#FAFAFA',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        display: 'flex',
+                        gap: '14px',
+                        alignItems: 'flex-start',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isChecked ? '0 4px 12px rgba(5,150,105,0.06)' : 'none',
+                      }}
+                    >
+                      <div style={{ paddingTop: '2px' }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}}
+                          style={{ width: '20px', height: '20px', accentColor: '#059669', cursor: 'pointer' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 400, padding: '3px 8px', borderRadius: '6px', backgroundColor: isChecked ? '#D1FAE5' : '#E7E5E4', color: isChecked ? '#065F46' : '#57534E' }}>
+                            {isChecked ? '✓ Show on Homepage' : 'Hidden from Homepage'}
+                          </span>
+                          {evt.price && <span style={{ fontSize: '13px', fontWeight: 400, color: '#B45309' }}>{evt.price}</span>}
+                        </div>
+
+                        <h4 style={{ fontSize: '14px', fontWeight: 400, fontFamily: 'var(--font-sans), "Neue Montreal", sans-serif', color: '#1C1917', margin: 0, lineHeight: 1.3 }}>
+                          {evt.title || evt.name}
+                        </h4>
+
+                        {evt.date && (
+                          <p style={{ fontSize: '12px', color: '#78716C', margin: 0, fontWeight: 400 }}>
+                            📅 {evt.date}
+                          </p>
+                        )}
+
+                        {evt.description && (
+                          <p style={{ fontSize: '12px', color: '#57534E', margin: '2px 0 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
+                            {evt.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+          </div>
         </div>
       )}
 

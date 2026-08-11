@@ -62,6 +62,9 @@ export interface SiteConfig {
     ctaPrimaryText: string;
     ctaSecondaryText: string;
   };
+  upcomingEventsConfig: {
+    enabledEventIds: string[];
+  };
   whyChooseUs: {
     subtitle: string;
     title: string;
@@ -123,6 +126,9 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     subtitle: 'Immerse in holistic wellness, traditional Pranayama, Kriya practices, and luxury Reformer Pilates sessions in serene sanctuary spaces.',
     ctaPrimaryText: 'Book Complimentary Trial',
     ctaSecondaryText: 'Explore Memberships',
+  },
+  upcomingEventsConfig: {
+    enabledEventIds: [],
   },
   whyChooseUs: {
     subtitle: '— VALUE —',
@@ -316,6 +322,7 @@ export function getSiteConfig(): SiteConfig {
       ...parsed,
       announcement: { ...DEFAULT_SITE_CONFIG.announcement, ...(parsed.announcement || {}) },
       hero: { ...DEFAULT_SITE_CONFIG.hero, ...(parsed.hero || {}) },
+      upcomingEventsConfig: { ...DEFAULT_SITE_CONFIG.upcomingEventsConfig, ...(parsed.upcomingEventsConfig || {}) },
       whyChooseUs: { ...DEFAULT_SITE_CONFIG.whyChooseUs, ...(parsed.whyChooseUs || {}) },
       wellnessJourney: { ...DEFAULT_SITE_CONFIG.wellnessJourney, ...(parsed.wellnessJourney || {}) },
       membershipPerks: { ...DEFAULT_SITE_CONFIG.membershipPerks, ...(parsed.membershipPerks || {}) },
@@ -341,6 +348,7 @@ export async function fetchSiteConfigFromFirebase(): Promise<SiteConfig> {
         ...data,
         announcement: { ...DEFAULT_SITE_CONFIG.announcement, ...(data.announcement || {}) },
         hero: { ...DEFAULT_SITE_CONFIG.hero, ...(data.hero || {}) },
+        upcomingEventsConfig: { ...DEFAULT_SITE_CONFIG.upcomingEventsConfig, ...(data.upcomingEventsConfig || {}) },
         whyChooseUs: { ...DEFAULT_SITE_CONFIG.whyChooseUs, ...(data.whyChooseUs || {}) },
         wellnessJourney: { ...DEFAULT_SITE_CONFIG.wellnessJourney, ...(data.wellnessJourney || {}) },
         membershipPerks: { ...DEFAULT_SITE_CONFIG.membershipPerks, ...(data.membershipPerks || {}) },
@@ -420,6 +428,7 @@ export function subscribeSiteConfig(callback: (config: SiteConfig) => void): () 
             ...data,
             announcement: { ...DEFAULT_SITE_CONFIG.announcement, ...(data.announcement || {}) },
             hero: { ...DEFAULT_SITE_CONFIG.hero, ...(data.hero || {}) },
+            upcomingEventsConfig: { ...DEFAULT_SITE_CONFIG.upcomingEventsConfig, ...(data.upcomingEventsConfig || {}) },
             whyChooseUs: { ...DEFAULT_SITE_CONFIG.whyChooseUs, ...(data.whyChooseUs || {}) },
             wellnessJourney: { ...DEFAULT_SITE_CONFIG.wellnessJourney, ...(data.wellnessJourney || {}) },
             membershipPerks: { ...DEFAULT_SITE_CONFIG.membershipPerks, ...(data.membershipPerks || {}) },

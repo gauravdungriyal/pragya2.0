@@ -145,7 +145,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onExitAdmin }) => {
   const pendingBookingsCount = bookings.filter((b) => b.status === 'Pending').length;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#FAF7F2', color: '#1C1917', fontFamily: 'system-ui, -apple-system, sans-serif', paddingBottom: '60px' }}>
+    <div className="admin-panel admin-panel-container" style={{ minHeight: '100vh', backgroundColor: '#FAF7F2', color: '#1C1917', fontFamily: 'var(--font-sans), "Neue Montreal", sans-serif', fontWeight: 400, paddingBottom: '60px' }}>
       
       {/* ── Top Header Bar ────────────────────────────────────────── */}
       <header style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E5E4', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>

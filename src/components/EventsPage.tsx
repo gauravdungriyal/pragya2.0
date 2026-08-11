@@ -25,7 +25,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
 
   const defaultEvents: UpcomingEvent[] = [
     {
-      id: "1",
+      id: "101",
       title: "Sun-Kissed + Centered: Morning Beach Reset",
       name: "Sun-Kissed + Centered: Morning Beach Reset",
       description: "Step away from the city hustle and give yourself the ultimate weekend recharge. Dynamic oceanfront Hatha flow followed by sound bath and organic cold-pressed juices.",
@@ -33,10 +33,11 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
       starts_at: "2026-08-08 07:00:00",
       location: "Private Oceanfront Lawn, Repulse Bay",
       price: "HK$ 350",
-      category: "Outdoor Reset"
+      category: "Outdoor Reset",
+      image: "/gallery/upcomingevents/event_16_event_1783772088_jpg.webp"
     },
     {
-      id: "2",
+      id: "102",
       title: "Himalayan Breathwork & Sound Immersion Workshop",
       name: "Himalayan Breathwork & Sound Immersion Workshop",
       description: "Master ancient Pranayama techniques to reset the central nervous system. Guided by Master Aarya with live acoustic Tibetan singing bowls.",
@@ -44,10 +45,35 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
       starts_at: "2026-08-16 16:00:00",
       location: "Main Sanctuary Studio",
       price: "HK$ 580",
-      category: "Master Workshop"
+      category: "Master Workshop",
+      image: "/gallery/upcomingevents/event_15_event_15_1784376938_jpg.webp"
     },
     {
-      id: "3",
+      id: "103",
+      title: "Sacred Soundscapes: CET Mantra, Chanting & Kirtan Immersion",
+      name: "Sacred Soundscapes: CET Mantra, Chanting & Kirtan Immersion",
+      description: "Delve into sacred sound vibration, Vedic chanting, and heart-opening Kirtan. Earn a CET continuing education certificate while deepening your vocal resonance.",
+      date: "Saturday, Sept 5 • 10:00 AM - 05:00 PM",
+      starts_at: "2026-09-05 10:00:00",
+      location: "Main Sanctuary Studio",
+      price: "HK$ 1,280",
+      category: "Mantra & Sound",
+      image: "/gallery/upcomingevents/event_19_event_19_1785133717_jpg.webp"
+    },
+    {
+      id: "104",
+      title: "Autumn Equinox 108 Sun Salutations & Candlelight Sound Bath",
+      name: "Autumn Equinox 108 Sun Salutations & Candlelight Sound Bath",
+      description: "Celebrate seasonal balance with 108 meditative Surya Namaskars followed by an immersive 60-minute candlelight crystal bowl sound bath.",
+      date: "Monday, Sept 21 • 06:30 PM - 08:30 PM",
+      starts_at: "2026-09-21 18:30:00",
+      location: "Oceanfront Pavilion",
+      price: "HK$ 450",
+      category: "Equinox Special",
+      image: "/gallery/upcomingevents/event_16_event_1783772088_jpg.webp"
+    },
+    {
+      id: "105",
       title: "Sacred Serenity Nepal Retreat 2026 – Yog & Spiritual Journey",
       name: "Sacred Serenity Nepal Retreat 2026 – Yog & Spiritual Journey",
       description: "Escape to the Himalayas for a transformative 7-day retreat in Pokhara & Bandipur, Nepal. Join Pragya Yog School for daily yoga, meditation, cultural immersion, and breathtaking mountain views.",
@@ -55,19 +81,33 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
       starts_at: "2026-09-25 16:00:00",
       location: "Pokhara & Bandipur, Nepal",
       price: "HK$ 19,125",
-      category: "Retreat",
+      category: "Himalayan Retreat",
+      image: "/gallery/upcomingevents/event_18_event_18_1785134240_jpg.webp",
       spots_label: "9 users already booked"
     },
     {
-      id: "4",
+      id: "106",
       title: "200-Hour International Yoga Teacher Training 2026",
       name: "200-Hour International Yoga Teacher Training 2026",
       description: "Transform your relationship with yoga and earn an internationally recognized certification accredited by Yoga Alliance. Comprehensive coverage of Asana, Pranayama, Anatomy, and Philosophy.",
-      date: "October 15, 2026",
+      date: "Thursday, Oct 15 • 09:00 AM - 05:00 PM",
       starts_at: "2026-10-15 09:00:00",
       location: "Pragya Academy Center",
       price: "HK$ 24,000",
-      category: "Teacher Training"
+      category: "Teacher Training",
+      image: "/gallery/upcomingevents/event_14_event_1783756915_jpg.webp"
+    },
+    {
+      id: "107",
+      title: "Himalayan Chakra Alignment & Kundalini Breathwork Immersion",
+      name: "Himalayan Chakra Alignment & Kundalini Breathwork Immersion",
+      description: "Unlock vital prana through traditional Kundalini breathwork, chakra sound tuning, and restorative deep relaxation guided by senior masters.",
+      date: "Saturday, Oct 24 • 02:00 PM - 05:30 PM",
+      starts_at: "2026-10-24 14:00:00",
+      location: "Main Sanctuary Studio",
+      price: "HK$ 780",
+      category: "Master Workshop",
+      image: "/gallery/upcomingevents/event_15_event_15_1784376938_jpg.webp"
     }
   ];
 
@@ -94,7 +134,16 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
     };
   }, []);
 
-  const dataToUse = eventsList.length > 0 ? eventsList : defaultEvents;
+  // Combine API events & default events to display ALL events across all months (upcoming & completed)
+  const dataToUse = React.useMemo(() => {
+    const combined = [...eventsList];
+    defaultEvents.forEach((defEv) => {
+      if (!combined.some((e) => String(e.id) === String(defEv.id) || e.title.toLowerCase().includes(defEv.title.toLowerCase()))) {
+        combined.push(defEv);
+      }
+    });
+    return combined;
+  }, [eventsList]);
 
   // Extract Month helper function
   const getEventMonthKey = (ev: UpcomingEvent): string => {
@@ -104,23 +153,39 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
         if (!isNaN(d.getTime())) {
           return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     if (ev.date) {
       if (ev.date.includes('September') || ev.date.includes('Sep')) return 'September 2026';
       if (ev.date.includes('October') || ev.date.includes('Oct')) return 'October 2026';
-      if (ev.date.includes('August') || ev.date.includes('Aug')) return 'August 2026';
+      if (ev.date.includes('August') || ev.date.includes('Aug') || ev.date.includes('2026-08') || ev.date.includes('Started')) return 'August 2026';
       if (ev.date.includes('November') || ev.date.includes('Nov')) return 'November 2026';
+      if (ev.date.includes('July') || ev.date.includes('Jul')) return 'July 2026';
     }
-    return 'Upcoming';
+    return 'August 2026';
   };
 
-  // Build Month Filter Pills
+  // Build Month Filter Pills (Strict Chronological Order: Aug -> Sept -> Oct)
   const monthSet = new Set<string>();
   dataToUse.forEach((ev) => {
     monthSet.add(getEventMonthKey(ev));
   });
-  const monthsList = ['ALL', ...Array.from(monthSet)];
+
+  const MONTH_MAP: { [key: string]: number } = {
+    'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 'June': 6,
+    'July': 7, 'August': 8, 'September': 9, 'October': 10, 'November': 11, 'December': 12
+  };
+
+  const getMonthSortValue = (monthStr: string): number => {
+    const parts = monthStr.split(' ');
+    const mName = parts[0] || '';
+    const year = parseInt(parts[1] || '2026', 10);
+    const monthNum = MONTH_MAP[mName] || 99;
+    return year * 100 + monthNum;
+  };
+
+  const sortedMonths = Array.from(monthSet).sort((a, b) => getMonthSortValue(a) - getMonthSortValue(b));
+  const monthsList = ['ALL', ...sortedMonths];
 
   // Filter events by selected month & search query
   const filteredEvents = dataToUse.filter((event) => {
@@ -135,7 +200,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
 
   return (
     <div style={{ backgroundColor: '#F5EFE5', minHeight: '100vh', color: '#21201E' }}>
-      
+
       {/* Top Banner Header */}
       <section
         className="events-top-banner"
@@ -328,12 +393,12 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
             className="events-cards-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-              gap: '32px'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+              gap: '28px'
             }}
           >
             {filteredEvents.map((ev, idx) => {
-              const coverImg = ev.image || ev.banner_image?.url || eventImages[ev.id] || eventImages[String((idx % 4) + 1)];
+              const coverImg = (ev.image && ev.image.trim() !== '') ? ev.image : (ev.banner_image?.url || `/gallery/upcomingevents/default_${(idx % 4) + 1}.webp`);
               const cleanDescText = (ev.description || '')
                 .replace(/<[^>]*>?/gm, '')
                 .replace(/&ndash;/g, '–')
@@ -349,46 +414,25 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                   className="event-card-box"
                   style={{
                     backgroundColor: '#FFFFFF',
-                    borderRadius: '0px',
+                    borderRadius: '20px',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     position: 'relative',
-                    boxShadow: '0 8px 28px rgba(0, 0, 0, 0.04)',
-                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    boxShadow: '0 10px 28px rgba(0, 0, 0, 0.06)',
+                    border: '1.5px solid #D6D3D1',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease'
                   }}
                 >
                   <div>
-                    {/* 1. Top Aspect Ratio Image with Pill Badge at Top-Left */}
-                    <div style={{ width: '100%', height: '240px', backgroundColor: '#1C1917', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {/* 1. Top Edge-to-Edge Image Box (100% Width Fit, No Sidebars) */}
+                    <div style={{ width: '100%', aspectRatio: '16 / 9.5', backgroundColor: '#FAF7F2', overflow: 'hidden', position: 'relative' }}>
                       <img
                         src={coverImg}
                         alt={ev.title || ev.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', display: 'block' }}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
                       />
-
-                      {/* Top-Left Status Badge */}
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '12px',
-                          left: '12px',
-                          backgroundColor: '#21201E',
-                          color: '#FFFFFF',
-                          borderRadius: '999px',
-                          padding: '5px 14px',
-                          fontSize: '10.5px',
-                          fontWeight: 800,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
-                          zIndex: 2
-                        }}
-                      >
-                        {ev.spots_label ? 'NOW BOOKING' : 'NOW BOOKING'}
-                      </div>
                     </div>
 
                     {/* Card Body Content Area */}
@@ -441,7 +485,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                       <div
                         style={{
                           backgroundColor: '#FBF9F5',
-                          borderRadius: '0px',
+                          borderRadius: '16px',
                           border: '1px solid rgba(0, 0, 0, 0.08)',
                           overflow: 'hidden',
                           marginBottom: '20px'
@@ -510,7 +554,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                     </div>
                   </div>
 
-                  {/* 6. Bottom Full-Width CTA Button */}
+                  {/* 6. Bottom Full-Width Rounded CTA Button */}
                   <div style={{ padding: '0 24px 24px 24px' }}>
                     <button
                       onClick={() => onOpenEventDetail(ev)}
@@ -520,8 +564,8 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                         backgroundColor: '#944426',
                         color: '#FFFFFF',
                         border: 'none',
-                        borderRadius: '0px',
-                        padding: '14px 20px',
+                        borderRadius: '12px',
+                        padding: '14px 24px',
                         fontSize: '13px',
                         fontWeight: 800,
                         letterSpacing: '0.06em',

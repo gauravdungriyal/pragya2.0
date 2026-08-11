@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, BarChart2, Clock, Target, RefreshCw, Users } from 'lucide-react';
 import { getUpcomingEvents } from '../services/api';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 import { UpcomingEvent } from '../types';
 
 interface ProgramsEventsProps {
@@ -67,6 +68,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
     }
   ];
 
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [events, setEvents] = useState<any[]>(defaultEvents);
   const [loading, setLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -74,6 +76,10 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [lastClickedBtn, setLastClickedBtn] = useState<'prev' | 'next'>('next');
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -107,37 +113,41 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
     };
   }, []);
 
-  const displayList = events.length > 0 ? events : defaultEvents;
+  const enabledIds = siteConfig.upcomingEventsConfig?.enabledEventIds;
+
+  const filteredEvents = useMemo(() => {
+    if (!enabledIds || enabledIds.length === 0) {
+      return events;
+    }
+    if (enabledIds.length === 1 && enabledIds[0] === '__none__') {
+      return [];
+    }
+    return events.filter((evt) => {
+      const idStr = String(evt.id);
+      const titleStr = String(evt.title || evt.name || '').toLowerCase();
+      return enabledIds.includes(idStr) || enabledIds.some((e) => e.length > 2 && titleStr.includes(e.toLowerCase()));
+    });
+  }, [events, enabledIds]);
+
+  const displayList = filteredEvents.length > 0 ? filteredEvents : defaultEvents;
   // Quadrupled list for seamless infinite loop scroll
   const quadrupledList = [...displayList, ...displayList, ...displayList, ...displayList];
 
-  // Automatic Infinite Horizontal Scrolling (Pauses when cursor hovers, Resumes when cursor leaves)
+  // Track scroll progress for bottom progress bar
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    let animationFrameId: number;
-    // UX Gold Standard: ~45px/sec (0.75px per 60fps frame) allows comfortable readability while maintaining dynamic movement
-    const speed = 0.75;
-
-    const animateScroll = () => {
-      if (!isHovered && container) {
-        container.scrollLeft += speed;
-
-        const singleSetWidth = container.scrollWidth / 4;
-        if (singleSetWidth > 0) {
-          if (container.scrollLeft >= singleSetWidth * 2) {
-            container.scrollLeft -= singleSetWidth;
-          }
-          setProgress((container.scrollLeft % singleSetWidth) / singleSetWidth);
-        }
+    const handleScroll = () => {
+      const singleSetWidth = container.scrollWidth / 4;
+      if (singleSetWidth > 0) {
+        setProgress((container.scrollLeft % singleSetWidth) / singleSetWidth);
       }
-      animationFrameId = requestAnimationFrame(animateScroll);
     };
 
-    animationFrameId = requestAnimationFrame(animateScroll);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [isHovered, displayList.length]);
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [displayList.length]);
 
   const pauseTimeoutRef = useRef<any>(null);
 
@@ -148,14 +158,14 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
     }
     pauseTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 4000);
+    }, 4500);
   };
 
   const handleNext = () => {
     setLastClickedBtn('next');
     triggerClickPause();
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 380, behavior: 'smooth' });
+      scrollContainerRef.current.scrollBy({ left: 400, behavior: 'smooth' });
     }
   };
 
@@ -163,7 +173,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
     setLastClickedBtn('prev');
     triggerClickPause();
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -380, behavior: 'smooth' });
+      scrollContainerRef.current.scrollBy({ left: -400, behavior: 'smooth' });
     }
   };
 
@@ -214,7 +224,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
             {/* Automatic Infinite Scrolling Carousel Wrapper (Pauses only when hovering event cards) */}
             <div
               ref={scrollContainerRef}
-              className="programs-carousel-wrapper"
+              className={`programs-carousel-wrapper ${isHovered ? 'paused' : ''}`}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               onTouchStart={() => setIsHovered(true)}
@@ -340,12 +350,21 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
           margin: 4px 0 0 0;
         }
 
-        /* Continuous Smooth Infinite Scroll Wrapper */
+        /* Butter-Smooth Hardware-Accelerated Infinite Scroll Marquee */
+        @keyframes continuousInfiniteMarquee {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(calc(-100% / 4), 0, 0);
+          }
+        }
+
         .programs-carousel-wrapper {
           width: 100%;
           overflow-x: auto;
           overflow-y: hidden;
-          padding: 8px 0 16px 0;
+          padding: 12px 0 20px 0;
           scrollbar-width: none;
           -ms-overflow-style: none;
           scroll-behavior: smooth;
@@ -357,29 +376,39 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
         .programs-carousel-track {
           display: flex;
           width: max-content;
+          animation: continuousInfiniteMarquee 52s linear infinite;
+          will-change: transform;
         }
 
-        /* Dark Event Cards */
+        /* Pause infinite scrolling seamlessly on hover, focus, or button click */
+        .programs-carousel-wrapper:hover .programs-carousel-track,
+        .programs-carousel-wrapper.paused .programs-carousel-track {
+          animation-play-state: paused;
+        }
+
+        /* Light Event Cards — Color Palette Compliant */
         .programs-event-card {
           width: 380px;
           flex-shrink: 0;
           margin-right: 20px;
-          background-color: #21201E;
-          color: #FFFFFF;
+          background-color: #FAF6F0;
+          color: #272727;
           border-radius: 24px;
           padding: 16px;
-          box-shadow: 0 10px 28px rgba(33, 32, 30, 0.16);
+          border: 1px solid #E7E5E4;
+          box-shadow: 0 8px 24px rgba(39, 39, 39, 0.05);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           cursor: pointer;
-          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
           box-sizing: border-box;
           backface-visibility: hidden;
         }
         .programs-event-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 16px 36px rgba(33, 32, 30, 0.28);
+          box-shadow: 0 16px 36px rgba(39, 39, 39, 0.12);
+          border-color: #D6D3D1;
         }
 
         .programs-card-img-box {
@@ -408,7 +437,7 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
           align-items: center;
           gap: 14px;
           font-size: 12.5px;
-          color: rgba(255, 255, 255, 0.85);
+          color: #57534E;
           margin-bottom: 10px;
           flex-wrap: wrap;
         }
@@ -416,18 +445,22 @@ export const ProgramsEvents: React.FC<ProgramsEventsProps> = ({ onOpenBooking, o
           display: flex;
           align-items: center;
           gap: 5px;
+          color: #57534E;
+        }
+        .meta-item svg {
+          color: #944426;
         }
         .programs-card-title {
           font-family: var(--font-sans);
           font-size: 19px;
           font-weight: 700;
-          color: #FFFFFF;
+          color: #272727;
           margin: 0 0 8px 0;
           line-height: 1.25;
         }
         .programs-card-desc {
           font-size: 13.5px;
-          color: rgba(255, 255, 255, 0.75);
+          color: #57534E;
           line-height: 1.5;
           margin: 0;
           display: -webkit-box;

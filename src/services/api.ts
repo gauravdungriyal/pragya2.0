@@ -627,57 +627,102 @@ export async function getPackages(): Promise<Record<string, PackageItem[]>> {
 
 // 5. Upcoming Events & Retreats
 export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
-  const res = await fetchFromApi<any>('upcoming-events');
-  if (res && Array.isArray(res.data) && res.data.length > 0) {
-    return res.data.map((item: any, idx: number) => {
-      const cleanDesc = (item.description || '').replace(/<[^>]*>?/gm, '').trim();
-      const amountVal = typeof item.amount === 'number' ? item.amount : parseFloat(item.amount);
-      const formattedPrice = !isNaN(amountVal) ? `HK$ ${amountVal.toLocaleString()}` : item.price || '$45';
+  let apiEvents: UpcomingEvent[] = [];
+  try {
+    const res = await fetchFromApi<any>('upcoming-events');
+    if (res && Array.isArray(res.data) && res.data.length > 0) {
+      apiEvents = res.data.map((item: any, idx: number) => {
+        const cleanTitle = cleanHtmlEntities(item.title || item.name || item.event_title || 'Pragya Wellness Event');
+        const cleanDesc = cleanHtmlEntities(item.description || item.content || '');
+        const cleanDate = cleanHtmlEntities(item.countdown_label || item.date || item.starts_at || (idx === 0 ? 'Saturday, Sunrise' : idx === 1 ? 'Full Moon Weekend' : 'Upcoming Season'));
+        const amountVal = typeof item.amount === 'number' ? item.amount : parseFloat(item.amount);
+        const formattedPrice = !isNaN(amountVal) ? `HK$ ${amountVal.toLocaleString()}` : item.price || '$45';
 
-      const rawImg = item.image || item.image_url || item.banner_image?.url || item.square_image?.url || item.cover_image || item.photo || item.featured_image || item.poster || item.img;
-      let imageUrl: string | undefined = undefined;
-      if (typeof rawImg === 'string' && rawImg.trim() !== '') {
-        imageUrl = rawImg.startsWith('http') ? rawImg : `https://pragya-yog.com/${rawImg.replace(/^\//, '')}`;
-      } else if (rawImg && typeof rawImg.url === 'string' && rawImg.url.trim() !== '') {
-        imageUrl = rawImg.url.startsWith('http') ? rawImg.url : `https://pragya-yog.com/${rawImg.url.replace(/^\//, '')}`;
-      }
+        const rawImg = item.image || item.image_url || item.banner_image?.url || item.square_image?.url || item.cover_image || item.photo || item.featured_image || item.poster || item.img;
+        let imageUrl: string | undefined = undefined;
+        if (typeof rawImg === 'string' && rawImg.trim() !== '') {
+          imageUrl = rawImg.startsWith('http') ? rawImg : `https://pragya-yog.com/${rawImg.replace(/^\//, '')}`;
+        } else if (rawImg && typeof rawImg.url === 'string' && rawImg.url.trim() !== '') {
+          imageUrl = rawImg.url.startsWith('http') ? rawImg.url : `https://pragya-yog.com/${rawImg.url.replace(/^\//, '')}`;
+        }
 
-      // Map to local compressed WebP image for instant sub-50ms local loading
-      let localImage = imageUrl;
-      if (imageUrl) {
-        const lower = imageUrl.toLowerCase();
-        if (lower.includes('1783740951')) localImage = '/gallery/upcomingevents/event_8_event_8_1783740951_jpg.webp';
-        else if (lower.includes('1784376938')) localImage = '/gallery/upcomingevents/event_15_event_15_1784376938_jpg.webp';
-        else if (lower.includes('1785134240')) localImage = '/gallery/upcomingevents/event_18_event_18_1785134240_jpg.webp';
-        else if (lower.includes('1785133717')) localImage = '/gallery/upcomingevents/event_19_event_19_1785133717_jpg.webp';
-        else if (lower.includes('1783772088')) localImage = '/gallery/upcomingevents/event_16_event_1783772088_jpg.webp';
-        else if (lower.includes('1783756915')) localImage = '/gallery/upcomingevents/event_14_event_1783756915_jpg.webp';
-      }
+        let localImage = imageUrl;
+        if (imageUrl) {
+          const lower = imageUrl.toLowerCase();
+          if (lower.includes('1783740951')) localImage = '/gallery/upcomingevents/event_8_event_8_1783740951_jpg.webp';
+          else if (lower.includes('1784376938')) localImage = '/gallery/upcomingevents/event_15_event_15_1784376938_jpg.webp';
+          else if (lower.includes('1785134240')) localImage = '/gallery/upcomingevents/event_18_event_18_1785134240_jpg.webp';
+          else if (lower.includes('1785133717')) localImage = '/gallery/upcomingevents/event_19_event_19_1785133717_jpg.webp';
+          else if (lower.includes('1783772088')) localImage = '/gallery/upcomingevents/event_16_event_1783772088_jpg.webp';
+          else if (lower.includes('1783756915')) localImage = '/gallery/upcomingevents/event_14_event_1783756915_jpg.webp';
+        }
 
-      return {
-        id: String(item.id || item.event_id || idx + 1),
-        title: item.title || item.name || item.event_title || 'Pragya Wellness Event',
-        name: item.name || item.title || item.event_title || 'Pragya Wellness Event',
-        description: cleanDesc || 'Join us for a transformative session guided by Pragya Yog faculty.',
-        date: item.countdown_label || item.date || item.starts_at || (idx === 0 ? 'Saturday, Sunrise' : idx === 1 ? 'Full Moon Weekend' : 'Upcoming Season'),
-        location: item.location || item.venue || 'Pragya Sanctuary Studio',
-        price: formattedPrice,
-        amount: !isNaN(amountVal) ? amountVal : undefined,
-        category: (item.difficulty_tags && item.difficulty_tags.length > 0 ? item.difficulty_tags[0] : item.category) || 'Retreat',
-        image: localImage || `/gallery/upcomingevents/default_${(idx % 4) + 1}.webp`,
-        banner_image: item.banner_image,
-        starts_at: item.starts_at,
-        ends_at: item.ends_at,
-        countdown_label: item.countdown_label,
-        difficulty_tags: item.difficulty_tags || [],
-        instructor: item.instructor,
-        benefits: item.benefits || [],
-        spots_label: item.spots_label,
-        share_url: item.share_url
-      };
-    });
+        return {
+          id: String(item.id || item.event_id || `evt-${idx + 1}`),
+          title: cleanTitle,
+          name: cleanTitle,
+          description: cleanDesc || 'Join us for a transformative session guided by Pragya Yog faculty.',
+          date: cleanDate,
+          location: item.location || item.venue || 'Pragya Sanctuary Studio',
+          price: formattedPrice,
+          amount: !isNaN(amountVal) ? amountVal : undefined,
+          category: (item.difficulty_tags && item.difficulty_tags.length > 0 ? item.difficulty_tags[0] : item.category) || 'Retreat',
+          image: localImage || `/gallery/upcomingevents/default_${(idx % 4) + 1}.webp`,
+          banner_image: item.banner_image,
+          starts_at: item.starts_at,
+          ends_at: item.ends_at,
+          countdown_label: item.countdown_label,
+          difficulty_tags: item.difficulty_tags || [],
+          instructor: item.instructor,
+          benefits: item.benefits || [],
+          spots_label: item.spots_label,
+          share_url: item.share_url
+        };
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to fetch upcoming-events:', err);
   }
-  return [
+
+  // Also include Workshop / Event / Retreat items from getPackages() to guarantee ALL events in system are accessible
+  try {
+    const packagesRes = await getPackages();
+    const pkgEvents: UpcomingEvent[] = [];
+    ['Workshop', 'Event', 'Retreat'].forEach((cat) => {
+      if (packagesRes[cat] && Array.isArray(packagesRes[cat])) {
+        packagesRes[cat].forEach((pkg: any) => {
+          const amtVal = typeof pkg.amount === 'number' ? pkg.amount : parseFloat(pkg.amount) || 0;
+          pkgEvents.push({
+            id: String(pkg.id || pkg.packageID || `pkg-evt-${pkgEvents.length}`),
+            title: cleanHtmlEntities(pkg.title),
+            name: cleanHtmlEntities(pkg.title),
+            description: cleanHtmlEntities(pkg.description || ''),
+            date: cleanHtmlEntities(pkg.duration_label || pkg.access_label || 'Special Session'),
+            location: pkg.class_access || 'Pragya Sanctuary Studio',
+            price: amtVal > 0 ? `HK$ ${amtVal.toLocaleString()}` : 'Free Session',
+            amount: amtVal,
+            category: pkg.category || cat,
+            image: `/gallery/upcomingevents/default_${(pkgEvents.length % 4) + 1}.webp`
+          });
+        });
+      }
+    });
+
+    const combined = [...apiEvents];
+    for (const item of pkgEvents) {
+      if (!combined.some((e) => String(e.id) === String(item.id) || e.title.toLowerCase() === item.title.toLowerCase())) {
+        combined.push(item);
+      }
+    }
+
+    if (combined.length > 0) {
+      return combined;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch package events:', err);
+  }
+
+  return apiEvents.length > 0 ? apiEvents : [
     {
       id: "1",
       title: "Sun-Kissed + Centered: Morning Beach Reset",
@@ -710,7 +755,133 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
   ];
 }
 
-// 6. Schedule List by Date
+// Helper to map and sanitize API schedule objects
+const mapScheduleItem = (s: any): ClassScheduleItem => ({
+  id: String(s.id || s.schedule_id || ''),
+  schedule_id: String(s.schedule_id || s.id || ''),
+  title: cleanHtmlEntities(s.title || s.name || 'Yoga Class'),
+  date: s.date || 'Today',
+  instructor: s.instructor || 'Master Teacher',
+  color: s.color || '#944426',
+  timing: s.timing || `${s.start_time || '09:00 AM'} - ${s.end_time || '10:00 AM'}`,
+  book_limit: String(s.book_limit || '20'),
+  booked: Number(s.booked || 0),
+  levels: s.levels || s.level || 'All Levels',
+  level: s.levels || s.level || 'All Levels',
+  completed: String(s.completed || '0'),
+  credit: String(s.credit || '1'),
+  book_cost: String(s.book_cost || '0'),
+  is_booked: Boolean(s.is_booked),
+  showButton: String(s.showButton ?? 'true'),
+  buttonType: s.buttonType || 'book',
+  booking_id: s.booking_id || '',
+  description: cleanHtmlEntities(s.description || 'Mindful practice and breathing techniques guided by Pragya masters.'),
+  video: s.video || '',
+  duration: String(s.duration || '60'),
+  room: s.room || 'Woo House',
+  pillar: s.pillar || ''
+});
+
+// 6. Public Today-Class Endpoint
+export async function getTodayClasses(): Promise<{ today: string; schedules: ClassScheduleItem[] }> {
+  try {
+    const res = await fetchFromApi<any>('today-class', {});
+    if (res && res.status && Array.isArray(res.todaySchedules) && res.todaySchedules.length > 0) {
+      return {
+        today: res.today || "Today's Schedule",
+        schedules: res.todaySchedules.map(mapScheduleItem)
+      };
+    }
+  } catch (err) {
+    console.warn('Failed fetching today-class API:', err);
+  }
+  return getScheduleByDate();
+}
+
+// Helper to generate day-specific fallback schedule when API returns empty for a given date
+const getDaySpecificSchedules = (dateStr?: string): ClassScheduleItem[] => {
+  let dayOfWeek = 1; // Default Monday
+  if (dateStr) {
+    let d: Date | null = null;
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      if (parts.length === 3 && parts[0].length === 4) {
+        d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      }
+    } else if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      }
+    }
+    if (d && !isNaN(d.getTime())) {
+      dayOfWeek = d.getDay();
+    }
+  }
+
+  const schedulesByDay: { [key: number]: ClassScheduleItem[] } = {
+    1: [ // Monday (6 full classes)
+      { id: "201", schedule_id: "25501", title: "Gentle Hatha Flow", date: "Monday", instructor: "Master Aarya", color: "#059669", timing: "07:00 AM - 08:00 AM", book_limit: "20", booked: 10, levels: "Beginner", completed: "0", credit: "1", book_cost: "HK$ 220", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Awaken bodily energy with gentle breathwork and classical sun salutations.", video: "", duration: "60", room: "Woo House" },
+      { id: "202", schedule_id: "25502", title: "Vinyasa Core Alignment", date: "Monday", instructor: "Angela Lee", color: "#944426", timing: "09:30 AM - 10:45 AM", book_limit: "18", booked: 12, levels: "Intermediate", completed: "0", credit: "1", book_cost: "HK$ 250", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Fluid movement synchronized with dynamic breath to build stamina and balance.", video: "", duration: "75", room: "Woo House" },
+      { id: "203", schedule_id: "25503", title: "Pranayama & Energy Balance", date: "Monday", instructor: "Charlotte Chiu", color: "#0284C7", timing: "11:30 AM - 12:30 PM", book_limit: "16", booked: 9, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 220", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Breathing practices to harmonize subtle body channels and mental clarity.", video: "", duration: "60", room: "Woo House" },
+      { id: "204", schedule_id: "25504", title: "Deep Spinal Release & Stretch", date: "Monday", instructor: "Master Shoaib", color: "#D97706", timing: "02:30 PM - 03:45 PM", book_limit: "15", booked: 11, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 300", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Therapeutic posture alignment for back relief and thoracic mobility.", video: "", duration: "75", room: "Pragya Sanctuary Studio" },
+      { id: "205", schedule_id: "25505", title: "Restorative Yin & Sound", date: "Monday", instructor: "Charlotte Chiu", color: "#7C3AED", timing: "05:30 PM - 06:45 PM", book_limit: "16", booked: 14, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 280", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Deep floor posture holds accompanied by acoustic singing bowl vibrations.", video: "", duration: "75", room: "Woo House" },
+      { id: "206", schedule_id: "25506", title: "Candlelight Meditation Reset", date: "Monday", instructor: "Louise Vance", color: "#354336", timing: "07:15 PM - 08:15 PM", book_limit: "20", booked: 15, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 200", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Calming end-of-day guided meditation bathed in soft ambient candlelight.", video: "", duration: "60", room: "Woo House" }
+    ],
+    2: [ // Tuesday (6 full classes)
+      { id: "207", schedule_id: "25507", title: "Back Bend Intensive 2026", date: "Tuesday", instructor: "Master Aarya", color: "#D97706", timing: "07:00 AM - 08:30 AM", book_limit: "20", booked: 15, levels: "Intermediate", completed: "0", credit: "1", book_cost: "HK$ 350", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Structured thoracic spine opening and shoulder alignment guided by Master Aarya.", video: "", duration: "90", room: "Pragya Sanctuary Studio" },
+      { id: "208", schedule_id: "25508", title: "Dynamic Morning Flow", date: "Tuesday", instructor: "Angela Lee", color: "#944426", timing: "09:00 AM - 10:15 AM", book_limit: "18", booked: 13, levels: "Intermediate", completed: "0", credit: "1", book_cost: "HK$ 240", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Energizing sequence linking breath to fluid movement.", video: "", duration: "75", room: "Woo House" },
+      { id: "209", schedule_id: "25509", title: "Ashtanga Primary Series", date: "Tuesday", instructor: "Angela Lee", color: "#944426", timing: "11:00 AM - 12:15 PM", book_limit: "15", booked: 8, levels: "Advanced", completed: "0", credit: "1", book_cost: "HK$ 250", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Traditional dynamic Ashtanga sequence for strength, endurance, and focus.", video: "", duration: "75", room: "Woo House" },
+      { id: "210", schedule_id: "25510", title: "Gentle Restorative Stretch", date: "Tuesday", instructor: "Master Aarya", color: "#059669", timing: "02:00 PM - 03:15 PM", book_limit: "16", booked: 10, levels: "Beginner", completed: "0", credit: "1", book_cost: "HK$ 220", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Gentle passive stretching using bolsters and blocks for deep tension release.", video: "", duration: "75", room: "Woo House" },
+      { id: "211", schedule_id: "25511", title: "Candlelight Sound Bath", date: "Tuesday", instructor: "Charlotte Chiu", color: "#7C3AED", timing: "06:00 PM - 07:15 PM", book_limit: "18", booked: 16, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 300", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Immersive sound relaxation using crystal bowls and Tibetan gongs.", video: "", duration: "75", room: "Woo House" },
+      { id: "212", schedule_id: "25512", title: "Evening Yoga Nidra", date: "Tuesday", instructor: "Marcus Chan", color: "#354336", timing: "07:30 PM - 08:30 PM", book_limit: "20", booked: 17, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 200", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Psychic sleep practice for profound rest and stress recovery.", video: "", duration: "60", room: "Woo House" }
+    ],
+    3: [ // Wednesday (6 full classes)
+      { id: "213", schedule_id: "25513", title: "Morning Pranayama & Kriya", date: "Wednesday", instructor: "Master Aarya", color: "#059669", timing: "07:00 AM - 08:15 AM", book_limit: "20", booked: 11, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 220", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Classical breathing techniques and internal energy cleansing rituals.", video: "", duration: "75", room: "Woo House" },
+      { id: "214", schedule_id: "25514", title: "Vinyasa Core Dynamics", date: "Wednesday", instructor: "Angela Lee", color: "#944426", timing: "09:00 AM - 10:15 AM", book_limit: "18", booked: 14, levels: "Intermediate", completed: "0", credit: "1", book_cost: "HK$ 250", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Core-focused vinyasa sequence building abdominal stability and balance.", video: "", duration: "75", room: "Woo House" },
+      { id: "215", schedule_id: "25515", title: "Deep Posture Therapy 2.0", date: "Wednesday", instructor: "Master Shoaib", color: "#D97706", timing: "10:30 AM - 11:45 AM", book_limit: "12", booked: 9, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 380", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Hands-on spinal realignment, sciatica release, and manual posture adjustment.", video: "", duration: "75", room: "Pragya Sanctuary Studio" },
+      { id: "216", schedule_id: "25516", title: "Hatha Balance & Clarity", date: "Wednesday", instructor: "Ashish P", color: "#0284C7", timing: "02:00 PM - 03:00 PM", book_limit: "16", booked: 10, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 220", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Traditional hatha holding poses focused on mental poise and physical equilibrium.", video: "", duration: "60", room: "Woo House" },
+      { id: "217", schedule_id: "25517", title: "Power Vinyasa Flow", date: "Wednesday", instructor: "Louise Vance", color: "#944426", timing: "05:30 PM - 06:45 PM", book_limit: "18", booked: 14, levels: "Intermediate", completed: "0", credit: "1", book_cost: "HK$ 250", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "High-energy movement building heat, stamina, and centered presence.", video: "", duration: "75", room: "Woo House" },
+      { id: "218", schedule_id: "25518", title: "Sound Bowl & Deep Relaxation", date: "Wednesday", instructor: "Charlotte Chiu", color: "#7C3AED", timing: "07:15 PM - 08:15 PM", book_limit: "20", booked: 18, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 280", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Soothing sound bath resonance to unwind mid-week tension.", video: "", duration: "60", room: "Woo House" }
+    ],
+    4: [ // Thursday (6 full classes)
+      { id: "219", schedule_id: "25519", title: "Asana Alignment & Hip Opening", date: "Thursday", instructor: "Ashish P", color: "#0284C7", timing: "07:30 AM - 08:45 AM", book_limit: "20", booked: 13, levels: "Intermediate", completed: "0", credit: "1", book_cost: "HK$ 240", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Precise posture alignment focusing on pelvic stability and hip mobility.", video: "", duration: "75", room: "Woo House" },
+      { id: "220", schedule_id: "25520", title: "Classical Hatha Yoga", date: "Thursday", instructor: "Master Aarya", color: "#059669", timing: "09:30 AM - 10:30 AM", book_limit: "18", booked: 12, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 220", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Traditional static posture holds emphasizing steady breath and inner awareness.", video: "", duration: "60", room: "Woo House" },
+      { id: "221", schedule_id: "25521", title: "Gentle Chair & Mat Yog", date: "Thursday", instructor: "Master Aarya", color: "#059669", timing: "11:30 AM - 12:30 PM", book_limit: "15", booked: 7, levels: "Beginner", completed: "0", credit: "1", book_cost: "HK$ 200", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Accessible gentle stretching for stress relief and joint flexibility.", video: "", duration: "60", room: "Woo House" },
+      { id: "222", schedule_id: "25522", title: "Yin Yoga Stabilizer", date: "Thursday", instructor: "Angela Lee", color: "#00381F", timing: "03:00 PM - 04:15 PM", book_limit: "16", booked: 11, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 240", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Long deep connective tissue release for hips, knees, and lower spine.", video: "", duration: "75", room: "Woo House" },
+      { id: "223", schedule_id: "25523", title: "Singing Bowl Acoustic Immersion", date: "Thursday", instructor: "Charlotte Chiu", color: "#7C3AED", timing: "06:30 PM - 07:45 PM", book_limit: "16", booked: 15, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 300", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Acoustic frequency therapy to calm the central nervous system.", video: "", duration: "75", room: "Woo House" },
+      { id: "224", schedule_id: "25524", title: "Night Pranayama & Mind Alignment", date: "Thursday", instructor: "Master Shoaib", color: "#354336", timing: "08:00 PM - 08:45 PM", book_limit: "20", booked: 16, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 180", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Nighttime breathwork and brainwave calming protocol.", video: "", duration: "45", room: "Woo House" }
+    ],
+    5: [ // Friday (6 full classes)
+      { id: "225", schedule_id: "25525", title: "Sunrise Ocean View Flow", date: "Friday", instructor: "Angela Lee", color: "#0284C7", timing: "07:00 AM - 08:15 AM", book_limit: "20", booked: 16, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 260", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Invigorating morning practice welcoming the day with expansive ocean breeze.", video: "", duration: "75", room: "Oceanfront Lawn" },
+      { id: "226", schedule_id: "25526", title: "Active Vinyasa Heat", date: "Friday", instructor: "Louise Vance", color: "#944426", timing: "09:30 AM - 10:45 AM", book_limit: "18", booked: 14, levels: "Intermediate", completed: "0", credit: "1", book_cost: "HK$ 250", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Sweat-inducing vinyasa flow designed to ignite metabolic fire.", video: "", duration: "75", room: "Woo House" },
+      { id: "227", schedule_id: "25527", title: "Midday Reset & Meditation", date: "Friday", instructor: "Marcus Chan", color: "#7C3AED", timing: "12:00 PM - 01:00 PM", book_limit: "15", booked: 10, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 180", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Express 60-minute mindfulness and breath recharge during lunch hour.", video: "", duration: "60", room: "Woo House" },
+      { id: "228", schedule_id: "25528", title: "Deep Joint Mobility & Stretch", date: "Friday", instructor: "Master Shoaib", color: "#D97706", timing: "02:30 PM - 03:45 PM", book_limit: "16", booked: 12, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 280", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Targeted joint decompression for shoulders, hips, and ankles.", video: "", duration: "75", room: "Pragya Sanctuary Studio" },
+      { id: "229", schedule_id: "25529", title: "Weekend Sunset Reset", date: "Friday", instructor: "Louise Vance", color: "#944426", timing: "05:00 PM - 06:30 PM", book_limit: "18", booked: 17, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 280", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Smooth transition into the weekend with restorative postures and herbal tea.", video: "", duration: "90", room: "Woo House" },
+      { id: "230", schedule_id: "25530", title: "Acoustic Sound Bath & Tea Ritual", date: "Friday", instructor: "Charlotte Chiu", color: "#7C3AED", timing: "07:00 PM - 08:15 PM", book_limit: "20", booked: 19, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 320", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Deep acoustic relaxation session followed by organic botanical tea ceremony.", video: "", duration: "75", room: "Woo House" }
+    ],
+    6: [ // Saturday (6 full classes)
+      { id: "231", schedule_id: "25531", title: "Saturday Sanctuary Masterclass", date: "Saturday", instructor: "Master Aarya", color: "#059669", timing: "08:00 AM - 09:30 AM", book_limit: "22", booked: 19, levels: "Intermediate", completed: "0", credit: "1", book_cost: "HK$ 320", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Deep dive into classical pranayama, bandhas, and steady posture hold.", video: "", duration: "90", room: "Woo House" },
+      { id: "232", schedule_id: "25532", title: "Vinyasa Flow & Arm Balances", date: "Saturday", instructor: "Angela Lee", color: "#944426", timing: "10:00 AM - 11:15 AM", book_limit: "18", booked: 15, levels: "Intermediate", completed: "0", credit: "1", book_cost: "HK$ 260", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Playful exploration of crow pose, side crow, and flying pigeon transitions.", video: "", duration: "75", room: "Woo House" },
+      { id: "233", schedule_id: "25533", title: "Advanced Asana & Inversions", date: "Saturday", instructor: "Master Shoaib", color: "#D97706", timing: "10:30 AM - 12:00 PM", book_limit: "15", booked: 12, levels: "Advanced", completed: "0", credit: "1", book_cost: "HK$ 380", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Mastering arm balances, handstands, and inversions safely with props.", video: "", duration: "90", room: "Pragya Sanctuary Studio" },
+      { id: "234", schedule_id: "25534", title: "Gentle Afternoon Hatha", date: "Saturday", instructor: "Louise Vance", color: "#0284C7", timing: "02:00 PM - 03:15 PM", book_limit: "18", booked: 11, levels: "Beginner", completed: "0", credit: "1", book_cost: "HK$ 220", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Relaxed afternoon flow focusing on joint mobility and breath awareness.", video: "", duration: "75", room: "Woo House" },
+      { id: "235", schedule_id: "25535", title: "Full Moon Sound Bath Immersion", date: "Saturday", instructor: "Charlotte Chiu", color: "#7C3AED", timing: "04:00 PM - 05:30 PM", book_limit: "20", booked: 18, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 350", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Sacred acoustic sound healing with 7-chakra crystal bowls.", video: "", duration: "90", room: "Woo House" },
+      { id: "236", schedule_id: "25536", title: "Sunset Chakra Sound Healing", date: "Saturday", instructor: "Master Aarya", color: "#7C3AED", timing: "06:00 PM - 07:15 PM", book_limit: "20", booked: 17, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 300", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Energy center balancing combining subtle posture holds and bowl frequencies.", video: "", duration: "75", room: "Woo House" }
+    ],
+    0: [ // Sunday (6 full classes)
+      { id: "237", schedule_id: "25537", title: "Sunday Slow Flow & Breathwork", date: "Sunday", instructor: "Louise Vance", color: "#0284C7", timing: "08:30 AM - 09:45 AM", book_limit: "20", booked: 14, levels: "Beginner", completed: "0", credit: "1", book_cost: "HK$ 240", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Nourishing slow movement and diaphragmatic breathing for deep calm.", video: "", duration: "75", room: "Woo House" },
+      { id: "238", schedule_id: "25538", title: "Gentle Morning Awakening", date: "Sunday", instructor: "Angela Lee", color: "#059669", timing: "10:00 AM - 11:15 AM", book_limit: "18", booked: 12, levels: "Beginner", completed: "0", credit: "1", book_cost: "HK$ 220", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Soft spinal warmups and standing postures to start the weekend brightly.", video: "", duration: "75", room: "Woo House" },
+      { id: "239", schedule_id: "25539", title: "Himalayan Kriya & Meditation", date: "Sunday", instructor: "Master Aarya", color: "#059669", timing: "11:00 AM - 12:30 PM", book_limit: "18", booked: 16, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 320", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Ancient Himalayan kriya practices for energy alignment and inner stillness.", video: "", duration: "90", room: "Woo House" },
+      { id: "240", schedule_id: "25540", title: "Deep Spinal Decompression", date: "Sunday", instructor: "Master Shoaib", color: "#D97706", timing: "02:00 PM - 03:15 PM", book_limit: "16", booked: 13, levels: "All Levels", completed: "0", credit: "1", book_cost: "HK$ 300", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Posture therapy focused on traction, spinal lengthen, and disc relief.", video: "", duration: "75", room: "Pragya Sanctuary Studio" },
+      { id: "241", schedule_id: "25541", title: "Restorative Chakra Tuning", date: "Sunday", instructor: "Charlotte Chiu", color: "#7C3AED", timing: "04:30 PM - 06:00 PM", book_limit: "16", booked: 15, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 300", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Prop-supported restorative poses tuned to the 7 major energy centers.", video: "", duration: "90", room: "Woo House" },
+      { id: "242", schedule_id: "25542", title: "Sunday Evening Sanctuary Reset", date: "Sunday", instructor: "Marcus Chan", color: "#354336", timing: "06:30 PM - 07:30 PM", book_limit: "20", booked: 18, levels: "Restorative", completed: "0", credit: "1", book_cost: "HK$ 200", is_booked: false, showButton: "true", buttonType: "book", booking_id: "", description: "Peaceful closing sequence to ground mind and body for the upcoming week.", video: "", duration: "60", room: "Woo House" }
+    ]
+  };
+
+  return schedulesByDay[dayOfWeek] || schedulesByDay[1];
+};
+
+// 7. Schedule List by Date (getClassByDate & publicClassByDate)
 export async function getScheduleByDate(dateStr?: string, instructorId?: string, token?: string): Promise<{ today: string; schedules: ClassScheduleItem[] }> {
   const payload: any = {};
   if (dateStr) {
@@ -727,166 +898,26 @@ export async function getScheduleByDate(dateStr?: string, instructorId?: string,
     }
   }
 
-  // Bug 15 fix: removed fragile length>20 heuristic; instructorId is strictly for instructor filtering
   if (instructorId) {
     payload.instructor = instructorId;
   }
-  // Auth token is always passed via the dedicated third parameter
   if (token) payload.token = token;
 
-  // Use the JWT-gated endpoint for richer data when token is provided
+  // Use JWT-gated getClassByDate when token is provided; else publicClassByDate
   const action = payload.token ? 'getClassByDate' : 'publicClassByDate';
   const res = await fetchFromApi<any>(action, payload);
-  if (res && res.status && Array.isArray(res.todaySchedules)) {
+  if (res && res.status && Array.isArray(res.todaySchedules) && res.todaySchedules.length > 0) {
     return {
       today: res.today || 'Schedule',
-      schedules: res.todaySchedules
+      schedules: res.todaySchedules.map(mapScheduleItem)
     };
   }
 
-  // Fallback realistic schedule items
+  // Fallback to day-specific schedule if API returns empty for the date
+  const fallbackSchedules = getDaySpecificSchedules(dateStr);
   return {
-    today: "Today's Schedule",
-    schedules: [
-      {
-        id: "101",
-        schedule_id: "25493",
-        title: "Gentle Yoga",
-        date: "Today",
-        instructor: "Master Aarya",
-        color: "#944426",
-        timing: "07:00 AM - 08:00 AM",
-        book_limit: "20",
-        booked: 14,
-        levels: "Beginner",
-        completed: "0",
-        credit: "1",
-        book_cost: "HK$220",
-        is_booked: false,
-        showButton: "true",
-        buttonType: "book",
-        booking_id: "",
-        description: "Awaken the bodily energy through rhythmic breathwork, classical sun salutations, and grounding posture holds.",
-        video: "",
-        duration: "60",
-        room: "Woo House"
-      },
-      {
-        id: "102",
-        schedule_id: "25494",
-        title: "Vinyasa Flow",
-        date: "Today",
-        instructor: "Angela Lee",
-        color: "#620513",
-        timing: "09:00 AM - 10:15 AM",
-        book_limit: "18",
-        booked: 12,
-        levels: "Intermediate",
-        completed: "0",
-        credit: "1",
-        book_cost: "HK$220",
-        is_booked: false,
-        showButton: "true",
-        buttonType: "book",
-        booking_id: "",
-        description: "Fluid movement synchronized with dynamic breath to build stamina, balance, and centered presence.",
-        video: "",
-        duration: "75",
-        room: "Woo House"
-      },
-      {
-        id: "103",
-        schedule_id: "25495",
-        title: "Hatha Yoga",
-        date: "Today",
-        instructor: "Charlotte Chiu",
-        color: "#9D9D48",
-        timing: "11:00 AM - 12:00 PM",
-        book_limit: "15",
-        booked: 9,
-        levels: "All Levels",
-        completed: "0",
-        credit: "1",
-        book_cost: "HK$220",
-        is_booked: false,
-        showButton: "true",
-        buttonType: "book",
-        booking_id: "",
-        description: "A meditative style with longer holds that release deep tension and cultivate inner stillness and balance.",
-        video: "",
-        duration: "60",
-        room: "Woo House"
-      },
-      {
-        id: "104",
-        schedule_id: "25496",
-        title: "Yin Yoga",
-        date: "Today",
-        instructor: "Angela Lee",
-        color: "#00381F",
-        timing: "02:00 PM - 03:00 PM",
-        book_limit: "16",
-        booked: 8,
-        levels: "All Levels",
-        completed: "0",
-        credit: "1",
-        book_cost: "HK$220",
-        is_booked: false,
-        showButton: "true",
-        buttonType: "book",
-        booking_id: "",
-        description: "Precision-controlled movement using traditional postures to lengthen, align, and strengthen deep stabilizing muscles.",
-        video: "",
-        duration: "60",
-        room: "Woo House"
-      },
-      {
-        id: "105",
-        schedule_id: "25497",
-        title: "Power Yoga",
-        date: "Today",
-        instructor: "Charlotte Chiu",
-        color: "#944426",
-        timing: "05:30 PM - 06:45 PM",
-        book_limit: "20",
-        booked: 16,
-        levels: "Advanced",
-        completed: "0",
-        credit: "1",
-        book_cost: "HK$220",
-        is_booked: false,
-        showButton: "true",
-        buttonType: "book",
-        booking_id: "",
-        description: "High energy dynamic movement sequence designed to build core vitality, stamina, and cardiovascular health.",
-        video: "",
-        duration: "75",
-        room: "Woo House"
-      },
-      {
-        id: "106",
-        schedule_id: "25498",
-        title: "Restorative Yoga",
-        date: "Today",
-        instructor: "Master Aarya",
-        color: "#354336",
-        timing: "07:15 PM - 08:15 PM",
-        book_limit: "22",
-        booked: 18,
-        levels: "Restorative",
-        completed: "0",
-        credit: "1",
-        book_cost: "HK$220",
-        is_booked: false,
-        showButton: "true",
-        buttonType: "book",
-        booking_id: "",
-        description: "Sacred breath sequences and prop-supported floor postures designed to clear stress and rejuvenate vital energy.",
-        video: "",
-        duration: "60",
-        room: "Woo House"
-      }
-    ]
+    today: "Class Schedule",
+    schedules: fallbackSchedules
   };
 }
 

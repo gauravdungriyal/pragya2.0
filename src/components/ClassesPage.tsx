@@ -1067,7 +1067,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                     const keyStr = `${y}-${m}-${dayStr}`;
 
                     const rawDayItems = weeklySchedules[keyStr] || [];
-                    const displayDayItems = rawDayItems.length > 0 ? rawDayItems : fallbackClasses;
+                    const displayDayItems = rawDayItems;
 
                     // Filter items according to active filters
                     const filteredDayItems = displayDayItems.filter((item) => {
@@ -1146,9 +1146,16 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                             filteredDayItems.map((clsItem, cIdx) => {
                               const title = clsItem.title || 'Yoga Class';
                               const timing = (clsItem as any).timing || '09:00 AM';
-                              const level = (clsItem as any).levels || (clsItem as any).level || 'All Levels';
                               const instructor = clsItem.instructor || 'Teacher';
                               const room = (clsItem as any).room || 'Woo House';
+                              const classColor = (clsItem.color && clsItem.color.trim() !== '') 
+                                ? clsItem.color 
+                                : title.toLowerCase().includes('back') ? '#D97706'
+                                : title.toLowerCase().includes('yin') || title.toLowerCase().includes('sound') ? '#7C3AED'
+                                : title.toLowerCase().includes('gentle') || title.toLowerCase().includes('hatha') ? '#059669'
+                                : title.toLowerCase().includes('vinyasa') || title.toLowerCase().includes('power') ? '#944426'
+                                : title.toLowerCase().includes('restorative') ? '#0284C7'
+                                : '#D97706';
 
                               const parts = (timing || '').split(/\s*-\s*|\s*to\s*/i);
                               const startTime = parts[0]?.trim() || timing;
@@ -1157,109 +1164,66 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                               return (
                                 <div
                                   key={cIdx}
+                                  onClick={() => onOpenBooking('class', title, clsItem)}
                                   style={{
-                                    backgroundColor: '#FFFFFF',
-                                    borderRadius: '14px',
-                                    padding: '14px 12px',
+                                    backgroundColor: '#FAF7F2',
+                                    borderRadius: '16px',
+                                    padding: '12px 10px 12px 14px',
                                     border: '1px solid #EBE4D8',
-                                    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.03)',
+                                    borderLeft: `4px solid ${classColor}`,
+                                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.04)',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    alignItems: 'center',
-                                    textAlign: 'center',
-                                    gap: '8px',
+                                    alignItems: 'flex-start',
+                                    textAlign: 'left',
+                                    gap: '6px',
+                                    position: 'relative',
+                                    cursor: 'pointer',
                                     transition: 'transform 0.25s ease, box-shadow 0.25s ease'
                                   }}
                                   className="weekly-slot-card"
                                 >
-                                  {/* Centered Stacked Time Pill Badge */}
-                                  <div
-                                    style={{
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      backgroundColor: '#F5EFE5',
-                                      color: '#944426',
-                                      padding: '6px 8px',
-                                      borderRadius: '10px',
-                                      width: '100%',
-                                      textAlign: 'center'
-                                    }}
-                                  >
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 800, lineHeight: 1.2, flexWrap: 'wrap', justifyContent: 'center' }}>
-                                      <Clock size={11} color="#944426" style={{ flexShrink: 0 }} />
-                                      <span>{endTime ? `${startTime} – ${endTime}` : startTime}</span>
+                                  {/* Top Row: Time & Top-Right Floating BOOK Button */}
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '4px' }}>
+                                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', letterSpacing: '-0.01em' }}>
+                                      {endTime ? `${startTime} - ${endTime}` : startTime}
                                     </div>
-                                  </div>
-
-                                  {/* Class Title */}
-                                  <div style={{ fontFamily: "var(--font-serif)", fontSize: '15px', fontWeight: 700, color: '#21201E', lineHeight: 1.25 }}>
-                                    {title}
-                                  </div>
-
-                                  {/* Instructor & Location Info */}
-                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
-                                    <div style={{ fontSize: '11.5px', color: '#353330', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                                      <User size={12} color="#944426" />
-                                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{instructor}</span>
-                                    </div>
-                                    {room && (
-                                      <div style={{ fontSize: '10.5px', color: '#7A756F', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                        <MapPin size={10} color="#7A756F" />
-                                        <span>{room}</span>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Level Pill Badge */}
-                                  <div style={{ marginTop: '2px' }}>
-                                    <span
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onOpenBooking('class', title, clsItem);
+                                      }}
                                       style={{
-                                        fontSize: '9.5px',
-                                        fontWeight: 800,
-                                        padding: '3px 8px',
+                                        backgroundColor: '#1E293B',
+                                        color: '#FFFFFF',
+                                        border: 'none',
                                         borderRadius: '999px',
-                                        backgroundColor: level.toLowerCase().includes('begin') ? '#E6F4EA' : level.toLowerCase().includes('inter') ? '#FEF7E0' : level.toLowerCase().includes('adv') ? '#FCE8E6' : '#F0F4F8',
-                                        color: level.toLowerCase().includes('begin') ? '#137333' : level.toLowerCase().includes('inter') ? '#B06000' : level.toLowerCase().includes('adv') ? '#C5221F' : '#1E40AF',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.04em'
+                                        padding: '3px 9px',
+                                        fontSize: '10px',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        letterSpacing: '0.06em',
+                                        boxShadow: '0 2px 6px rgba(30, 41, 59, 0.25)',
+                                        flexShrink: 0
                                       }}
                                     >
-                                      {level}
-                                    </span>
+                                      BOOK
+                                    </button>
                                   </div>
 
-                                  {/* Book CTA Button */}
-                                  <button
-                                    type="button"
-                                    onClick={() => onOpenBooking('class', title, clsItem)}
-                                    style={{
-                                      marginTop: '6px',
-                                      width: '100%',
-                                      backgroundColor: '#944426',
-                                      color: '#FFFFFF',
-                                      border: 'none',
-                                      borderRadius: '10px',
-                                      padding: '8px 0',
-                                      fontSize: '11.5px',
-                                      fontWeight: 800,
-                                      cursor: 'pointer',
-                                      letterSpacing: '0.06em',
-                                      boxShadow: '0 3px 8px rgba(148, 68, 38, 0.2)',
-                                      transition: 'all 0.2s ease'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor = '#7A351C';
-                                      e.currentTarget.style.transform = 'translateY(-1px)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = '#944426';
-                                      e.currentTarget.style.transform = 'translateY(0)';
-                                    }}
-                                  >
-                                    BOOK ↗
-                                  </button>
+                                  {/* Title Row with Bullet Dot */}
+                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', width: '100%', margin: '2px 0' }}>
+                                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: classColor, marginTop: '5px', flexShrink: 0 }} />
+                                    <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 700, color: classColor, lineHeight: 1.25 }}>
+                                      {title}
+                                    </div>
+                                  </div>
+
+                                  {/* Instructor & Room Info */}
+                                  <div style={{ fontSize: '11px', color: '#334155', fontWeight: 600, lineHeight: 1.3 }}>
+                                    By {instructor} {room ? `📍 ${room}` : ''}
+                                  </div>
                                 </div>
                               );
                             })
@@ -1284,110 +1248,122 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               </div>
             ) : (
               <div className="classes-live-sch-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {filteredClasses.map((cls, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '16px',
-                    padding: '24px 32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '24px',
-                    flexWrap: 'wrap',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-                    transition: 'all 0.25s ease'
-                  }}
-                  className="schedule-row-hover"
-                >
-                  {/* Time & Room (Stacked Start & End Time) */}
-                  <div className="cls-sch-time" style={{ minWidth: '100px', flexShrink: 0 }}>
-                    {(() => {
-                      const parts = (cls.timing || '').split(/\s*-\s*|\s*to\s*/i);
-                      const startTime = parts[0]?.trim() || cls.timing;
-                      const endTime = parts[1]?.trim() || '';
-                      return (
-                        <>
-                          <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: '#944426', lineHeight: 1.2 }}>
-                            {startTime}
-                          </div>
-                          {endTime && (
-                            <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: '#6B655F', lineHeight: 1.2 }}>
-                              {endTime}
-                            </div>
-                          )}
-                          <div style={{ fontFamily: "var(--font-sans)", fontSize: '11.5px', color: '#8A8580', fontWeight: 500, marginTop: '2px' }}>
-                            {cls.room}
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
+              {filteredClasses.map((cls, idx) => {
+                const classColor = (cls.color && cls.color.trim() !== '') 
+                  ? cls.color 
+                  : (cls.title || '').toLowerCase().includes('back') ? '#D97706'
+                  : (cls.title || '').toLowerCase().includes('yin') || (cls.title || '').toLowerCase().includes('sound') ? '#7C3AED'
+                  : (cls.title || '').toLowerCase().includes('gentle') || (cls.title || '').toLowerCase().includes('hatha') ? '#059669'
+                  : (cls.title || '').toLowerCase().includes('vinyasa') || (cls.title || '').toLowerCase().includes('power') ? '#944426'
+                  : (cls.title || '').toLowerCase().includes('restorative') ? '#0284C7'
+                  : '#D97706';
 
-                  {/* Class Title & Instructor */}
-                  <div className="cls-sch-main" style={{ flexGrow: 1, minWidth: '140px' }}>
-                    <h4 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: '0 0 4px 0' }}>
-                      {cls.title}
-                    </h4>
-                    <div style={{ fontFamily: "var(--font-sans)", fontSize: '13.5px', color: '#6B655F', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <User size={14} color="#944426" />
-                      <span>Guided by {cls.instructor}</span>
+                const parts = (cls.timing || '').split(/\s*-\s*|\s*to\s*/i);
+                const startTime = parts[0]?.trim() || cls.timing;
+                const endTime = parts[1]?.trim() || '';
+
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '16px',
+                      padding: '24px 32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '24px',
+                      flexWrap: 'wrap',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                      borderLeft: `5px solid ${classColor}`,
+                      transition: 'all 0.25s ease'
+                    }}
+                    className="schedule-row-hover"
+                  >
+                    {/* Time & Room (Stacked Start & End Time) */}
+                    <div className="cls-sch-time" style={{ minWidth: '100px', flexShrink: 0 }}>
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: classColor, lineHeight: 1.2 }}>
+                        {startTime}
+                      </div>
+                      {endTime && (
+                        <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: '#6B655F', lineHeight: 1.2 }}>
+                          {endTime}
+                        </div>
+                      )}
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '11.5px', color: '#8A8580', fontWeight: 500, marginTop: '2px' }}>
+                        {cls.room}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Level Badge */}
-                  <div className="cls-sch-badge">
-                    <span
+                    {/* Class Title & Instructor */}
+                    <div className="cls-sch-main" style={{ flexGrow: 1, minWidth: '140px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: classColor, display: 'inline-block', flexShrink: 0 }} />
+                        <h4 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: classColor, margin: 0 }}>
+                          {cls.title}
+                        </h4>
+                      </div>
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '13.5px', color: '#6B655F', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <User size={14} color={classColor} />
+                        <span>Guided by {cls.instructor}</span>
+                      </div>
+                    </div>
+
+                    {/* Level Badge */}
+                    <div className="cls-sch-badge">
+                      <span
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          backgroundColor: `${classColor}15`,
+                          color: classColor,
+                          border: `1px solid ${classColor}30`,
+                          padding: '6px 16px',
+                          borderRadius: '999px',
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          letterSpacing: '0.02em'
+                        }}
+                      >
+                        {cls.level}
+                      </span>
+                    </div>
+
+                    {/* Book Session Action */}
+                    <button
+                      className="cls-sch-btn"
+                      onClick={() => onOpenBooking('class', cls.title, cls)}
                       style={{
                         fontFamily: "var(--font-sans)",
-                        backgroundColor: '#F5EFE5',
-                        color: '#944426',
-                        padding: '6px 16px',
+                        backgroundColor: '#21201E',
+                        color: '#FFFFFF',
+                        border: 'none',
                         borderRadius: '999px',
-                        fontSize: '12.5px',
+                        padding: '10px 24px',
+                        fontSize: '13px',
                         fontWeight: 700,
-                        letterSpacing: '0.02em'
+                        cursor: 'pointer',
+                        transition: 'all 0.25s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = classColor;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#21201E';
                       }}
                     >
-                      {cls.level}
-                    </span>
+                      <span>Book</span>
+                      <ChevronRight size={14} />
+                    </button>
                   </div>
-
-                  {/* Book Session Action */}
-                  <button
-                    className="cls-sch-btn"
-                    onClick={() => onOpenBooking('class', cls.title, cls)}
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      backgroundColor: '#21201E',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: '999px',
-                      padding: '10px 24px',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#944426';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#21201E';
-                    }}
-                  >
-                    <span>Book</span>
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          ))}
-        </div>
+          )
+        )}
+      </div>
       </section>
 
       {/* SECTION 3: The Gift of Yoga */}

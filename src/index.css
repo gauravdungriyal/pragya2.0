@@ -812,3 +812,16 @@ header .reveal-on-scroll {
     display: grid;
   }
 }
+
+/* ==========================================================================
+   ADMIN PANEL BRAND TYPOGRAPHY OVERRIDE
+   Uses brand font (Neue Montreal / var(--font-sans)) with normal regular weight (400)
+   ========================================================================== */
+.admin-panel,
+.admin-panel *,
+.admin-panel-container,
+.admin-panel-container * {
+  font-family: var(--font-sans), 'Neue Montreal', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-weight: 400 !important;
+}
+
