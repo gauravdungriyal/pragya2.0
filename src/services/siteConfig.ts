@@ -316,6 +316,9 @@ export function getSiteConfig(): SiteConfig {
       ...parsed,
       announcement: { ...DEFAULT_SITE_CONFIG.announcement, ...(parsed.announcement || {}) },
       hero: { ...DEFAULT_SITE_CONFIG.hero, ...(parsed.hero || {}) },
+      whyChooseUs: { ...DEFAULT_SITE_CONFIG.whyChooseUs, ...(parsed.whyChooseUs || {}) },
+      wellnessJourney: { ...DEFAULT_SITE_CONFIG.wellnessJourney, ...(parsed.wellnessJourney || {}) },
+      membershipPerks: { ...DEFAULT_SITE_CONFIG.membershipPerks, ...(parsed.membershipPerks || {}) },
       about: { ...DEFAULT_SITE_CONFIG.about, ...(parsed.about || {}) },
       courseTemplates: { ...DEFAULT_SITE_CONFIG.courseTemplates, ...(parsed.courseTemplates || {}) },
       footer: { ...DEFAULT_SITE_CONFIG.footer, ...(parsed.footer || {}) },
@@ -366,6 +369,7 @@ export async function saveSiteConfig(newConfig: SiteConfig): Promise<void> {
     }
   } catch (err) {
     console.error('Error saving site config:', err);
+    throw err;
   }
 }
 
@@ -389,11 +393,23 @@ export function subscribeSiteConfig(callback: (config: SiteConfig) => void): () 
     }
   };
 
+  const storageHandler = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY) {
+      callback(getSiteConfig());
+    }
+  };
+
   window.addEventListener(EVENT_NAME, handler);
+  window.addEventListener('storage', storageHandler);
 
   let unsubscribeFirestore: (() => void) | null = null;
 
   if (db && isFirebaseConfigured) {
+    // Initial fetch from Firestore to update local storage and state
+    fetchSiteConfigFromFirebase().then((liveConfig) => {
+      if (liveConfig) callback(liveConfig);
+    });
+
     try {
       const docRef = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
       unsubscribeFirestore = onSnapshot(docRef, (snap: any) => {
@@ -422,6 +438,7 @@ export function subscribeSiteConfig(callback: (config: SiteConfig) => void): () 
 
   return () => {
     window.removeEventListener(EVENT_NAME, handler);
+    window.removeEventListener('storage', storageHandler);
     if (unsubscribeFirestore) {
       unsubscribeFirestore();
     }

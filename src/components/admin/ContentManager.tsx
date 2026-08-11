@@ -25,10 +25,16 @@ export const ContentManager: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    await saveSiteConfig(config);
-    setIsSaving(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    try {
+      await saveSiteConfig(config);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: any) {
+      console.error('Save failed:', err);
+      alert(`⚠️ Save Error: ${err?.message || 'Could not save changes to Firebase. Local changes preserved.'}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {

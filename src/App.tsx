@@ -34,12 +34,18 @@ import { MerchandiseStorePage } from './components/MerchandiseStorePage';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLogin } from './components/admin/AdminLogin';
 import { Instructor, UpcomingEvent, DynamicPackage } from './types';
+import { fetchSiteConfigFromFirebase } from './services/siteConfig';
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'merchandise' | 'ai-assistant' | 'cart' | 'policy' | 'admin'>('home');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('pragya_admin_auth') === 'true';
   });
+
+  // Initial site configuration sync from Firebase Cloud Firestore
+  useEffect(() => {
+    fetchSiteConfigFromFirebase();
+  }, []);
 
   // Listen to route /pragya-admin or #pragya-admin
   useEffect(() => {
