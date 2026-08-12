@@ -240,6 +240,10 @@ export interface MerchandiseItem {
   id: string;
   title: string;
   subtitle?: string;
+  brand?: string;
+  audience?: 'Unisex' | 'Women' | 'Men' | 'Kids';
+  rating?: number;
+  ratingCount?: number;
   category: MerchandiseCategory;
   price: number;
   discountPrice?: number;
