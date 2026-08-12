@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ShoppingBag, Star, CheckCircle, Eye, X, Search, Filter,
-  RotateCcw, SlidersHorizontal, Check, ArrowRight, Sparkles
+  RotateCcw, SlidersHorizontal, Check, ArrowRight, Sparkles, TrendingUp
 } from 'lucide-react';
 import { MerchandiseItem } from '../types';
 import { getMerchandiseItems } from '../services/api';
@@ -708,7 +708,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                           </div>
                         )}
 
-                        {/* Bottom-Left Rating Pill Overlay (Image 1 Style) */}
+                        {/* Bottom-Left Rating Pill Overlay */}
                         <div
                           style={{
                             position: 'absolute',
@@ -736,7 +736,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
 
                       {/* Card Information Section */}
                       <div style={{ padding: '16px 16px 12px 16px' }}>
-                        {/* Bold Brand / Collection Name (Image 1 Style) */}
+                        {/* Bold Brand / Collection Name */}
                         <div
                           style={{
                             fontSize: '12px',

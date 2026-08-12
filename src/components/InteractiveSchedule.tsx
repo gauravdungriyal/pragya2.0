@@ -8,6 +8,21 @@ interface InteractiveScheduleProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
 }
 
+const checkIsCompleted = (item: any, dateObj?: Date): boolean => {
+  if (String(item?.completed) === '1' || item?.completed === 1 || item?.completed === true) {
+    return true;
+  }
+  if (dateObj) {
+    const now = new Date();
+    const classDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    const todayDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (classDay < todayDay) {
+      return true;
+    }
+  }
+  return false;
+};
+
 export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpenBooking }) => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -49,81 +64,6 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
       }
     });
   }, []);
-
-  const fallbackClasses = [
-    {
-      id: '01',
-      schedule_id: '25493',
-      title: 'Gentle Yoga',
-      levels: 'Beginner',
-      level: 'Beginner',
-      duration: '60 mins',
-      timing: '07:00 AM - 08:00 AM',
-      instructor: 'Master Aarya',
-      room: 'Woo House',
-      description: 'Awaken the bodily energy through rhythmic breathwork, classical sun salutations, and grounding posture holds.'
-    },
-    {
-      id: '02',
-      schedule_id: '25494',
-      title: 'Vinyasa Flow',
-      levels: 'Intermediate',
-      level: 'Intermediate',
-      duration: '75 mins',
-      timing: '09:00 AM - 10:15 AM',
-      instructor: 'Angela Lee',
-      room: 'Woo House',
-      description: 'Fluid movement synchronized with dynamic breath to build stamina, balance, and centered presence.'
-    },
-    {
-      id: '03',
-      schedule_id: '25495',
-      title: 'Hatha Yoga',
-      levels: 'All Levels',
-      level: 'All Levels',
-      duration: '60 mins',
-      timing: '11:00 AM - 12:00 PM',
-      instructor: 'Charlotte Chiu',
-      room: 'Woo House',
-      description: 'A meditative style with longer holds that release deep tension and cultivate inner stillness and balance.'
-    },
-    {
-      id: '04',
-      schedule_id: '25496',
-      title: 'Yin Yoga',
-      levels: 'All Levels',
-      level: 'All Levels',
-      duration: '60 mins',
-      timing: '02:00 PM - 03:00 PM',
-      instructor: 'Angela Lee',
-      room: 'Woo House',
-      description: 'Precision-controlled movement using traditional postures to lengthen, align, and strengthen deep stabilizing muscles.'
-    },
-    {
-      id: '05',
-      schedule_id: '25497',
-      title: 'Power Yoga',
-      levels: 'Advanced',
-      level: 'Advanced',
-      duration: '75 mins',
-      timing: '05:30 PM - 06:45 PM',
-      instructor: 'Charlotte Chiu',
-      room: 'Woo House',
-      description: 'High energy dynamic movement sequence designed to build core vitality, stamina, and cardiovascular health.'
-    },
-    {
-      id: '06',
-      schedule_id: '25498',
-      title: 'Restorative Yoga',
-      levels: 'Restorative',
-      level: 'Restorative',
-      duration: '60 mins',
-      timing: '07:15 PM - 08:15 PM',
-      instructor: 'Master Aarya',
-      room: 'Woo House',
-      description: 'Sacred breath sequences and prop-supported floor postures designed to clear stress and rejuvenate vital energy.'
-    }
-  ];
 
   // View Mode: 'day' or 'week'
   const [scheduleViewMode, setScheduleViewMode] = useState<'day' | 'week'>('day');
@@ -217,7 +157,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
         day: 'numeric',
         year: 'numeric'
       });
-      if (data && Array.isArray(data.schedules) && data.schedules.length > 0) {
+      if (data && Array.isArray(data.schedules)) {
         setScheduleItems(data.schedules.map((s: any) => ({
           ...s,
           date: s.date && s.date !== 'Today' ? s.date : formattedDate
@@ -245,7 +185,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
     return () => document.removeEventListener('mousedown', handleOutside);
   }, [showFilterModal]);
 
-  const displayItems = scheduleItems.length > 0 ? scheduleItems : (fallbackClasses as any[]);
+  const displayItems = scheduleItems;
 
   const availableInstructors = React.useMemo(() => {
     const map = new Map<string, { id: string; name: string }>();
@@ -803,37 +743,32 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                         <div
                           key={keyStr}
                           style={{
-                            backgroundColor: isToday ? '#FFFFFF' : '#FAF6F0',
+                            backgroundColor: '#FAF6F0',
                             borderRadius: '20px',
-                            border: isToday ? '2px solid #944426' : '1px solid #EBE4D8',
+                            border: '1px solid #EBE4D8',
                             overflow: 'hidden',
                             display: 'flex',
                             flexDirection: 'column',
-                            boxShadow: isToday ? '0 10px 28px rgba(148, 68, 38, 0.14)' : 'none',
+                            boxShadow: 'none',
                             transition: 'all 0.3s ease'
                           }}
                         >
                           {/* Column Day Header */}
                           <div
                             style={{
-                              backgroundColor: isToday ? '#063928' : '#F5EFE5',
-                              color: isToday ? '#FFFFFF' : '#21201E',
+                              backgroundColor: '#F5EFE5',
+                              color: isToday ? '#944426' : '#21201E',
                               padding: '14px 10px',
                               textAlign: 'center',
                               borderBottom: '1px solid #EBE4D8'
                             }}
                           >
-                            <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', opacity: 0.85 }}>
+                            <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', opacity: isToday ? 1 : 0.85, color: isToday ? '#944426' : '#21201E' }}>
                               {dayName}
                             </div>
-                            <div style={{ fontSize: '14px', fontWeight: 700, marginTop: '2px' }}>
+                            <div style={{ fontSize: '14px', fontWeight: 700, marginTop: '2px', color: isToday ? '#944426' : '#21201E' }}>
                               {dateNum}
                             </div>
-                            {isToday && (
-                              <span style={{ display: 'inline-block', fontSize: '9px', fontWeight: 900, backgroundColor: '#D97706', color: '#FFFFFF', padding: '2px 8px', borderRadius: '999px', marginTop: '4px', textTransform: 'uppercase' }}>
-                                TODAY
-                              </span>
-                            )}
                           </div>
 
                           {/* Class Slot Cards Column */}
@@ -861,67 +796,101 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                                 const startTime = parts[0]?.trim() || timing;
                                 const endTime = parts[1]?.trim() || '';
 
+                              const isCompleted = checkIsCompleted(clsItem, dateObj);
+
                                 return (
                                   <div
                                     key={cIdx}
-                                    onClick={() => onOpenBooking('class', title, clsItem)}
+                                    onClick={() => {
+                                      if (!isCompleted) {
+                                        onOpenBooking('class', title, clsItem);
+                                      }
+                                    }}
                                     style={{
-                                      backgroundColor: '#FAF7F2',
+                                      backgroundColor: isCompleted ? '#F8FAFC' : '#FAF7F2',
                                       borderRadius: '16px',
                                       padding: '12px 10px 12px 14px',
                                       border: '1px solid #EBE4D8',
-                                      borderLeft: `4px solid ${classColor}`,
-                                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.04)',
+                                      borderLeft: `4px solid ${isCompleted ? '#94A3B8' : classColor}`,
+                                      boxShadow: isCompleted ? 'none' : '0 4px 14px rgba(0, 0, 0, 0.04)',
                                       display: 'flex',
                                       flexDirection: 'column',
                                       alignItems: 'flex-start',
                                       textAlign: 'left',
                                       gap: '6px',
                                       position: 'relative',
-                                      cursor: 'pointer',
+                                      cursor: isCompleted ? 'default' : 'pointer',
+                                      opacity: isCompleted ? 0.75 : 1,
                                       transition: 'transform 0.25s ease, box-shadow 0.25s ease'
                                     }}
-                                    className="weekly-slot-card"
+                                    className={isCompleted ? "weekly-slot-card completed" : "weekly-slot-card"}
                                   >
                                     {/* Top Row: Time & Top-Right Floating BOOK Button */}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '4px' }}>
-                                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', letterSpacing: '-0.01em' }}>
-                                        {endTime ? `${startTime} - ${endTime}` : startTime}
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          onOpenBooking('class', title, clsItem);
-                                        }}
+                                      <div
                                         style={{
-                                          backgroundColor: '#1E293B',
-                                          color: '#FFFFFF',
-                                          border: 'none',
-                                          borderRadius: '999px',
-                                          padding: '3px 9px',
-                                          fontSize: '10px',
-                                          fontWeight: 800,
-                                          cursor: 'pointer',
-                                          letterSpacing: '0.06em',
-                                          boxShadow: '0 2px 6px rgba(30, 41, 59, 0.25)',
-                                          flexShrink: 0
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          color: isCompleted ? '#94A3B8' : '#475569',
+                                          textDecoration: isCompleted ? 'line-through' : 'none',
+                                          letterSpacing: '-0.01em'
                                         }}
                                       >
-                                        BOOK
-                                      </button>
+                                        {endTime ? `${startTime} - ${endTime}` : startTime}
+                                      </div>
+                                      {!isCompleted && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onOpenBooking('class', title, clsItem);
+                                          }}
+                                          style={{
+                                            backgroundColor: '#1E293B',
+                                            color: '#FFFFFF',
+                                            border: 'none',
+                                            borderRadius: '999px',
+                                            padding: '3px 9px',
+                                            fontSize: '10px',
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            letterSpacing: '0.06em',
+                                            boxShadow: '0 2px 6px rgba(30, 41, 59, 0.25)',
+                                            flexShrink: 0
+                                          }}
+                                        >
+                                          BOOK
+                                        </button>
+                                      )}
                                     </div>
 
                                     {/* Title Row with Bullet Dot */}
                                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', width: '100%', margin: '2px 0' }}>
-                                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: classColor, marginTop: '5px', flexShrink: 0 }} />
-                                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 700, color: classColor, lineHeight: 1.25 }}>
+                                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: isCompleted ? '#94A3B8' : classColor, marginTop: '5px', flexShrink: 0 }} />
+                                      <div
+                                        style={{
+                                          fontFamily: "var(--font-sans)",
+                                          fontSize: '13px',
+                                          fontWeight: 700,
+                                          color: isCompleted ? '#94A3B8' : classColor,
+                                          textDecoration: isCompleted ? 'line-through' : 'none',
+                                          lineHeight: 1.25
+                                        }}
+                                      >
                                         {title}
                                       </div>
                                     </div>
 
                                     {/* Instructor & Room Info */}
-                                    <div style={{ fontSize: '11px', color: '#334155', fontWeight: 600, lineHeight: 1.3 }}>
+                                    <div
+                                      style={{
+                                        fontSize: '11px',
+                                        color: isCompleted ? '#94A3B8' : '#334155',
+                                        textDecoration: isCompleted ? 'line-through' : 'none',
+                                        fontWeight: 600,
+                                        lineHeight: 1.3
+                                      }}
+                                    >
                                       By {instructor} {room ? `📍 ${room}` : ''}
                                     </div>
                                   </div>
@@ -958,12 +927,18 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                   : (item.title || '').toLowerCase().includes('restorative') ? '#0284C7'
                   : '#944426';
 
+                const isCompleted = checkIsCompleted(item, selectedDate);
+
                 return (
                   <div
                     key={idx}
-                    onClick={() => onOpenBooking('class', item.title || item.className, item)}
+                    onClick={() => {
+                      if (!isCompleted) {
+                        onOpenBooking('class', item.title || item.className, item);
+                      }
+                    }}
                     style={{
-                      backgroundColor: '#FFFFFF',
+                      backgroundColor: isCompleted ? '#F8FAFC' : '#FFFFFF',
                       borderRadius: '16px',
                       padding: '24px 32px',
                       display: 'flex',
@@ -971,9 +946,10 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                       justifyContent: 'space-between',
                       gap: '24px',
                       flexWrap: 'wrap',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-                      borderLeft: `5px solid ${classColor}`,
+                      cursor: isCompleted ? 'default' : 'pointer',
+                      boxShadow: isCompleted ? 'none' : '0 4px 16px rgba(0,0,0,0.03)',
+                      borderLeft: `5px solid ${isCompleted ? '#94A3B8' : classColor}`,
+                      opacity: isCompleted ? 0.75 : 1,
                       transition: 'all 0.25s ease'
                     }}
                     className="schedule-row-grid"
@@ -987,15 +963,15 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                         const endTime = parts[1]?.trim() || '';
                         return (
                           <>
-                            <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: classColor, lineHeight: 1.2 }}>
+                            <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: isCompleted ? '#94A3B8' : classColor, textDecoration: isCompleted ? 'line-through' : 'none', lineHeight: 1.2 }}>
                               {startTime}
                             </div>
                             {endTime && (
-                              <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: '#6B655F', lineHeight: 1.2 }}>
+                              <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: isCompleted ? '#94A3B8' : '#6B655F', textDecoration: isCompleted ? 'line-through' : 'none', lineHeight: 1.2 }}>
                                 {endTime}
                               </div>
                             )}
-                            <div style={{ fontSize: '11.5px', color: '#8A8580', fontWeight: 500, marginTop: '2px' }}>
+                            <div style={{ fontSize: '11.5px', color: isCompleted ? '#94A3B8' : '#8A8580', textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, marginTop: '2px' }}>
                               {item.room || 'Woo House'}
                             </div>
                           </>
@@ -1005,12 +981,12 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
 
                     <div className="sch-row-main" style={{ flexGrow: 1, minWidth: '140px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: classColor, display: 'inline-block', flexShrink: 0 }} />
-                        <h4 style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 700, color: '#21201E', margin: 0 }}>
+                        <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: isCompleted ? '#94A3B8' : classColor, display: 'inline-block', flexShrink: 0 }} />
+                        <h4 style={{ fontFamily: "'Neue Montreal', sans-serif", fontSize: '18px', fontWeight: 700, color: isCompleted ? '#94A3B8' : '#21201E', textDecoration: isCompleted ? 'line-through' : 'none', margin: 0 }}>
                           {item.title || item.className}
                         </h4>
                       </div>
-                      <div style={{ fontSize: '13.5px', color: '#6B655F' }}>
+                      <div style={{ fontSize: '13.5px', color: isCompleted ? '#94A3B8' : '#6B655F', textDecoration: isCompleted ? 'line-through' : 'none' }}>
                         Guided by {item.instructor}
                       </div>
                     </div>
@@ -1018,9 +994,9 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                     <div className="sch-row-badge">
                       <span
                         style={{
-                          backgroundColor: `${classColor}15`,
-                          color: classColor,
-                          border: `1px solid ${classColor}30`,
+                          backgroundColor: isCompleted ? '#F1F5F9' : `${classColor}15`,
+                          color: isCompleted ? '#94A3B8' : classColor,
+                          border: `1px solid ${isCompleted ? '#CBD5E1' : `${classColor}30`}`,
                           padding: '6px 16px',
                           borderRadius: '999px',
                           fontSize: '12.5px',
@@ -1032,25 +1008,27 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
                       </span>
                     </div>
 
-                    <button
-                      className="sch-row-btn"
-                      style={{
-                        border: 'none',
-                        backgroundColor: '#21201E',
-                        color: '#FFFFFF',
-                        borderRadius: '999px',
-                        padding: '10px 24px',
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <span>Book</span>
-                      <ArrowUpRight size={15} />
-                    </button>
+                    {!isCompleted && (
+                      <button
+                        className="sch-row-btn"
+                        style={{
+                          border: 'none',
+                          backgroundColor: '#21201E',
+                          color: '#FFFFFF',
+                          borderRadius: '999px',
+                          padding: '10px 24px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <span>Book</span>
+                        <ArrowUpRight size={15} />
+                      </button>
+                    )}
                   </div>
                 );
               })}

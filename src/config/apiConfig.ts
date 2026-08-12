@@ -1,7 +1,7 @@
 // Centralized API Configuration
 // Set USE_DEMO_API to true for Testing/Demo Sandbox, or false for Live Production
 
-export const USE_DEMO_API = true;
+export const USE_DEMO_API = false;
 
 export const DEMO_API_URL = 'https://demo.pragya-yog.com/api_v2.php';
 export const PROD_API_URL = 'https://pragya-yog.com/api.php';

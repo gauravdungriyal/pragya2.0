@@ -9,6 +9,21 @@ interface ClassesPageProps {
   onNavigateSection?: (sectionId: string) => void;
 }
 
+const checkIsCompleted = (item: any, dateObj?: Date): boolean => {
+  if (String(item?.completed) === '1' || item?.completed === 1 || item?.completed === true) {
+    return true;
+  }
+  if (dateObj) {
+    const now = new Date();
+    const classDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    const todayDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (classDay < todayDay) {
+      return true;
+    }
+  }
+  return false;
+};
+
 export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
   const { user } = useAuth();
   const [schedules, setSchedules] = useState<ClassScheduleItem[]>([]);
@@ -123,87 +138,6 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
     });
   }, []);
 
-  const fallbackClasses = [
-    {
-      id: '01',
-      schedule_id: '25493',
-      title: 'Gentle Yoga',
-      level: 'Beginner',
-      duration: '60 mins',
-      timing: '07:00 AM - 08:00 AM',
-      instructor: 'Master Aarya',
-      room: 'Woo House',
-      schedule: 'Mon, Wed, Fri',
-      description: 'Awaken the bodily energy through rhythmic breathwork, classical sun salutations, and grounding posture holds.',
-      image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-      id: '02',
-      schedule_id: '25494',
-      title: 'Vinyasa Flow',
-      level: 'Intermediate',
-      duration: '75 mins',
-      timing: '09:00 AM - 10:15 AM',
-      instructor: 'Angela Lee',
-      room: 'Woo House',
-      schedule: 'Tue, Thu, Sat',
-      description: 'Fluid movement synchronized with dynamic breath to build stamina, balance, and centered presence.',
-      image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-      id: '03',
-      schedule_id: '25495',
-      title: 'Hatha Yoga',
-      level: 'All Levels',
-      duration: '60 mins',
-      timing: '11:00 AM - 12:00 PM',
-      instructor: 'Charlotte Chiu',
-      room: 'Woo House',
-      schedule: 'Mon, Thu, Sun',
-      description: 'A meditative style with longer holds that release deep tension and cultivate inner stillness and balance.',
-      image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-      id: '04',
-      schedule_id: '25496',
-      title: 'Yin Yoga',
-      level: 'All Levels',
-      duration: '60 mins',
-      timing: '02:00 PM - 03:00 PM',
-      instructor: 'Angela Lee',
-      room: 'Woo House',
-      schedule: 'Wed, Fri, Sun',
-      description: 'Precision-controlled movement using traditional postures to lengthen, align, and strengthen deep stabilizing muscles.',
-      image: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-      id: '05',
-      schedule_id: '25497',
-      title: 'Power Yoga',
-      level: 'Advanced',
-      duration: '75 mins',
-      timing: '05:30 PM - 06:45 PM',
-      instructor: 'Charlotte Chiu',
-      room: 'Woo House',
-      schedule: 'Tue, Thu, Sat',
-      description: 'High energy dynamic movement sequence designed to build core vitality, stamina, and cardiovascular health.',
-      image: 'https://images.unsplash.com/photo-1512290900673-70024421191e?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-      id: '06',
-      schedule_id: '25498',
-      title: 'Restorative Yoga',
-      level: 'All Levels',
-      duration: '60 mins',
-      timing: '07:15 PM - 08:15 PM',
-      instructor: 'Master Aarya',
-      room: 'Woo House',
-      schedule: 'Mon, Wed, Fri',
-      description: 'Sacred breath sequences and prop-supported floor postures designed to clear stress and rejuvenate vital energy.',
-      image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop'
-    }
-  ];
-
   const classImages = [
     'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop',
@@ -230,7 +164,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
 
     fetchFn.then((data) => {
       if (!isMounted) return;
-      if (data && Array.isArray(data.schedules) && data.schedules.length > 0) {
+      if (data && Array.isArray(data.schedules)) {
         setSchedules(data.schedules);
       } else {
         setSchedules([]);
@@ -243,8 +177,8 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
     };
   }, [selectedDate, user]);
 
-  // Format display classes list
-  const displayClasses = (schedules.length > 0 ? schedules : fallbackClasses).map((item, idx) => {
+  // Format display classes list directly from API schedules
+  const displayClasses = schedules.map((item, idx) => {
     const rawDesc = (item as any).description || '';
     const cleanDesc = rawDesc.replace(/<[^>]*>?/gm, '').trim();
     const formattedDate = selectedDate.toLocaleDateString('en-US', {
@@ -258,11 +192,12 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
       schedule_id: (item as any).schedule_id || item.id || String(idx + 100),
       title: item.title || 'Yoga Session',
       level: (item as any).levels || (item as any).level || 'All Levels',
+      color: item.color || '',
       duration: item.duration ? `${item.duration} mins` : '60 mins',
       timing: (item as any).timing || 'Daily Session',
       instructor: item.instructor || 'Master Teacher',
       room: (item as any).room || 'Woo House',
-      schedule: (item as any).date || (fallbackClasses[idx % fallbackClasses.length]?.schedule) || 'Mon, Wed, Fri',
+      schedule: (item as any).date || 'Scheduled Class',
       date: (item as any).date && (item as any).date !== 'Today' ? (item as any).date : formattedDate,
       price: (item as any).book_cost || (item as any).price || (item as any).amount,
       description: cleanDesc || 'Experience traditional yoga practice combining breath, movement, and alignment.',
@@ -1086,55 +1021,36 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                     const dateNum = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
                     return (
-                      <div
-                        key={keyStr}
-                        style={{
-                          backgroundColor: isToday ? '#FFFFFF' : '#FAF6F0',
-                          borderRadius: '20px',
-                          border: isToday ? '2px solid #944426' : '1px solid #EBE4D8',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          boxShadow: isToday ? '0 10px 28px rgba(148, 68, 38, 0.14)' : 'none',
-                          transition: 'all 0.3s ease'
-                        }}
-                      >
-                        {/* Day Header Bar */}
                         <div
+                          key={keyStr}
                           style={{
-                            backgroundColor: isToday ? '#00381F' : '#EAE1D3',
-                            color: isToday ? '#FFFFFF' : '#21201E',
-                            padding: '14px 10px',
-                            textAlign: 'center',
-                            borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+                            backgroundColor: '#FAF6F0',
+                            borderRadius: '20px',
+                            border: '1px solid #EBE4D8',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            boxShadow: 'none',
+                            transition: 'all 0.3s ease'
                           }}
                         >
-                          <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                            {dayName}
+                          {/* Day Header Bar */}
+                          <div
+                            style={{
+                              backgroundColor: '#EAE1D3',
+                              color: isToday ? '#944426' : '#21201E',
+                              padding: '14px 10px',
+                              textAlign: 'center',
+                              borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+                            }}
+                          >
+                            <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: isToday ? '#944426' : '#21201E' }}>
+                              {dayName}
+                            </div>
+                            <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '2px', color: isToday ? '#944426' : '#21201E' }}>
+                              {dateNum}
+                            </div>
                           </div>
-                          <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '2px' }}>
-                            {dateNum}
-                          </div>
-                          {isToday && (
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                marginTop: '5px',
-                                fontSize: '9px',
-                                fontWeight: 800,
-                                backgroundColor: '#D9AE29',
-                                color: '#21201E',
-                                padding: '2px 9px',
-                                borderRadius: '999px',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.08em',
-                                boxShadow: '0 2px 6px rgba(217, 174, 41, 0.4)'
-                              }}
-                            >
-                              TODAY
-                            </span>
-                          )}
-                        </div>
 
                         {/* Class Slot Cards Column */}
                         <div style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
@@ -1161,67 +1077,101 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                               const startTime = parts[0]?.trim() || timing;
                               const endTime = parts[1]?.trim() || '';
 
+                              const isCompleted = checkIsCompleted(clsItem, dateObj);
+
                               return (
                                 <div
                                   key={cIdx}
-                                  onClick={() => onOpenBooking('class', title, clsItem)}
+                                  onClick={() => {
+                                    if (!isCompleted) {
+                                      onOpenBooking('class', title, clsItem);
+                                    }
+                                  }}
                                   style={{
-                                    backgroundColor: '#FAF7F2',
+                                    backgroundColor: isCompleted ? '#F8FAFC' : '#FAF7F2',
                                     borderRadius: '16px',
                                     padding: '12px 10px 12px 14px',
                                     border: '1px solid #EBE4D8',
-                                    borderLeft: `4px solid ${classColor}`,
-                                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.04)',
+                                    borderLeft: `4px solid ${isCompleted ? '#94A3B8' : classColor}`,
+                                    boxShadow: isCompleted ? 'none' : '0 4px 14px rgba(0, 0, 0, 0.04)',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'flex-start',
                                     textAlign: 'left',
                                     gap: '6px',
                                     position: 'relative',
-                                    cursor: 'pointer',
+                                    cursor: isCompleted ? 'default' : 'pointer',
+                                    opacity: isCompleted ? 0.75 : 1,
                                     transition: 'transform 0.25s ease, box-shadow 0.25s ease'
                                   }}
-                                  className="weekly-slot-card"
+                                  className={isCompleted ? "weekly-slot-card completed" : "weekly-slot-card"}
                                 >
                                   {/* Top Row: Time & Top-Right Floating BOOK Button */}
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '4px' }}>
-                                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', letterSpacing: '-0.01em' }}>
-                                      {endTime ? `${startTime} - ${endTime}` : startTime}
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onOpenBooking('class', title, clsItem);
-                                      }}
+                                    <div
                                       style={{
-                                        backgroundColor: '#1E293B',
-                                        color: '#FFFFFF',
-                                        border: 'none',
-                                        borderRadius: '999px',
-                                        padding: '3px 9px',
-                                        fontSize: '10px',
-                                        fontWeight: 800,
-                                        cursor: 'pointer',
-                                        letterSpacing: '0.06em',
-                                        boxShadow: '0 2px 6px rgba(30, 41, 59, 0.25)',
-                                        flexShrink: 0
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        color: isCompleted ? '#94A3B8' : '#475569',
+                                        textDecoration: isCompleted ? 'line-through' : 'none',
+                                        letterSpacing: '-0.01em'
                                       }}
                                     >
-                                      BOOK
-                                    </button>
+                                      {endTime ? `${startTime} - ${endTime}` : startTime}
+                                    </div>
+                                    {!isCompleted && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onOpenBooking('class', title, clsItem);
+                                        }}
+                                        style={{
+                                          backgroundColor: '#1E293B',
+                                          color: '#FFFFFF',
+                                          border: 'none',
+                                          borderRadius: '999px',
+                                          padding: '3px 9px',
+                                          fontSize: '10px',
+                                          fontWeight: 800,
+                                          cursor: 'pointer',
+                                          letterSpacing: '0.06em',
+                                          boxShadow: '0 2px 6px rgba(30, 41, 59, 0.25)',
+                                          flexShrink: 0
+                                        }}
+                                      >
+                                        BOOK
+                                      </button>
+                                    )}
                                   </div>
 
                                   {/* Title Row with Bullet Dot */}
                                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', width: '100%', margin: '2px 0' }}>
-                                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: classColor, marginTop: '5px', flexShrink: 0 }} />
-                                    <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 700, color: classColor, lineHeight: 1.25 }}>
+                                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: isCompleted ? '#94A3B8' : classColor, marginTop: '5px', flexShrink: 0 }} />
+                                    <div
+                                      style={{
+                                        fontFamily: "var(--font-sans)",
+                                        fontSize: '13px',
+                                        fontWeight: 700,
+                                        color: isCompleted ? '#94A3B8' : classColor,
+                                        textDecoration: isCompleted ? 'line-through' : 'none',
+                                        lineHeight: 1.25
+                                      }}
+                                    >
                                       {title}
                                     </div>
                                   </div>
 
                                   {/* Instructor & Room Info */}
-                                  <div style={{ fontSize: '11px', color: '#334155', fontWeight: 600, lineHeight: 1.3 }}>
+                                  <div
+                                    style={{
+                                      fontSize: '11px',
+                                      color: isCompleted ? '#94A3B8' : '#334155',
+                                      textDecoration: isCompleted ? 'line-through' : 'none',
+                                      fontWeight: 600,
+                                      lineHeight: 1.3
+                                    }}
+                                  >
                                     By {instructor} {room ? `📍 ${room}` : ''}
                                   </div>
                                 </div>
@@ -1262,11 +1212,13 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                 const startTime = parts[0]?.trim() || cls.timing;
                 const endTime = parts[1]?.trim() || '';
 
+                const isCompleted = checkIsCompleted(cls, selectedDate);
+
                 return (
                   <div
                     key={idx}
                     style={{
-                      backgroundColor: '#FFFFFF',
+                      backgroundColor: isCompleted ? '#F8FAFC' : '#FFFFFF',
                       borderRadius: '16px',
                       padding: '24px 32px',
                       display: 'flex',
@@ -1274,23 +1226,24 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                       justifyContent: 'space-between',
                       gap: '24px',
                       flexWrap: 'wrap',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-                      borderLeft: `5px solid ${classColor}`,
+                      boxShadow: isCompleted ? 'none' : '0 4px 16px rgba(0,0,0,0.03)',
+                      borderLeft: `5px solid ${isCompleted ? '#94A3B8' : classColor}`,
+                      opacity: isCompleted ? 0.75 : 1,
                       transition: 'all 0.25s ease'
                     }}
                     className="schedule-row-hover"
                   >
                     {/* Time & Room (Stacked Start & End Time) */}
                     <div className="cls-sch-time" style={{ minWidth: '100px', flexShrink: 0 }}>
-                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: classColor, lineHeight: 1.2 }}>
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '15px', fontWeight: 700, color: isCompleted ? '#94A3B8' : classColor, textDecoration: isCompleted ? 'line-through' : 'none', lineHeight: 1.2 }}>
                         {startTime}
                       </div>
                       {endTime && (
-                        <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: '#6B655F', lineHeight: 1.2 }}>
+                        <div style={{ fontFamily: "var(--font-sans)", fontSize: '13px', fontWeight: 600, color: isCompleted ? '#94A3B8' : '#6B655F', textDecoration: isCompleted ? 'line-through' : 'none', lineHeight: 1.2 }}>
                           {endTime}
                         </div>
                       )}
-                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '11.5px', color: '#8A8580', fontWeight: 500, marginTop: '2px' }}>
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '11.5px', color: isCompleted ? '#94A3B8' : '#8A8580', textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, marginTop: '2px' }}>
                         {cls.room}
                       </div>
                     </div>
@@ -1298,13 +1251,13 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                     {/* Class Title & Instructor */}
                     <div className="cls-sch-main" style={{ flexGrow: 1, minWidth: '140px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: classColor, display: 'inline-block', flexShrink: 0 }} />
-                        <h4 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: classColor, margin: 0 }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isCompleted ? '#94A3B8' : classColor, display: 'inline-block', flexShrink: 0 }} />
+                        <h4 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: isCompleted ? '#94A3B8' : classColor, textDecoration: isCompleted ? 'line-through' : 'none', margin: 0 }}>
                           {cls.title}
                         </h4>
                       </div>
-                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '13.5px', color: '#6B655F', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <User size={14} color={classColor} />
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: '13.5px', color: isCompleted ? '#94A3B8' : '#6B655F', textDecoration: isCompleted ? 'line-through' : 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <User size={14} color={isCompleted ? '#94A3B8' : classColor} />
                         <span>Guided by {cls.instructor}</span>
                       </div>
                     </div>
@@ -1314,9 +1267,9 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                       <span
                         style={{
                           fontFamily: "var(--font-sans)",
-                          backgroundColor: `${classColor}15`,
-                          color: classColor,
-                          border: `1px solid ${classColor}30`,
+                          backgroundColor: isCompleted ? '#F1F5F9' : `${classColor}15`,
+                          color: isCompleted ? '#94A3B8' : classColor,
+                          border: `1px solid ${isCompleted ? '#CBD5E1' : `${classColor}30`}`,
                           padding: '6px 16px',
                           borderRadius: '999px',
                           fontSize: '12.5px',
@@ -1329,34 +1282,30 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                     </div>
 
                     {/* Book Session Action */}
-                    <button
-                      className="cls-sch-btn"
-                      onClick={() => onOpenBooking('class', cls.title, cls)}
-                      style={{
-                        fontFamily: "var(--font-sans)",
-                        backgroundColor: '#21201E',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '999px',
-                        padding: '10px 24px',
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 0.25s ease',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = classColor;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#21201E';
-                      }}
-                    >
-                      <span>Book</span>
-                      <ChevronRight size={14} />
-                    </button>
+                    {!isCompleted && (
+                      <button
+                        className="cls-sch-btn"
+                        onClick={() => onOpenBooking('class', cls.title, cls)}
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          backgroundColor: '#21201E',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '999px',
+                          padding: '10px 24px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.25s ease',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <span>Book</span>
+                        <ChevronRight size={14} />
+                      </button>
+                    )}
                   </div>
                 );
               })}

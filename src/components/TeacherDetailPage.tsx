@@ -259,9 +259,9 @@ export const TeacherDetailPage: React.FC<TeacherDetailPageProps> = ({ teacher, o
     };
   }, [teacher.name, teacher.staff_id, (teacher as any).id, user?.access_token]);
 
-  // Extract unique class titles for filter dropdown from active schedule or master fallbacks
+  // Extract unique class titles for filter dropdown from active schedule
   const allFetchedSchedules = Object.values(dailySchedules).flat();
-  const activeSchedulesForFilter = allFetchedSchedules.length > 0 ? allFetchedSchedules : masterFallbackSchedules;
+  const activeSchedulesForFilter = allFetchedSchedules;
 
   const availableClassTitles = Array.from(
     new Set(

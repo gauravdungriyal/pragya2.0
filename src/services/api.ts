@@ -906,18 +906,16 @@ export async function getScheduleByDate(dateStr?: string, instructorId?: string,
   // Use JWT-gated getClassByDate when token is provided; else publicClassByDate
   const action = payload.token ? 'getClassByDate' : 'publicClassByDate';
   const res = await fetchFromApi<any>(action, payload);
-  if (res && res.status && Array.isArray(res.todaySchedules) && res.todaySchedules.length > 0) {
+  if (res && res.status && Array.isArray(res.todaySchedules)) {
     return {
       today: res.today || 'Schedule',
       schedules: res.todaySchedules.map(mapScheduleItem)
     };
   }
 
-  // Fallback to day-specific schedule if API returns empty for the date
-  const fallbackSchedules = getDaySpecificSchedules(dateStr);
   return {
     today: "Class Schedule",
-    schedules: fallbackSchedules
+    schedules: []
   };
 }
 

@@ -8,6 +8,7 @@ export interface ClassScheduleItem {
   book_limit: string;
   booked: number;
   levels: string;
+  level?: string;
   completed: string;
   credit: string;
   book_cost: string;
@@ -21,6 +22,8 @@ export interface ClassScheduleItem {
   schedule_id: string;
   room?: string;
   pillar?: string;
+  className?: string;
+  time?: string;
 }
 
 export interface Instructor {
