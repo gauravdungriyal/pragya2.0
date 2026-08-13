@@ -4,6 +4,7 @@ import { getPackages, getBundleList, trackBundleEvent, getDailyQuote, cleanHtmlE
 import { PackageItem, BundleItem, DailyQuote } from '../types';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 interface MembershipPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
@@ -19,11 +20,16 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
 }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [packagesData, setPackagesData] = useState<Record<string, PackageItem[]>>({});
   const [bundlesList, setBundlesList] = useState<BundleItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
   const [dailyQuote, setDailyQuote] = useState<DailyQuote | null>(null);
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
 
   useEffect(() => {
     if (initialCategory) {
@@ -337,7 +343,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
         </div>
       </section>
 
-      {/* Why Explore Our Packages Section (Matches Reference Design) */}
+      {/* Why Explore Our Packages Section (Matches Reference Design & Editable via Admin) */}
       <section
         style={{
           backgroundColor: '#F5EFE5',
@@ -357,7 +363,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
               lineHeight: 1.2
             }}
           >
-            Why Explore Our Packages?
+            {siteConfig.whyExplorePackages?.title || 'Why Explore Our Packages?'}
           </h2>
 
           {/* Delicate Black Accent Line with Diamond */}
@@ -367,31 +373,15 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
             <div style={{ width: '60px', height: '1px', backgroundColor: '#21201E', opacity: 0.3 }} />
           </div>
 
-          {/* 4 Points List */}
+          {/* Points List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', textAlign: 'left' }}>
-            <div>
-              <p style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', color: '#5A554F', lineHeight: 1.65, margin: 0 }}>
-                <strong style={{ color: '#21201E', fontWeight: 800 }}>Importance of Daily Practice & Mindful Breaks.</strong> In today's fast-paced world, taking dedicated time on the mat to breathe, decompress, and reconnect with your inner self is essential for long-term physical health, mental clarity, and emotional harmony.
-              </p>
-            </div>
-
-            <div>
-              <p style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', color: '#5A554F', lineHeight: 1.65, margin: 0 }}>
-                <strong style={{ color: '#21201E', fontWeight: 800 }}>Benefits of Authentic Yogic Science.</strong> Regular practice of authentic asanas, pranayama, and meditation stimulates circulation, enhances flexibility and core strength, balances nervous system function, and lowers stress — leaving you renewed and centered.
-              </p>
-            </div>
-
-            <div>
-              <p style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', color: '#5A554F', lineHeight: 1.65, margin: 0 }}>
-                <strong style={{ color: '#21201E', fontWeight: 800 }}>Tailored Personal Guidance & Practice.</strong> Every membership tier and package is crafted to meet you at your unique stage of practice. Whether you seek dynamic vinyasa flows, therapeutic alignment, or restorative sound bath resets, our master faculty customize your sanctuary journey.
-              </p>
-            </div>
-
-            <div>
-              <p style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', color: '#5A554F', lineHeight: 1.65, margin: 0 }}>
-                <strong style={{ color: '#21201E', fontWeight: 800 }}>Transparent Luxury Sanctuary Value.</strong> Our curated package tiers deliver world-class instruction, hydrotherapy amenities, and personalized care at accessible, transparent rates — empowering a sustainable, lifelong yoga practice.
-              </p>
-            </div>
+            {(siteConfig.whyExplorePackages?.points || []).map((pt, idx) => (
+              <div key={idx}>
+                <p style={{ fontFamily: "'Neue Montreal', -apple-system, sans-serif", fontSize: '15px', color: '#5A554F', lineHeight: 1.65, margin: 0 }}>
+                  <strong style={{ color: '#21201E', fontWeight: 800 }}>{pt.boldTitle}</strong> {pt.description}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

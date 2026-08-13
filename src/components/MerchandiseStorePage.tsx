@@ -6,14 +6,20 @@ import {
 } from 'lucide-react';
 import { MerchandiseItem } from '../types';
 import { getMerchandiseItems } from '../services/api';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 interface MerchandiseStorePageProps {
   onBackToHome?: () => void;
 }
 
 export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBackToHome }) => {
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [items, setItems] = useState<MerchandiseItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
 
   // E-commerce Sidebar Filter States
   const [selectedAudience, setSelectedAudience] = useState<string>('ALL'); // ALL | Women | Men | Unisex
@@ -344,7 +350,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
         >
           <div>
             <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.14em', color: '#944426', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-              — PRAGYA SANCTUARY STORE —
+              {siteConfig.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —'}
             </span>
             <h1
               style={{
@@ -357,7 +363,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                 margin: 0
               }}
             >
-              Merchandise &{' '}
+              {siteConfig.shopPageConfig?.topTitle || 'Merchandise &'}{' '}
               <span
                 style={{
                   fontFamily: "var(--font-serif)",
@@ -366,8 +372,9 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                   color: '#944426'
                 }}
               >
-                Yogic Wear
+                {siteConfig.shopPageConfig?.topTitleItalic || 'Yogic Wear'}
               </span>
+              {siteConfig.shopPageConfig?.topSuffix ? ` ${siteConfig.shopPageConfig.topSuffix}` : ''}
             </h1>
           </div>
 
@@ -382,7 +389,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                 maxWidth: '540px'
               }}
             >
-              Explore our sanctuary products, organic cotton apparel, non-slip jute mats, and authentic handcrafted essentials for your daily practice.
+              {siteConfig.shopPageConfig?.topSubtitle || 'Explore our sanctuary products, organic cotton apparel, non-slip jute mats, and authentic handcrafted essentials for your daily practice.'}
             </p>
           </div>
         </div>

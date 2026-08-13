@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, MapPin, Tag, ArrowUpRight, RefreshCw, Sparkles, Filter, Search, Check } from 'lucide-react';
 import { getUpcomingEvents, getDailyQuote } from '../services/api';
 import { UpcomingEvent, DailyQuote } from '../types';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 interface EventsPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
@@ -10,11 +11,16 @@ interface EventsPageProps {
 }
 
 export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEventDetail }) => {
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [eventsList, setEventsList] = useState<UpcomingEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeMonth, setActiveMonth] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [dailyQuote, setDailyQuote] = useState<DailyQuote | null>(null);
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
 
   const eventImages: Record<string, string> = {
     "1": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1200&auto=format&fit=crop",
@@ -234,7 +240,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                 margin: 0
               }}
             >
-              Events &{' '}
+              {siteConfig.eventsPageConfig?.topTitle || 'Events &'}{' '}
               <span
                 style={{
                   fontFamily: "var(--font-serif)",
@@ -243,8 +249,9 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                   color: '#21201E'
                 }}
               >
-                Workshops
+                {siteConfig.eventsPageConfig?.topTitleItalic || 'Workshops'}
               </span>
+              {siteConfig.eventsPageConfig?.topSuffix ? ` ${siteConfig.eventsPageConfig.topSuffix}` : ''}
             </h1>
           </div>
 
@@ -260,7 +267,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onOpenBooking, onOpenEve
                 maxWidth: '520px'
               }}
             >
-              Explore our sanctuary events, oceanfront resets, sound bath immersions, and international retreats. Filter by month to find your next journey.
+              {siteConfig.eventsPageConfig?.topSubtitle || 'Explore our sanctuary events, oceanfront resets, sound bath immersions, and international retreats. Filter by month to find your next journey.'}
             </p>
           </div>
         </div>

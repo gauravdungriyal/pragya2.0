@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Zap, Sparkles, Heart, Users } from 'lucide-react';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 export const GiftOfYoga: React.FC = () => {
-  const gifts = [
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
+
+  const defaultGifts = [
     {
       icon: Zap,
       title: 'Physical Strength & Flexibility',
@@ -24,6 +31,10 @@ export const GiftOfYoga: React.FC = () => {
       description: 'Join a welcoming space where like-minded individuals grow and thrive together.',
     },
   ];
+
+  const giftCards = siteConfig.classesPageConfig?.giftCards && siteConfig.classesPageConfig.giftCards.length > 0
+    ? siteConfig.classesPageConfig.giftCards
+    : defaultGifts;
 
   return (
     <section
@@ -52,7 +63,11 @@ export const GiftOfYoga: React.FC = () => {
             lineHeight: 1.15,
           }}
         >
-          The <span style={{ fontStyle: 'italic', fontFamily: 'serif' }}>Gift</span> of Yoga
+          {siteConfig.classesPageConfig?.giftTitle || 'The'}{' '}
+          <span style={{ fontStyle: 'italic', fontFamily: 'serif' }}>
+            {siteConfig.classesPageConfig?.giftTitleItalic || 'Gift'}
+          </span>
+          {siteConfig.classesPageConfig?.giftSuffix ? ` ${siteConfig.classesPageConfig.giftSuffix}` : ' of Yoga'}
         </h2>
 
         {/* Subtitle */}
@@ -66,7 +81,7 @@ export const GiftOfYoga: React.FC = () => {
             fontWeight: 400,
           }}
         >
-          Yoga is more than a physical practice, it&apos;s a path toward wellness, balance, and inner peace
+          {siteConfig.classesPageConfig?.giftSubtitle || "Yoga is more than a physical practice, it's a path toward wellness, balance, and inner peace"}
         </p>
 
         {/* 4 Feature Columns */}
@@ -78,8 +93,9 @@ export const GiftOfYoga: React.FC = () => {
             alignItems: 'start',
           }}
         >
-          {gifts.map((item, index) => {
-            const IconComponent = item.icon;
+          {giftCards.map((item, index) => {
+            const fallbackIcon = defaultGifts[index % defaultGifts.length]?.icon || Sparkles;
+            const IconComponent = (item as any).icon || fallbackIcon;
             return (
               <div
                 key={index}
@@ -124,11 +140,10 @@ export const GiftOfYoga: React.FC = () => {
                 {/* Card Description */}
                 <p
                   style={{
-                    fontSize: '13px',
-                    color: '#6E6A63',
+                    fontSize: '14px',
+                    color: '#66635F',
                     lineHeight: 1.55,
                     margin: 0,
-                    maxWidth: '260px',
                   }}
                 >
                   {item.description}

@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Sparkles, Image as ImageIcon, MapPin, BookOpen, Share2, Check, Plus, Trash2, Loader2, Calendar, Ticket } from 'lucide-react';
+import {
+  Save, Sparkles, Image as ImageIcon, MapPin, Check, Plus, Trash2, Loader2, Calendar,
+  Ticket, Shield, Globe, Info, RefreshCw, Layers, Award, BookOpen, User, Eye, ArrowRight,
+  Dumbbell, Heart, Command
+} from 'lucide-react';
 import {
   getSiteConfig,
   saveSiteConfig,
@@ -7,12 +11,13 @@ import {
   fetchSiteConfigFromFirebase,
   SiteConfig,
   StudioLocation,
+  NavbarVisibilityConfig
 } from '../../services/siteConfig';
 import { getUpcomingEvents } from '../../services/api';
 import { UpcomingEvent } from '../../types';
 
 export const ContentManager: React.FC = () => {
-  const [subTab, setSubTab] = useState<'hero' | 'events' | 'whyus' | 'journey' | 'perks' | 'locations' | 'about' | 'courses' | 'footer'>('hero');
+  const [selectedPage, setSelectedPage] = useState<'home' | 'about' | 'shop' | 'events' | 'classes' | 'teachers' | 'membership'>('home');
   const [config, setConfig] = useState<SiteConfig>(getSiteConfig());
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -58,6 +63,50 @@ export const ContentManager: React.FC = () => {
     }
   };
 
+  // Navbar Visibility Toggle Handler
+  const handleToggleNavbarItem = (key: keyof NavbarVisibilityConfig) => {
+    const currentVis = config.navbarVisibility || {
+      home: true,
+      about: true,
+      shop: true,
+      events: true,
+      classes: true,
+      teachers: true,
+      membership: true,
+    };
+    const nextVis = { ...currentVis, [key]: !currentVis[key] };
+    setConfig({ ...config, navbarVisibility: nextVis });
+  };
+
+  // Home Page -> Featured Events Tick Handler
+  const handleToggleEventOnHome = (eventId: string) => {
+    const enabledIds = config.upcomingEventsConfig?.enabledEventIds || [];
+    let nextEnabled: string[];
+
+    if (enabledIds.includes(eventId)) {
+      nextEnabled = enabledIds.filter((id) => id !== eventId);
+    } else {
+      nextEnabled = [...enabledIds.filter((id) => id !== '__none__'), eventId];
+    }
+
+    if (nextEnabled.length === 0) {
+      nextEnabled = ['__none__'];
+    }
+
+    setConfig({
+      ...config,
+      upcomingEventsConfig: {
+        enabledEventIds: nextEnabled,
+      },
+    });
+  };
+
+  const isEventEnabled = (eventId: string) => {
+    const enabledIds = config.upcomingEventsConfig?.enabledEventIds || [];
+    if (enabledIds.length === 0) return true; // Default: show all if not configured
+    return enabledIds.includes(eventId);
+  };
+
   // Locations Handlers
   const handleUpdateLocation = (index: number, updated: Partial<StudioLocation>) => {
     const nextLocations = [...config.locations];
@@ -87,1048 +136,2249 @@ export const ContentManager: React.FC = () => {
     }
   };
 
+  const navVisibility = config.navbarVisibility || {
+    home: true,
+    about: true,
+    shop: true,
+    events: true,
+    classes: true,
+    teachers: true,
+    membership: true,
+  };
+
+  const navButtonsList: { key: keyof NavbarVisibilityConfig; label: string }[] = [
+    { key: 'home', label: 'Home' },
+    { key: 'about', label: 'About' },
+    { key: 'shop', label: 'Shop' },
+    { key: 'events', label: 'Events' },
+    { key: 'classes', label: 'Classes' },
+    { key: 'teachers', label: 'Teachers' },
+    { key: 'membership', label: 'Membership & Packages' },
+  ];
+
+  const pageTabsList: { id: typeof selectedPage; label: string }[] = [
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
+    { id: 'shop', label: 'Shop' },
+    { id: 'events', label: 'Events' },
+    { id: 'classes', label: 'Classes' },
+    { id: 'teachers', label: 'Teachers' },
+    { id: 'membership', label: 'Membership & Packages' },
+  ];
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>
       
-      {/* CMS Action Bar & Sub-Tabs */}
-      <div style={{ backgroundColor: '#FFFFFF', padding: '20px 28px', borderRadius: '16px', border: '1px solid #E7E5E4', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-        
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
-          <button
-            onClick={() => setSubTab('hero')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontWeight: 500,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: subTab === 'hero' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: subTab === 'hero' ? '#B45309' : '#F5F5F4',
-              color: subTab === 'hero' ? '#FFFFFF' : '#44403C',
-            }}
-          >
-            <ImageIcon className="w-4 h-4" /> Hero Banner & Badge
-          </button>
+      {/* ── SECTION 1: NAVBAR BUTTONS VISIBILITY CONTROL ───────────────────────────── */}
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        padding: '24px 28px',
+        borderRadius: '16px',
+        border: '1px solid #E7E5E4',
+        boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Globe className="w-5 h-5 text-amber-700" /> Navigation Bar Button Visibility
+            </h2>
+            <p style={{ fontSize: '13px', color: '#78716C', margin: '4px 0 0 0' }}>
+              Select which navigation buttons appear in the main website header. Ticked items are live on the website.
+            </p>
+          </div>
 
-          <button
-            onClick={() => setSubTab('events')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontWeight: 500,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: subTab === 'events' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: subTab === 'events' ? '#B45309' : '#F5F5F4',
-              color: subTab === 'events' ? '#FFFFFF' : '#44403C',
-            }}
-          >
-            <Ticket className="w-4 h-4" /> Homepage Upcoming Events ({allEvents.length})
-          </button>
-
-          <button
-            onClick={() => setSubTab('whyus')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontWeight: 500,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: subTab === 'whyus' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: subTab === 'whyus' ? '#B45309' : '#F5F5F4',
-              color: subTab === 'whyus' ? '#FFFFFF' : '#44403C',
-            }}
-          >
-            <Sparkles className="w-4 h-4" /> Why Choose Us
-          </button>
-
-          <button
-            onClick={() => setSubTab('journey')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontWeight: 500,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: subTab === 'journey' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: subTab === 'journey' ? '#B45309' : '#F5F5F4',
-              color: subTab === 'journey' ? '#FFFFFF' : '#44403C',
-            }}
-          >
-            <BookOpen className="w-4 h-4" /> Wellness 4-Steps
-          </button>
-
-          <button
-            onClick={() => setSubTab('perks')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontWeight: 500,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: subTab === 'perks' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: subTab === 'perks' ? '#B45309' : '#F5F5F4',
-              color: subTab === 'perks' ? '#FFFFFF' : '#44403C',
-            }}
-          >
-            <Plus className="w-4 h-4" /> Membership Perks
-          </button>
-
-          <button
-            onClick={() => setSubTab('locations')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontWeight: 500,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: subTab === 'locations' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: subTab === 'locations' ? '#B45309' : '#F5F5F4',
-              color: subTab === 'locations' ? '#FFFFFF' : '#44403C',
-            }}
-          >
-            <MapPin className="w-4 h-4" /> Studio Locations ({config.locations.length})
-          </button>
-
-          <button
-            onClick={() => setSubTab('about')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontWeight: 500,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: subTab === 'about' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: subTab === 'about' ? '#B45309' : '#F5F5F4',
-              color: subTab === 'about' ? '#FFFFFF' : '#44403C',
-            }}
-          >
-            <Sparkles className="w-4 h-4" /> Brand Story
-          </button>
-
-          <button
-            onClick={() => setSubTab('courses')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontWeight: 500,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: subTab === 'courses' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: subTab === 'courses' ? '#B45309' : '#F5F5F4',
-              color: subTab === 'courses' ? '#FFFFFF' : '#44403C',
-            }}
-          >
-            <BookOpen className="w-4 h-4" /> Course Templates
-          </button>
-
-          <button
-            onClick={() => setSubTab('footer')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontWeight: 500,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              border: subTab === 'footer' ? 'none' : '1px solid #E7E5E4',
-              backgroundColor: subTab === 'footer' ? '#B45309' : '#F5F5F4',
-              color: subTab === 'footer' ? '#FFFFFF' : '#44403C',
-            }}
-          >
-            <Share2 className="w-4 h-4" /> Footer Links
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={handleSave}
             disabled={isSaving}
             style={{
-              padding: '10px 24px',
-              backgroundColor: isSaving ? '#059669' : '#047857',
+              padding: '10px 22px',
+              borderRadius: '10px',
+              backgroundColor: '#B45309',
               color: '#FFFFFF',
-              borderRadius: '12px',
-              fontSize: '13px',
-              fontWeight: 500,
               border: 'none',
-              cursor: isSaving ? 'wait' : 'pointer',
+              fontWeight: 600,
+              fontSize: '13.5px',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 3px 10px rgba(4,120,87,0.3)',
-              opacity: isSaving ? 0.8 : 1,
+              gap: '8px',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(180, 83, 9, 0.3)',
+              opacity: isSaving ? 0.7 : 1,
+              transition: 'all 0.2s ease'
             }}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : saveSuccess ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            {isSaving ? 'Syncing to Cloud...' : saveSuccess ? 'Live Changes Saved!' : 'Save All Changes'}
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saveSuccess ? 'Changes Saved!' : 'Save Navbar Settings'}
           </button>
         </div>
 
+        {/* Horizontal Nav Item Checkboxes */}
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '16px',
+          backgroundColor: '#FAFAF9',
+          borderRadius: '12px',
+          border: '1px solid #F5F5F4'
+        }}>
+          {navButtonsList.map((item) => {
+            const isChecked = navVisibility[item.key];
+            return (
+              <button
+                key={item.key}
+                onClick={() => handleToggleNavbarItem(item.key)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 18px',
+                  borderRadius: '10px',
+                  border: isChecked ? '1.5px solid #B45309' : '1px solid #D6D3D1',
+                  backgroundColor: isChecked ? '#FEF3C7' : '#FFFFFF',
+                  color: isChecked ? '#92400E' : '#57534E',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: isChecked ? '0 2px 6px rgba(180, 83, 9, 0.12)' : 'none'
+                }}
+              >
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '5px',
+                  backgroundColor: isChecked ? '#B45309' : '#E7E5E4',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  fontSize: '12px',
+                  transition: 'all 0.2s ease'
+                }}>
+                  {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                </div>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* SUB-TAB 1: HERO */}
-      {subTab === 'hero' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-          {/* Hero Banner Card */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans)', color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ImageIcon className="w-5 h-5 text-amber-700" /> Hero Section Content & Carousel Images
-            </h3>
-
+      {/* ── SECTION 2: PAGE CONTENT EDITOR (HIERARCHY BASED) ────────────────────── */}
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: '16px',
+        border: '1px solid #E7E5E4',
+        boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+        overflow: 'hidden'
+      }}>
+        {/* Top Header & Page Selector Tabs */}
+        <div style={{
+          padding: '24px 28px',
+          borderBottom: '1px solid #E7E5E4',
+          backgroundColor: '#FAFAF9',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '18px'
+        }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Main Hero Headline</label>
-              <input
-                type="text"
-                value={config.hero.mainTitle}
-                onChange={(e) => setConfig({ ...config, hero: { ...config.hero, mainTitle: e.target.value } })}
-                placeholder="e.g. Transform Body & Mind With Authentic Yoga"
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '14px', fontWeight: 500 }}
-              />
+              <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Sparkles className="w-5 h-5 text-amber-700" /> Page Content Hierarchy Manager
+              </h2>
+              <p style={{ fontSize: '13.5px', color: '#78716C', margin: '4px 0 0 0' }}>
+                Select a page tab below to view and edit all non-API sections in their exact visual page order.
+              </p>
             </div>
 
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Hero Subtitle Paragraph</label>
-              <textarea
-                rows={3}
-                value={config.hero.subtitle}
-                onChange={(e) => setConfig({ ...config, hero: { ...config.hero, subtitle: e.target.value } })}
-                placeholder="Subtitle text..."
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', lineHeight: '1.6' }}
-              />
-            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                onClick={handleReset}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '10px',
+                  border: '1px solid #E7E5E4',
+                  backgroundColor: '#FFFFFF',
+                  color: '#78716C',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                Reset Defaults
+              </button>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Primary Button Text</label>
-                <input
-                  type="text"
-                  value={config.hero.ctaPrimaryText}
-                  onChange={(e) => setConfig({ ...config, hero: { ...config.hero, ctaPrimaryText: e.target.value } })}
-                  placeholder="e.g. Book Complimentary Trial"
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Secondary Button Text</label>
-                <input
-                  type="text"
-                  value={config.hero.ctaSecondaryText}
-                  onChange={(e) => setConfig({ ...config, hero: { ...config.hero, ctaSecondaryText: e.target.value } })}
-                  placeholder="e.g. Explore Memberships"
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Hero Background Image URLs (One URL per line)</label>
-              <textarea
-                rows={3}
-                value={config.hero.images.join('\n')}
-                onChange={(e) => setConfig({ ...config, hero: { ...config.hero, images: e.target.value.split('\n').filter(Boolean) } })}
-                placeholder="https://images.unsplash.com/..."
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '12px', fontFamily: 'monospace', lineHeight: '1.6' }}
-              />
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                style={{
+                  padding: '10px 22px',
+                  borderRadius: '10px',
+                  backgroundColor: '#B45309',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: '13.5px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(180, 83, 9, 0.3)',
+                  opacity: isSaving ? 0.7 : 1
+                }}
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saveSuccess ? 'Page Saved!' : 'Save Page Changes'}
+              </button>
             </div>
           </div>
+
+          {/* Horizontal Page Tabs */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
+            {pageTabsList.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedPage(tab.id)}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  fontSize: '13.5px',
+                  cursor: 'pointer',
+                  border: selectedPage === tab.id ? 'none' : '1px solid #E7E5E4',
+                  backgroundColor: selectedPage === tab.id ? '#B45309' : '#FFFFFF',
+                  color: selectedPage === tab.id ? '#FFFFFF' : '#44403C',
+                  boxShadow: selectedPage === tab.id ? '0 2px 8px rgba(180,83,9,0.25)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
 
-      {/* SUB-TAB: HOMEPAGE UPCOMING EVENTS FILTER */}
-      {subTab === 'events' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans), "Neue Montreal", sans-serif', color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Ticket className="w-5 h-5 text-amber-700" /> Homepage "Upcoming Events" Visibility Manager
-                </h3>
-                <p style={{ fontSize: '13px', color: '#78716C', margin: '4px 0 0 0' }}>
-                  Select (tick ✓) which events from the API should be displayed on the Homepage slider. Unticked events will be hidden.
-                </p>
-              </div>
+        {/* Main Editor Body */}
+        <div style={{ padding: '28px' }}>
 
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const allIds = allEvents.map((e) => String(e.id));
-                    setConfig({
-                      ...config,
-                      upcomingEventsConfig: { enabledEventIds: allIds },
-                    });
-                  }}
-                  style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 400, border: '1px solid #D6D3D1', backgroundColor: '#F5F5F4', color: '#292524', cursor: 'pointer' }}
-                >
-                  ✓ Select All ({allEvents.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfig({
-                      ...config,
-                      upcomingEventsConfig: { enabledEventIds: ['__none__'] },
-                    });
-                  }}
-                  style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 400, border: '1px solid #FECDD3', backgroundColor: '#FEF2F2', color: '#991B1B', cursor: 'pointer' }}
-                >
-                  Deselect All
-                </button>
-              </div>
-            </div>
+          {/* ════════════════════ PAGE: HOME ════════════════════ */}
+          {selectedPage === 'home' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
-            {isLoadingEvents ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#78716C' }}>
-                <Loader2 className="w-6 h-6 animate-spin" style={{ margin: '0 auto 8px auto', display: 'block' }} />
-                Fetching events from API...
-              </div>
-            ) : allEvents.length === 0 ? (
-              <div style={{ padding: '30px', textAlign: 'center', color: '#78716C', backgroundColor: '#FAF7F2', borderRadius: '12px' }}>
-                No events found in API.
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-                {allEvents.map((evt) => {
-                  const eventId = String(evt.id);
-                  const enabledList = config.upcomingEventsConfig?.enabledEventIds || [];
-                  // Default: if enabledList is empty, all events are ticked by default
-                  const isChecked = enabledList.length === 0 ? true : enabledList.includes(eventId);
+              {/* Section 1: Hero Section */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', borderBottom: '1px solid #F5F5F4', paddingBottom: '12px' }}>
+                  <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                    Section 1
+                  </span>
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: 0 }}>
+                    Hero Banner Section
+                  </h3>
+                </div>
 
-                  return (
-                    <div
-                      key={eventId}
-                      onClick={() => {
-                        const effective = (enabledList.length === 0)
-                          ? allEvents.map((e) => String(e.id))
-                          : [...enabledList];
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '18px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>
+                      Main Title Text
+                    </label>
+                    <input
+                      type="text"
+                      value={config.hero.mainTitle}
+                      onChange={(e) => setConfig({ ...config, hero: { ...config.hero, mainTitle: e.target.value } })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
 
-                        let next: string[];
-                        if (effective.includes(eventId)) {
-                          next = effective.filter((id) => id !== eventId);
-                        } else {
-                          next = [...effective, eventId];
-                        }
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>
+                      Subtitle Description
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={config.hero.subtitle}
+                      onChange={(e) => setConfig({ ...config, hero: { ...config.hero, subtitle: e.target.value } })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
 
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>
+                      Primary Button Text
+                    </label>
+                    <input
+                      type="text"
+                      value={config.hero.ctaPrimaryText}
+                      onChange={(e) => setConfig({ ...config, hero: { ...config.hero, ctaPrimaryText: e.target.value } })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>
+                      Hero Carousel Images (URLs separated by comma)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={config.hero.images.join(', ')}
+                      onChange={(e) =>
                         setConfig({
                           ...config,
-                          upcomingEventsConfig: { enabledEventIds: next },
-                        });
-                      }}
-                      style={{
-                        border: isChecked ? '2px solid #059669' : '1px solid #E7E5E4',
-                        backgroundColor: isChecked ? '#F0FDF4' : '#FAFAFA',
-                        borderRadius: '16px',
-                        padding: '16px',
-                        display: 'flex',
-                        gap: '14px',
-                        alignItems: 'flex-start',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        boxShadow: isChecked ? '0 4px 12px rgba(5,150,105,0.06)' : 'none',
-                      }}
-                    >
-                      <div style={{ paddingTop: '2px' }}>
+                          hero: {
+                            ...config.hero,
+                            images: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                          },
+                        })
+                      }
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '13px', fontFamily: 'monospace' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Why Choose Us Section */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
+                  <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                    Section 2
+                  </span>
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: 0 }}>
+                    Why Choose Us Section
+                  </h3>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '18px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Subtitle</label>
+                    <input
+                      type="text"
+                      value={config.whyChooseUs.subtitle}
+                      onChange={(e) => setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, subtitle: e.target.value } })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title</label>
+                    <input
+                      type="text"
+                      value={config.whyChooseUs.title}
+                      onChange={(e) => setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, title: e.target.value } })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '18px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Description</label>
+                  <textarea
+                    rows={2}
+                    value={config.whyChooseUs.description}
+                    onChange={(e) => setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, description: e.target.value } })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+
+                {/* 4 Feature Cards */}
+                <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#1C1917', margin: '0 0 12px 0' }}>Feature Cards (4 Items)</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+                  {config.whyChooseUs.features.map((feat, idx) => (
+                    <div key={feat.id || idx} style={{ border: '1px solid #F5F5F4', borderRadius: '10px', padding: '14px', backgroundColor: '#FAFAF9' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#B45309', marginBottom: '8px' }}>Card #{idx + 1}</div>
+                      <input
+                        type="text"
+                        placeholder="Feature Title"
+                        value={feat.title}
+                        onChange={(e) => {
+                          const next = [...config.whyChooseUs.features];
+                          next[idx] = { ...next[idx], title: e.target.value };
+                          setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, features: next } });
+                        }}
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #E7E5E4', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}
+                      />
+                      <textarea
+                        rows={2}
+                        placeholder="Feature Description"
+                        value={feat.description}
+                        onChange={(e) => {
+                          const next = [...config.whyChooseUs.features];
+                          next[idx] = { ...next[idx], description: e.target.value };
+                          setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, features: next } });
+                        }}
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #E7E5E4', fontSize: '12.5px' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 3: The Gift of Yoga Section */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
+                  <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                    Section 3
+                  </span>
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: 0 }}>
+                    The Gift of Yoga Section
+                  </h3>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Prefix</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.giftTitle || 'The'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore Our',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: e.target.value,
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Italic Part</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.giftTitleItalic || 'Gift'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore Our',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: e.target.value,
+                          giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Suffix</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.giftSuffix || 'of Yoga'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore Our',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: e.target.value,
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Subtitle Description</label>
+                  <textarea
+                    rows={2}
+                    value={config.classesPageConfig?.giftSubtitle || "Yoga is more than a physical practice, it's a path toward wellness, balance, and inner peace"}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      classesPageConfig: {
+                        ...config.classesPageConfig,
+                        topTitle: config.classesPageConfig?.topTitle || 'Explore Our',
+                        topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Classes',
+                        topSuffix: config.classesPageConfig?.topSuffix || '',
+                        topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                        idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                        idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                        idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                        idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                        giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                        giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                        giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                        giftSubtitle: e.target.value,
+                        giftCards: config.classesPageConfig?.giftCards || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, color: '#1C1917', marginBottom: '12px' }}>4 Gift Benefit Cards</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {(config.classesPageConfig?.giftCards && config.classesPageConfig.giftCards.length === 4
+                    ? config.classesPageConfig.giftCards
+                    : [
+                        { title: 'Physical Strength & Flexibility', description: 'Build endurance, improve posture, and move with more ease and confidence.' },
+                        { title: 'Mental Clarity', description: 'Reduce stress, sharpen focus, and calm the mind through mindful movement and breathwork.' },
+                        { title: 'Emotional Balance', description: 'Release tension, manage emotions, and create harmony between body and spirit.' },
+                        { title: 'Community Connection', description: 'Join a welcoming space where like-minded individuals grow and thrive together.' }
+                      ]
+                  ).map((card, idx) => (
+                    <div key={idx} style={{ border: '1px solid #E7E5E4', borderRadius: '10px', padding: '14px', backgroundColor: '#FAFAF9' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#B45309', display: 'block', marginBottom: '6px' }}>Benefit Card #{idx + 1}</span>
+                      <div style={{ marginBottom: '8px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#57534E', marginBottom: '4px' }}>Card Title</label>
                         <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => {}}
-                          style={{ width: '20px', height: '20px', accentColor: '#059669', cursor: 'pointer' }}
+                          type="text"
+                          value={card.title}
+                          onChange={(e) => {
+                            const newCards = [...(config.classesPageConfig?.giftCards || [
+                              { title: 'Physical Strength & Flexibility', description: 'Build endurance, improve posture, and move with more ease and confidence.' },
+                              { title: 'Mental Clarity', description: 'Reduce stress, sharpen focus, and calm the mind through mindful movement and breathwork.' },
+                              { title: 'Emotional Balance', description: 'Release tension, manage emotions, and create harmony between body and spirit.' },
+                              { title: 'Community Connection', description: 'Join a welcoming space where like-minded individuals grow and thrive together.' }
+                            ])];
+                            newCards[idx] = { ...newCards[idx], title: e.target.value };
+                            setConfig({
+                              ...config,
+                              classesPageConfig: {
+                                ...config.classesPageConfig,
+                                topTitle: config.classesPageConfig?.topTitle || 'Explore Our',
+                                topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Classes',
+                                topSuffix: config.classesPageConfig?.topSuffix || '',
+                                topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                                idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                                idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                                idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                                idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                                giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                                giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                                giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                                giftSubtitle: config.classesPageConfig?.giftSubtitle || "Yoga is more than a physical practice, it's a path toward wellness, balance, and inner peace",
+                                giftCards: newCards
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #D6D3D1', fontSize: '13px' }}
                         />
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 400, padding: '3px 8px', borderRadius: '6px', backgroundColor: isChecked ? '#D1FAE5' : '#E7E5E4', color: isChecked ? '#065F46' : '#57534E' }}>
-                            {isChecked ? '✓ Show on Homepage' : 'Hidden from Homepage'}
-                          </span>
-                          {evt.price && <span style={{ fontSize: '13px', fontWeight: 400, color: '#B45309' }}>{evt.price}</span>}
-                        </div>
-
-                        <h4 style={{ fontSize: '14px', fontWeight: 400, fontFamily: 'var(--font-sans), "Neue Montreal", sans-serif', color: '#1C1917', margin: 0, lineHeight: 1.3 }}>
-                          {evt.title || evt.name}
-                        </h4>
-
-                        {evt.date && (
-                          <p style={{ fontSize: '12px', color: '#78716C', margin: 0, fontWeight: 400 }}>
-                            📅 {evt.date}
-                          </p>
-                        )}
-
-                        {evt.description && (
-                          <p style={{ fontSize: '12px', color: '#57534E', margin: '2px 0 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
-                            {evt.description}
-                          </p>
-                        )}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#57534E', marginBottom: '4px' }}>Card Description</label>
+                        <textarea
+                          rows={2}
+                          value={card.description}
+                          onChange={(e) => {
+                            const newCards = [...(config.classesPageConfig?.giftCards || [
+                              { title: 'Physical Strength & Flexibility', description: 'Build endurance, improve posture, and move with more ease and confidence.' },
+                              { title: 'Mental Clarity', description: 'Reduce stress, sharpen focus, and calm the mind through mindful movement and breathwork.' },
+                              { title: 'Emotional Balance', description: 'Release tension, manage emotions, and create harmony between body and spirit.' },
+                              { title: 'Community Connection', description: 'Join a welcoming space where like-minded individuals grow and thrive together.' }
+                            ])];
+                            newCards[idx] = { ...newCards[idx], description: e.target.value };
+                            setConfig({
+                              ...config,
+                              classesPageConfig: {
+                                ...config.classesPageConfig,
+                                topTitle: config.classesPageConfig?.topTitle || 'Explore Our',
+                                topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Classes',
+                                topSuffix: config.classesPageConfig?.topSuffix || '',
+                                topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                                idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                                idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                                idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                                idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                                giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                                giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                                giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                                giftSubtitle: config.classesPageConfig?.giftSubtitle || "Yoga is more than a physical practice, it's a path toward wellness, balance, and inner peace",
+                                giftCards: newCards
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #D6D3D1', fontSize: '13px' }}
+                        />
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB: WHY CHOOSE US */}
-      {subTab === 'whyus' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans)', color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sparkles className="w-5 h-5 text-amber-700" /> Why Choose Us Section
-            </h3>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Sub-Tagline</label>
-                <input
-                  type="text"
-                  value={config.whyChooseUs?.subtitle || '— VALUE —'}
-                  onChange={(e) => setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, subtitle: e.target.value } })}
-                  placeholder="e.g. — VALUE —"
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Section Main Heading</label>
-                <input
-                  type="text"
-                  value={config.whyChooseUs?.title || 'Why Choose Pragya Yog School'}
-                  onChange={(e) => setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, title: e.target.value } })}
-                  placeholder="Heading..."
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Section Intro Description</label>
-              <textarea
-                rows={2}
-                value={config.whyChooseUs?.description || ''}
-                onChange={(e) => setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, description: e.target.value } })}
-                placeholder="Description..."
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-          </div>
-
-          {/* Feature Cards Editor */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <h4 style={{ fontSize: '15px', fontWeight: 500, color: '#1C1917', margin: 0 }}>Feature Cards (4 Key Benefits)</h4>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              {(config.whyChooseUs?.features || []).map((feat, idx) => (
-                <div key={feat.id || idx} style={{ border: '1px solid #E7E5E4', padding: '16px', borderRadius: '14px', backgroundColor: '#FAF7F2', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#B45309' }}>Card #{idx + 1}</span>
-                    <select
-                      value={feat.iconName || 'Dumbbell'}
-                      onChange={(e) => {
-                        const nextFeatures = [...config.whyChooseUs.features];
-                        nextFeatures[idx] = { ...feat, iconName: e.target.value };
-                        setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, features: nextFeatures } });
-                      }}
-                      style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #D6D3D1' }}
-                    >
-                      <option value="Dumbbell">Icon: Dumbbell</option>
-                      <option value="Command">Icon: Command</option>
-                      <option value="Layers">Icon: Layers</option>
-                      <option value="Heart">Icon: Heart</option>
-                      <option value="Sparkles">Icon: Sparkles</option>
-                      <option value="Star">Icon: Star</option>
-                      <option value="Zap">Icon: Zap</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#666', marginBottom: '4px' }}>Title</label>
-                    <input
-                      type="text"
-                      value={feat.title}
-                      onChange={(e) => {
-                        const nextFeatures = [...config.whyChooseUs.features];
-                        nextFeatures[idx] = { ...feat, title: e.target.value };
-                        setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, features: nextFeatures } });
-                      }}
-                      style={{ width: '100%', border: '1px solid #D6D3D1', borderRadius: '8px', padding: '8px 10px', fontSize: '13px' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#666', marginBottom: '4px' }}>Description</label>
-                    <textarea
-                      rows={2}
-                      value={feat.description}
-                      onChange={(e) => {
-                        const nextFeatures = [...config.whyChooseUs.features];
-                        nextFeatures[idx] = { ...feat, description: e.target.value };
-                        setConfig({ ...config, whyChooseUs: { ...config.whyChooseUs, features: nextFeatures } });
-                      }}
-                      style={{ width: '100%', border: '1px solid #D6D3D1', borderRadius: '8px', padding: '8px 10px', fontSize: '12px' }}
-                    />
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB: WELLNESS JOURNEY */}
-      {subTab === 'journey' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans)', color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <BookOpen className="w-5 h-5 text-amber-700" /> Wellness 4-Stage Pathway Header
-            </h3>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Badge Pill Text</label>
-                <input
-                  type="text"
-                  value={config.wellnessJourney?.badge || 'TRANSFORMATION PATHWAY'}
-                  onChange={(e) => setConfig({ ...config, wellnessJourney: { ...config.wellnessJourney, badge: e.target.value } })}
-                  placeholder="e.g. TRANSFORMATION PATHWAY"
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-                />
               </div>
 
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Main Section Title</label>
-                <input
-                  type="text"
-                  value={config.wellnessJourney?.title || 'Your Path to Inner Peace'}
-                  onChange={(e) => setConfig({ ...config, wellnessJourney: { ...config.wellnessJourney, title: e.target.value } })}
-                  placeholder="Title..."
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Section Subtitle</label>
-              <textarea
-                rows={2}
-                value={config.wellnessJourney?.subtitle || ''}
-                onChange={(e) => setConfig({ ...config, wellnessJourney: { ...config.wellnessJourney, subtitle: e.target.value } })}
-                placeholder="Subtitle..."
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-          </div>
-
-          {/* 4 Steps Editor */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <h4 style={{ fontSize: '15px', fontWeight: 500, color: '#1C1917', margin: 0 }}>4 Journey Steps Details</h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              {(config.wellnessJourney?.steps || []).map((step, idx) => (
-                <div key={step.num || idx} style={{ border: '1px solid #E7E5E4', padding: '18px', borderRadius: '14px', backgroundColor: '#FAF7F2', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ backgroundColor: '#B45309', color: '#FFFFFF', padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600 }}>Step {step.num || `0${idx + 1}`}</span>
-                    <input
-                      type="text"
-                      value={step.title}
-                      onChange={(e) => {
-                        const nextSteps = [...config.wellnessJourney.steps];
-                        nextSteps[idx] = { ...step, title: e.target.value };
-                        setConfig({ ...config, wellnessJourney: { ...config.wellnessJourney, steps: nextSteps } });
-                      }}
-                      placeholder="Step Title"
-                      style={{ flex: 1, border: '1px solid #D6D3D1', borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontWeight: 500 }}
-                    />
+              {/* Section 4: Featured Programs & Events (API Event Selection with Ticks) */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                      Section 4
+                    </span>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Ticket className="w-4 h-4 text-amber-700" /> Featured Events Slider (API Events Selection)
+                    </h3>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', color: '#666', marginBottom: '4px' }}>Sub-headline</label>
-                      <input
-                        type="text"
-                        value={step.subtitle}
-                        onChange={(e) => {
-                          const nextSteps = [...config.wellnessJourney.steps];
-                          nextSteps[idx] = { ...step, subtitle: e.target.value };
-                          setConfig({ ...config, wellnessJourney: { ...config.wellnessJourney, steps: nextSteps } });
-                        }}
-                        style={{ width: '100%', border: '1px solid #D6D3D1', borderRadius: '8px', padding: '8px 10px', fontSize: '12px' }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', color: '#666', marginBottom: '4px' }}>Bullet Points (One per line)</label>
-                      <textarea
-                        rows={2}
-                        value={(step.bullets || []).join('\n')}
-                        onChange={(e) => {
-                          const nextSteps = [...config.wellnessJourney.steps];
-                          nextSteps[idx] = { ...step, bullets: e.target.value.split('\n').filter(Boolean) };
-                          setConfig({ ...config, wellnessJourney: { ...config.wellnessJourney, steps: nextSteps } });
-                        }}
-                        style={{ width: '100%', border: '1px solid #D6D3D1', borderRadius: '8px', padding: '8px 10px', fontSize: '12px' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#666', marginBottom: '4px' }}>Description Paragraph</label>
-                    <textarea
-                      rows={2}
-                      value={step.description}
-                      onChange={(e) => {
-                        const nextSteps = [...config.wellnessJourney.steps];
-                        nextSteps[idx] = { ...step, description: e.target.value };
-                        setConfig({ ...config, wellnessJourney: { ...config.wellnessJourney, steps: nextSteps } });
-                      }}
-                      style={{ width: '100%', border: '1px solid #D6D3D1', borderRadius: '8px', padding: '8px 10px', fontSize: '12px' }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB: MEMBERSHIP PERKS */}
-      {subTab === 'perks' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans)', color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Plus className="w-5 h-5 text-amber-700" /> Membership Plan Perks & Badges
-            </h3>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Standard Plan Featured Badge</label>
-              <input
-                type="text"
-                value={config.membershipPerks?.standardBadge || 'MOST POPULAR'}
-                onChange={(e) => setConfig({ ...config, membershipPerks: { ...config.membershipPerks, standardBadge: e.target.value } })}
-                placeholder="e.g. MOST POPULAR"
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Basic Plan Perks (One bullet per line)</label>
-                <textarea
-                  rows={4}
-                  value={(config.membershipPerks?.basicPerks || []).join('\n')}
-                  onChange={(e) => setConfig({ ...config, membershipPerks: { ...config.membershipPerks, basicPerks: e.target.value.split('\n').filter(Boolean) } })}
-                  placeholder="Perk 1&#10;Perk 2..."
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '12px', lineHeight: '1.6' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Standard Plan Perks (One bullet per line)</label>
-                <textarea
-                  rows={4}
-                  value={(config.membershipPerks?.standardPerks || []).join('\n')}
-                  onChange={(e) => setConfig({ ...config, membershipPerks: { ...config.membershipPerks, standardPerks: e.target.value.split('\n').filter(Boolean) } })}
-                  placeholder="Perk 1&#10;Perk 2..."
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '12px', lineHeight: '1.6' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Premium Plan Perks (One bullet per line)</label>
-                <textarea
-                  rows={4}
-                  value={(config.membershipPerks?.premiumPerks || []).join('\n')}
-                  onChange={(e) => setConfig({ ...config, membershipPerks: { ...config.membershipPerks, premiumPerks: e.target.value.split('\n').filter(Boolean) } })}
-                  placeholder="Perk 1&#10;Perk 2..."
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '12px', lineHeight: '1.6' }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 2: STUDIO LOCATIONS */}
-      {subTab === 'locations' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 style={{ fontSize: '17px', fontWeight: 400, fontFamily: 'var(--font-sans)', color: '#1C1917', margin: 0 }}>Manage Studio Branches & Pavilions</h3>
-            <button
-              onClick={handleAddLocation}
-              style={{ padding: '10px 20px', backgroundColor: '#B45309', color: '#FFFFFF', borderRadius: '12px', fontSize: '13px', fontWeight: 500, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-              <Plus className="w-4 h-4" /> Add Studio Branch
-            </button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
-            {config.locations.map((loc, idx) => (
-              <div key={loc.id || idx} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 500, color: '#78350F', backgroundColor: '#FEF3C7', padding: '3px 10px', borderRadius: '999px', border: '1px solid #FDE68A' }}>
-                    Branch #{idx + 1}
+                  <span style={{ fontSize: '12px', color: '#B45309', fontWeight: 600, backgroundColor: '#FEF3C7', padding: '4px 10px', borderRadius: '6px' }}>
+                    {allEvents.filter((ev) => isEventEnabled(String(ev.id))).length} / {allEvents.length} Events Selected
                   </span>
-                  <button
-                    onClick={() => handleDeleteLocation(idx)}
-                    style={{ padding: '6px 10px', backgroundColor: '#FEF2F2', color: '#991B1B', borderRadius: '8px', border: '1px solid #FECDD3', cursor: 'pointer', fontSize: '12px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Remove
-                  </button>
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '4px', fontSize: '12px' }}>Studio Name</label>
-                  <input
-                    type="text"
-                    value={loc.name}
-                    onChange={(e) => handleUpdateLocation(idx, { name: e.target.value })}
-                    style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '8px 12px', fontSize: '13px', fontWeight: 500 }}
-                  />
-                </div>
+                <p style={{ fontSize: '13.5px', color: '#78716C', margin: '0 0 16px 0' }}>
+                  Select (tick) which live events from the database API should be displayed in the Home Page slider.
+                </p>
 
-                <div>
-                  <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '4px', fontSize: '12px' }}>Address & City</label>
-                  <input
-                    type="text"
-                    value={loc.address}
-                    onChange={(e) => handleUpdateLocation(idx, { address: e.target.value })}
-                    placeholder="Address"
-                    style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', marginBottom: '8px' }}
-                  />
-                  <input
-                    type="text"
-                    value={loc.city}
-                    onChange={(e) => handleUpdateLocation(idx, { city: e.target.value })}
-                    placeholder="City / Area label"
-                    style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '8px 12px', fontSize: '12px' }}
-                  />
-                </div>
+                {isLoadingEvents ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '20px', color: '#78716C' }}>
+                    <Loader2 className="w-5 h-5 animate-spin" /> Loading API events list...
+                  </div>
+                ) : allEvents.length === 0 ? (
+                  <div style={{ padding: '16px', backgroundColor: '#FAFAF9', borderRadius: '8px', color: '#78716C', fontSize: '13px' }}>
+                    No events returned from API. Default promotional events will be shown.
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+                    {allEvents.map((ev) => {
+                      const evIdStr = String(ev.id);
+                      const enabled = isEventEnabled(evIdStr);
+                      return (
+                        <div
+                          key={evIdStr}
+                          onClick={() => handleToggleEventOnHome(evIdStr)}
+                          style={{
+                            border: enabled ? '1.5px solid #B45309' : '1px solid #E7E5E4',
+                            backgroundColor: enabled ? '#FEF3C7' : '#FAFAF9',
+                            borderRadius: '12px',
+                            padding: '14px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            gap: '12px',
+                            alignItems: 'flex-start',
+                            transition: 'all 0.2s ease',
+                            boxShadow: enabled ? '0 2px 8px rgba(180, 83, 9, 0.1)' : 'none'
+                          }}
+                        >
+                          <div style={{
+                            width: '22px',
+                            height: '22px',
+                            borderRadius: '6px',
+                            backgroundColor: enabled ? '#B45309' : '#D6D3D1',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#FFFFFF',
+                            flexShrink: 0,
+                            marginTop: '2px'
+                          }}>
+                            {enabled && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                          </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div style={{ flexGrow: 1 }}>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: enabled ? '#78350F' : '#292524', marginBottom: '4px' }}>
+                              {ev.title || ev.name}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#78716C' }}>
+                              📅 {ev.date || 'Upcoming'} • 📍 {ev.location || 'Sanctuary'}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
+          {/* ════════════════════ PAGE: ABOUT ════════════════════ */}
+          {selectedPage === 'about' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+              {/* Section 1: Hero Banner (Pragya Yog School) */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 1
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Pragya Yog School Hero Banner
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                   <div>
-                    <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '4px', fontSize: '12px' }}>Hours</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Prefix</label>
                     <input
                       type="text"
-                      value={loc.hours}
-                      onChange={(e) => handleUpdateLocation(idx, { hours: e.target.value })}
-                      style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '8px 12px', fontSize: '12px' }}
+                      value={config.aboutPageConfig?.topTitle || 'Pragya'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        aboutPageConfig: {
+                          ...config.aboutPageConfig,
+                          topTitle: e.target.value,
+                          topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                          topSuffix: config.aboutPageConfig?.topSuffix || '',
+                          topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                          aboutTitle: config.aboutPageConfig?.aboutTitle || '',
+                          aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                          benefitTitle: config.aboutPageConfig?.benefitTitle || '',
+                          benefits: config.aboutPageConfig?.benefits || [],
+                          coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '',
+                          coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || '',
+                          coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                          pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                          pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                          pillarCards: config.aboutPageConfig?.pillarCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Italic Part</label>
+                    <input
+                      type="text"
+                      value={config.aboutPageConfig?.topTitleItalic || 'Yog School'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        aboutPageConfig: {
+                          ...config.aboutPageConfig,
+                          topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                          topTitleItalic: e.target.value,
+                          topSuffix: config.aboutPageConfig?.topSuffix || '',
+                          topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                          aboutTitle: config.aboutPageConfig?.aboutTitle || '',
+                          aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                          benefitTitle: config.aboutPageConfig?.benefitTitle || '',
+                          benefits: config.aboutPageConfig?.benefits || [],
+                          coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '',
+                          coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || '',
+                          coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                          pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                          pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                          pillarCards: config.aboutPageConfig?.pillarCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Suffix</label>
+                    <input
+                      type="text"
+                      placeholder="(Optional)"
+                      value={config.aboutPageConfig?.topSuffix || ''}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        aboutPageConfig: {
+                          ...config.aboutPageConfig,
+                          topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                          topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                          topSuffix: e.target.value,
+                          topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                          aboutTitle: config.aboutPageConfig?.aboutTitle || '',
+                          aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                          benefitTitle: config.aboutPageConfig?.benefitTitle || '',
+                          benefits: config.aboutPageConfig?.benefits || [],
+                          coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '',
+                          coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || '',
+                          coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                          pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                          pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                          pillarCards: config.aboutPageConfig?.pillarCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Subtitle Description</label>
+                  <textarea
+                    rows={2}
+                    value={config.aboutPageConfig?.topSubtitle || 'A meditative practice of stillness and deep stretches designed to release tension, restore balance, and calm the mind.'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      aboutPageConfig: {
+                        ...config.aboutPageConfig,
+                        topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                        topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                        topSuffix: config.aboutPageConfig?.topSuffix || '',
+                        topSubtitle: e.target.value,
+                        aboutTitle: config.aboutPageConfig?.aboutTitle || '',
+                        aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                        benefitTitle: config.aboutPageConfig?.benefitTitle || '',
+                        benefits: config.aboutPageConfig?.benefits || [],
+                        coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '',
+                        coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || '',
+                        coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                        pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                        pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                        pillarCards: config.aboutPageConfig?.pillarCards || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Hero Banner Image URL</label>
+                  <input
+                    type="text"
+                    value={config.aboutPageConfig?.heroImage || '/about.png'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      aboutPageConfig: {
+                        ...config.aboutPageConfig,
+                        topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                        topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                        topSuffix: config.aboutPageConfig?.topSuffix || '',
+                        topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                        heroImage: e.target.value,
+                        aboutTitle: config.aboutPageConfig?.aboutTitle || '',
+                        aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                        benefitTitle: config.aboutPageConfig?.benefitTitle || '',
+                        benefits: config.aboutPageConfig?.benefits || [],
+                        coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '',
+                        coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || '',
+                        coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                        pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                        pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                        pillarCards: config.aboutPageConfig?.pillarCards || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                </div>
+              </div>
+
+              {/* Section 2: About Pragya Yog School & Benefits */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 2
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  About Pragya Yog School & Benefit List
+                </h3>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>About Section Title</label>
+                  <input
+                    type="text"
+                    value={config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      aboutPageConfig: {
+                        ...config.aboutPageConfig,
+                        topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                        topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                        topSuffix: config.aboutPageConfig?.topSuffix || '',
+                        topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                        aboutTitle: e.target.value,
+                        aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                        benefitTitle: config.aboutPageConfig?.benefitTitle || '',
+                        benefits: config.aboutPageConfig?.benefits || [],
+                        coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '',
+                        coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || '',
+                        coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                        pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                        pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                        pillarCards: config.aboutPageConfig?.pillarCards || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>About Description Paragraph</label>
+                  <textarea
+                    rows={3}
+                    value={config.aboutPageConfig?.aboutDesc || 'Pragya Yog School is a holistic sanctuary dedicated to traditional Hatha, Ashtanga, Yin Yoga, and therapeutic sound healing. Guided by ancient lineage and modern physiological science, our sanctuary empowers students to cultivate awareness, deepen their practice, and experience true mind-body harmony.'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      aboutPageConfig: {
+                        ...config.aboutPageConfig,
+                        topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                        topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                        topSuffix: config.aboutPageConfig?.topSuffix || '',
+                        topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                        aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                        aboutDesc: e.target.value,
+                        benefitTitle: config.aboutPageConfig?.benefitTitle || '',
+                        benefits: config.aboutPageConfig?.benefits || [],
+                        coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '',
+                        coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || '',
+                        coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                        pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                        pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                        pillarCards: config.aboutPageConfig?.pillarCards || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+
+                <div style={{ borderTop: '1px solid #E7E5E4', paddingTop: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, color: '#1C1917', marginBottom: '10px' }}>Benefit Section Header</label>
+                  <input
+                    type="text"
+                    value={config.aboutPageConfig?.benefitTitle || 'Benefit'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      aboutPageConfig: {
+                        ...config.aboutPageConfig,
+                        topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                        topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                        topSuffix: config.aboutPageConfig?.topSuffix || '',
+                        topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                        aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                        aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                        benefitTitle: e.target.value,
+                        benefits: config.aboutPageConfig?.benefits || [],
+                        coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '',
+                        coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || '',
+                        coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                        pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                        pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                        pillarCards: config.aboutPageConfig?.pillarCards || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px', marginBottom: '16px' }}
+                  />
+
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '10px' }}>5 Key Benefit Bullet Points</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {(config.aboutPageConfig?.benefits && config.aboutPageConfig.benefits.length === 5
+                      ? config.aboutPageConfig.benefits
+                      : [
+                          'Enhances flexibility, strength, and joint mobility',
+                          'Improves circulation and subtle energy flow',
+                          'Promotes deep cellular relaxation and stress relief',
+                          'Increases mindfulness and bodily self-awareness',
+                          'Balances the nervous system for better sleep and calmness'
+                        ]
+                    ).map((benefitItem, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#944426', minWidth: '20px' }}>#{idx + 1}</span>
+                        <input
+                          type="text"
+                          value={benefitItem}
+                          onChange={(e) => {
+                            const newBenefits = [...(config.aboutPageConfig?.benefits || [
+                              'Enhances flexibility, strength, and joint mobility',
+                              'Improves circulation and subtle energy flow',
+                              'Promotes deep cellular relaxation and stress relief',
+                              'Increases mindfulness and bodily self-awareness',
+                              'Balances the nervous system for better sleep and calmness'
+                            ])];
+                            newBenefits[idx] = e.target.value;
+                            setConfig({
+                              ...config,
+                              aboutPageConfig: {
+                                ...config.aboutPageConfig,
+                                topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                                topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                                topSuffix: config.aboutPageConfig?.topSuffix || '',
+                                topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                                aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                                aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                                benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                                benefits: newBenefits,
+                                coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '',
+                                coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || '',
+                                coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                                pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                                pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                                pillarCards: config.aboutPageConfig?.pillarCards || []
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '13.5px' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Core Values (Guided by Wisdom & Purpose) */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 3
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Core Values Section (Guided by Wisdom & Purpose)
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Section Badge Label</label>
+                    <input
+                      type="text"
+                      value={config.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        aboutPageConfig: {
+                          ...config.aboutPageConfig,
+                          topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                          topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                          topSuffix: config.aboutPageConfig?.topSuffix || '',
+                          topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                          aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                          aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                          benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                          benefits: config.aboutPageConfig?.benefits || [],
+                          coreValuesBadge: e.target.value,
+                          coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose',
+                          coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                          pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                          pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                          pillarCards: config.aboutPageConfig?.pillarCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Section Main Heading</label>
+                    <input
+                      type="text"
+                      value={config.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        aboutPageConfig: {
+                          ...config.aboutPageConfig,
+                          topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                          topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                          topSuffix: config.aboutPageConfig?.topSuffix || '',
+                          topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                          aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                          aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                          benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                          benefits: config.aboutPageConfig?.benefits || [],
+                          coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —',
+                          coreValuesTitle: e.target.value,
+                          coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                          pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                          pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                          pillarCards: config.aboutPageConfig?.pillarCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, color: '#1C1917', marginBottom: '12px' }}>4 Core Value Cards</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {(config.aboutPageConfig?.coreValueCards && config.aboutPageConfig.coreValueCards.length === 4
+                    ? config.aboutPageConfig.coreValueCards
+                    : [
+                        { title: 'Holistic Well-being', description: 'Embracing the ancient wisdom and practices of yog to nurture holistic well-being.' },
+                        { title: 'Harmony', description: 'Bridging mind, body, and spirit for a harmonious and balanced life.' },
+                        { title: 'Self-Discovery', description: 'Encouraging self-exploration and mindfulness to awaken your true potential.' },
+                        { title: 'Continuous Growth', description: 'Fostering continuous learning and personal development through yogic practices.' }
+                      ]
+                  ).map((card, idx) => (
+                    <div key={idx} style={{ border: '1px solid #E7E5E4', borderRadius: '10px', padding: '14px', backgroundColor: '#FAFAF9' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#944426', display: 'block', marginBottom: '6px' }}>Card #{idx + 1}</span>
+                      <div style={{ marginBottom: '8px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#57534E', marginBottom: '4px' }}>Card Title</label>
+                        <input
+                          type="text"
+                          value={card.title}
+                          onChange={(e) => {
+                            const newCards = [...(config.aboutPageConfig?.coreValueCards || [
+                              { title: 'Holistic Well-being', description: 'Embracing the ancient wisdom and practices of yog to nurture holistic well-being.' },
+                              { title: 'Harmony', description: 'Bridging mind, body, and spirit for a harmonious and balanced life.' },
+                              { title: 'Self-Discovery', description: 'Encouraging self-exploration and mindfulness to awaken your true potential.' },
+                              { title: 'Continuous Growth', description: 'Fostering continuous learning and personal development through yogic practices.' }
+                            ])];
+                            newCards[idx] = { ...newCards[idx], title: e.target.value };
+                            setConfig({
+                              ...config,
+                              aboutPageConfig: {
+                                ...config.aboutPageConfig,
+                                topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                                topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                                topSuffix: config.aboutPageConfig?.topSuffix || '',
+                                topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                                aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                                aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                                benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                                benefits: config.aboutPageConfig?.benefits || [],
+                                coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —',
+                                coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose',
+                                coreValueCards: newCards,
+                                pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                                pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                                pillarCards: config.aboutPageConfig?.pillarCards || []
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #D6D3D1', fontSize: '13px' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#57534E', marginBottom: '4px' }}>Card Description</label>
+                        <textarea
+                          rows={2}
+                          value={card.description}
+                          onChange={(e) => {
+                            const newCards = [...(config.aboutPageConfig?.coreValueCards || [
+                              { title: 'Holistic Well-being', description: 'Embracing the ancient wisdom and practices of yog to nurture holistic well-being.' },
+                              { title: 'Harmony', description: 'Bridging mind, body, and spirit for a harmonious and balanced life.' },
+                              { title: 'Self-Discovery', description: 'Encouraging self-exploration and mindfulness to awaken your true potential.' },
+                              { title: 'Continuous Growth', description: 'Fostering continuous learning and personal development through yogic practices.' }
+                            ])];
+                            newCards[idx] = { ...newCards[idx], description: e.target.value };
+                            setConfig({
+                              ...config,
+                              aboutPageConfig: {
+                                ...config.aboutPageConfig,
+                                topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                                topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                                topSuffix: config.aboutPageConfig?.topSuffix || '',
+                                topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                                aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                                aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                                benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                                benefits: config.aboutPageConfig?.benefits || [],
+                                coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —',
+                                coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose',
+                                coreValueCards: newCards,
+                                pillarsBadge: config.aboutPageConfig?.pillarsBadge || '',
+                                pillarsTitle: config.aboutPageConfig?.pillarsTitle || '',
+                                pillarCards: config.aboutPageConfig?.pillarCards || []
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #D6D3D1', fontSize: '13px' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 4: Pillars of Pragya Sanctuary */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 4
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Pillars of Pragya Sanctuary Section
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Section Badge Label</label>
+                    <input
+                      type="text"
+                      value={config.aboutPageConfig?.pillarsBadge || '— OUR FOUNDATION —'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        aboutPageConfig: {
+                          ...config.aboutPageConfig,
+                          topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                          topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                          topSuffix: config.aboutPageConfig?.topSuffix || '',
+                          topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                          aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                          aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                          benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                          benefits: config.aboutPageConfig?.benefits || [],
+                          coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —',
+                          coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose',
+                          coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                          pillarsBadge: e.target.value,
+                          pillarsTitle: config.aboutPageConfig?.pillarsTitle || 'Pillars of Pragya Sanctuary',
+                          pillarCards: config.aboutPageConfig?.pillarCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Section Main Heading</label>
+                    <input
+                      type="text"
+                      value={config.aboutPageConfig?.pillarsTitle || 'Pillars of Pragya Sanctuary'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        aboutPageConfig: {
+                          ...config.aboutPageConfig,
+                          topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                          topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                          topSuffix: config.aboutPageConfig?.topSuffix || '',
+                          topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                          aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                          aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                          benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                          benefits: config.aboutPageConfig?.benefits || [],
+                          coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —',
+                          coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose',
+                          coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                          pillarsBadge: config.aboutPageConfig?.pillarsBadge || '— OUR FOUNDATION —',
+                          pillarsTitle: e.target.value,
+                          pillarCards: config.aboutPageConfig?.pillarCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, color: '#1C1917', marginBottom: '12px' }}>6 Pillar Cards</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {(config.aboutPageConfig?.pillarCards && config.aboutPageConfig.pillarCards.length === 6
+                    ? config.aboutPageConfig.pillarCards
+                    : [
+                        { tag: 'BODY & MIND ACCURACY', title: 'Biomechanical Precision', description: 'Every posture is taught with deep anatomical awareness and alignment...' },
+                        { tag: 'ANCIENT LINEAGE', title: 'Traditional Roots', description: 'We preserve the sacred integrity of traditional Hatha & Ashtanga Vinyasa...' },
+                        { tag: 'AUTONOMIC HEALING', title: 'Nervous System Regulation', description: 'Integrating targeted pranayama breathwork and restorative sound baths...' },
+                        { tag: 'COMMUNITY & GUIDANCE', title: 'Personalized Mentorship', description: 'Small class sizes ensure every practitioner receives individualized feedback...' },
+                        { tag: 'PURPOSE & PASSION', title: 'Our Mission', description: 'To guide you to embrace conscious living through the transformative power...' },
+                        { tag: 'SCIENCE MEETS SPIRITUALITY', title: 'Our Goal', description: 'We aim at being the most comprehensive and authentic yog institute...' }
+                      ]
+                  ).map((pillar, idx) => (
+                    <div key={idx} style={{ border: '1px solid #E7E5E4', borderRadius: '10px', padding: '14px', backgroundColor: '#FAFAF9' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#00381F', display: 'block', marginBottom: '6px' }}>Pillar #{idx + 1}</span>
+                      <div style={{ marginBottom: '8px' }}>
+                        <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#57534E', marginBottom: '3px' }}>Tag / Category</label>
+                        <input
+                          type="text"
+                          value={pillar.tag}
+                          onChange={(e) => {
+                            const newPillars = [...(config.aboutPageConfig?.pillarCards || [
+                              { tag: 'BODY & MIND ACCURACY', title: 'Biomechanical Precision', description: 'Every posture is taught with deep anatomical awareness and alignment...' },
+                              { tag: 'ANCIENT LINEAGE', title: 'Traditional Roots', description: 'We preserve the sacred integrity of traditional Hatha & Ashtanga Vinyasa...' },
+                              { tag: 'AUTONOMIC HEALING', title: 'Nervous System Regulation', description: 'Integrating targeted pranayama breathwork and restorative sound baths...' },
+                              { tag: 'COMMUNITY & GUIDANCE', title: 'Personalized Mentorship', description: 'Small class sizes ensure every practitioner receives individualized feedback...' },
+                              { tag: 'PURPOSE & PASSION', title: 'Our Mission', description: 'To guide you to embrace conscious living through the transformative power...' },
+                              { tag: 'SCIENCE MEETS SPIRITUALITY', title: 'Our Goal', description: 'We aim at being the most comprehensive and authentic yog institute...' }
+                            ])];
+                            newPillars[idx] = { ...newPillars[idx], tag: e.target.value };
+                            setConfig({
+                              ...config,
+                              aboutPageConfig: {
+                                ...config.aboutPageConfig,
+                                topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                                topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                                topSuffix: config.aboutPageConfig?.topSuffix || '',
+                                topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                                aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                                aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                                benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                                benefits: config.aboutPageConfig?.benefits || [],
+                                coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —',
+                                coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose',
+                                coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                                pillarsBadge: config.aboutPageConfig?.pillarsBadge || '— OUR FOUNDATION —',
+                                pillarsTitle: config.aboutPageConfig?.pillarsTitle || 'Pillars of Pragya Sanctuary',
+                                pillarCards: newPillars
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #D6D3D1', fontSize: '12px' }}
+                        />
+                      </div>
+
+                      <div style={{ marginBottom: '8px' }}>
+                        <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#57534E', marginBottom: '3px' }}>Pillar Title</label>
+                        <input
+                          type="text"
+                          value={pillar.title}
+                          onChange={(e) => {
+                            const newPillars = [...(config.aboutPageConfig?.pillarCards || [
+                              { tag: 'BODY & MIND ACCURACY', title: 'Biomechanical Precision', description: 'Every posture is taught with deep anatomical awareness and alignment...' },
+                              { tag: 'ANCIENT LINEAGE', title: 'Traditional Roots', description: 'We preserve the sacred integrity of traditional Hatha & Ashtanga Vinyasa...' },
+                              { tag: 'AUTONOMIC HEALING', title: 'Nervous System Regulation', description: 'Integrating targeted pranayama breathwork and restorative sound baths...' },
+                              { tag: 'COMMUNITY & GUIDANCE', title: 'Personalized Mentorship', description: 'Small class sizes ensure every practitioner receives individualized feedback...' },
+                              { tag: 'PURPOSE & PASSION', title: 'Our Mission', description: 'To guide you to embrace conscious living through the transformative power...' },
+                              { tag: 'SCIENCE MEETS SPIRITUALITY', title: 'Our Goal', description: 'We aim at being the most comprehensive and authentic yog institute...' }
+                            ])];
+                            newPillars[idx] = { ...newPillars[idx], title: e.target.value };
+                            setConfig({
+                              ...config,
+                              aboutPageConfig: {
+                                ...config.aboutPageConfig,
+                                topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                                topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                                topSuffix: config.aboutPageConfig?.topSuffix || '',
+                                topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                                aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                                aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                                benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                                benefits: config.aboutPageConfig?.benefits || [],
+                                coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —',
+                                coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose',
+                                coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                                pillarsBadge: config.aboutPageConfig?.pillarsBadge || '— OUR FOUNDATION —',
+                                pillarsTitle: config.aboutPageConfig?.pillarsTitle || 'Pillars of Pragya Sanctuary',
+                                pillarCards: newPillars
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #D6D3D1', fontSize: '12px' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#57534E', marginBottom: '3px' }}>Description</label>
+                        <textarea
+                          rows={2}
+                          value={pillar.description}
+                          onChange={(e) => {
+                            const newPillars = [...(config.aboutPageConfig?.pillarCards || [
+                              { tag: 'BODY & MIND ACCURACY', title: 'Biomechanical Precision', description: 'Every posture is taught with deep anatomical awareness and alignment...' },
+                              { tag: 'ANCIENT LINEAGE', title: 'Traditional Roots', description: 'We preserve the sacred integrity of traditional Hatha & Ashtanga Vinyasa...' },
+                              { tag: 'AUTONOMIC HEALING', title: 'Nervous System Regulation', description: 'Integrating targeted pranayama breathwork and restorative sound baths...' },
+                              { tag: 'COMMUNITY & GUIDANCE', title: 'Personalized Mentorship', description: 'Small class sizes ensure every practitioner receives individualized feedback...' },
+                              { tag: 'PURPOSE & PASSION', title: 'Our Mission', description: 'To guide you to embrace conscious living through the transformative power...' },
+                              { tag: 'SCIENCE MEETS SPIRITUALITY', title: 'Our Goal', description: 'We aim at being the most comprehensive and authentic yog institute...' }
+                            ])];
+                            newPillars[idx] = { ...newPillars[idx], description: e.target.value };
+                            setConfig({
+                              ...config,
+                              aboutPageConfig: {
+                                ...config.aboutPageConfig,
+                                topTitle: config.aboutPageConfig?.topTitle || 'Pragya',
+                                topTitleItalic: config.aboutPageConfig?.topTitleItalic || 'Yog School',
+                                topSuffix: config.aboutPageConfig?.topSuffix || '',
+                                topSubtitle: config.aboutPageConfig?.topSubtitle || '',
+                                aboutTitle: config.aboutPageConfig?.aboutTitle || 'About Pragya Yog School',
+                                aboutDesc: config.aboutPageConfig?.aboutDesc || '',
+                                benefitTitle: config.aboutPageConfig?.benefitTitle || 'Benefit',
+                                benefits: config.aboutPageConfig?.benefits || [],
+                                coreValuesBadge: config.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —',
+                                coreValuesTitle: config.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose',
+                                coreValueCards: config.aboutPageConfig?.coreValueCards || [],
+                                pillarsBadge: config.aboutPageConfig?.pillarsBadge || '— OUR FOUNDATION —',
+                                pillarsTitle: config.aboutPageConfig?.pillarsTitle || 'Pillars of Pragya Sanctuary',
+                                pillarCards: newPillars
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #D6D3D1', fontSize: '12px' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 5: API Notice for Master Instructors & Sanctuary Locations */}
+              <div style={{ border: '1.5px dashed #D6D3D1', borderRadius: '14px', padding: '24px', backgroundColor: '#FAFAF9', textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '20px', backgroundColor: '#E0F2FE', color: '#0369A1', fontSize: '12px', fontWeight: 700, marginBottom: '10px' }}>
+                  ⚡ API-Driven Content
+                </div>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 6px 0' }}>
+                  Master Yogic Instructors & Sanctuary Locations
+                </h4>
+                <p style={{ fontSize: '13.5px', color: '#78716C', margin: '0 auto', maxWidth: '560px' }}>
+                  The teacher profiles and sanctuary location gallery cards are dynamically managed via the database API. To create or manage teacher profiles, use the <strong>Teachers Manager</strong> in the admin sidebar.
+                </p>
+              </div>
+
+            </div>
+          )}
+
+          {/* ════════════════════ PAGE: SHOP ════════════════════ */}
+          {selectedPage === 'shop' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 1
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Merchandise & Yogic Wear Hero Banner
+                </h3>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Top Badge Label</label>
+                  <input
+                    type="text"
+                    value={config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      shopPageConfig: {
+                        ...config.shopPageConfig,
+                        badge: e.target.value,
+                        topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                        topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                        topSuffix: config.shopPageConfig?.topSuffix || '',
+                        topSubtitle: config.shopPageConfig?.topSubtitle || ''
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Prefix</label>
+                    <input
+                      type="text"
+                      value={config.shopPageConfig?.topTitle || 'Merchandise &'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        shopPageConfig: {
+                          ...config.shopPageConfig,
+                          badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                          topTitle: e.target.value,
+                          topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                          topSuffix: config.shopPageConfig?.topSuffix || '',
+                          topSubtitle: config.shopPageConfig?.topSubtitle || ''
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Italic Part</label>
+                    <input
+                      type="text"
+                      value={config.shopPageConfig?.topTitleItalic || 'Yogic Wear'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        shopPageConfig: {
+                          ...config.shopPageConfig,
+                          badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                          topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                          topTitleItalic: e.target.value,
+                          topSuffix: config.shopPageConfig?.topSuffix || '',
+                          topSubtitle: config.shopPageConfig?.topSubtitle || ''
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Suffix</label>
+                    <input
+                      type="text"
+                      placeholder="(Optional)"
+                      value={config.shopPageConfig?.topSuffix || ''}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        shopPageConfig: {
+                          ...config.shopPageConfig,
+                          badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                          topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                          topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                          topSuffix: e.target.value,
+                          topSubtitle: config.shopPageConfig?.topSubtitle || ''
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Subtitle Description</label>
+                  <textarea
+                    rows={2}
+                    value={config.shopPageConfig?.topSubtitle || 'Explore our sanctuary products, organic cotton apparel, non-slip jute mats, and authentic handcrafted essentials for your daily practice.'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      shopPageConfig: {
+                        ...config.shopPageConfig,
+                        badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                        topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                        topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                        topSuffix: config.shopPageConfig?.topSuffix || '',
+                        topSubtitle: e.target.value
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+              </div>
+
+              {/* API Notice for Products */}
+              <div style={{ border: '1.5px dashed #D6D3D1', borderRadius: '14px', padding: '24px', backgroundColor: '#FAFAF9', textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '20px', backgroundColor: '#E0F2FE', color: '#0369A1', fontSize: '12px', fontWeight: 700, marginBottom: '10px' }}>
+                  ⚡ API-Driven Content
+                </div>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 6px 0' }}>
+                  Merchandise Catalog Items Grid
+                </h4>
+                <p style={{ fontSize: '13.5px', color: '#78716C', margin: '0 auto', maxWidth: '540px' }}>
+                  All product items, pricing, inventory, and brand categories are fetched live from the backend API database. To add, edit, or remove products, use the <strong>Merchandise Manager</strong> in the admin sidebar.
+                </p>
+              </div>
+
+            </div>
+          )}
+
+          {/* ════════════════════ PAGE: EVENTS ════════════════════ */}
+          {selectedPage === 'events' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 1
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Events & Workshops Hero Banner
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Prefix</label>
+                    <input
+                      type="text"
+                      value={config.eventsPageConfig?.topTitle || 'Events &'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        eventsPageConfig: {
+                          ...config.eventsPageConfig,
+                          topTitle: e.target.value,
+                          topTitleItalic: config.eventsPageConfig?.topTitleItalic || 'Workshops',
+                          topSuffix: config.eventsPageConfig?.topSuffix || '',
+                          topSubtitle: config.eventsPageConfig?.topSubtitle || ''
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Italic Part</label>
+                    <input
+                      type="text"
+                      value={config.eventsPageConfig?.topTitleItalic || 'Workshops'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        eventsPageConfig: {
+                          ...config.eventsPageConfig,
+                          topTitle: config.eventsPageConfig?.topTitle || 'Events &',
+                          topTitleItalic: e.target.value,
+                          topSuffix: config.eventsPageConfig?.topSuffix || '',
+                          topSubtitle: config.eventsPageConfig?.topSubtitle || ''
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Suffix</label>
+                    <input
+                      type="text"
+                      placeholder="(Optional)"
+                      value={config.eventsPageConfig?.topSuffix || ''}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        eventsPageConfig: {
+                          ...config.eventsPageConfig,
+                          topTitle: config.eventsPageConfig?.topTitle || 'Events &',
+                          topTitleItalic: config.eventsPageConfig?.topTitleItalic || 'Workshops',
+                          topSuffix: e.target.value,
+                          topSubtitle: config.eventsPageConfig?.topSubtitle || ''
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Subtitle Description</label>
+                  <textarea
+                    rows={2}
+                    value={config.eventsPageConfig?.topSubtitle || 'Explore our sanctuary events, oceanfront resets, sound bath immersions, and international retreats. Filter by month to find your next journey.'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      eventsPageConfig: {
+                        ...config.eventsPageConfig,
+                        topTitle: config.eventsPageConfig?.topTitle || 'Events &',
+                        topTitleItalic: config.eventsPageConfig?.topTitleItalic || 'Workshops',
+                        topSuffix: config.eventsPageConfig?.topSuffix || '',
+                        topSubtitle: e.target.value
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+              </div>
+
+              {/* API Notice for Events */}
+              <div style={{ border: '1.5px dashed #D6D3D1', borderRadius: '14px', padding: '24px', backgroundColor: '#FAFAF9', textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '20px', backgroundColor: '#E0F2FE', color: '#0369A1', fontSize: '12px', fontWeight: 700, marginBottom: '10px' }}>
+                  ⚡ API-Driven Content
+                </div>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 6px 0' }}>
+                  Live Events & Workshop Listings ({allEvents.length} Events)
+                </h4>
+                <p style={{ fontSize: '13.5px', color: '#78716C', margin: '0 auto', maxWidth: '540px' }}>
+                  All event cards, dates, locations, prices, and booking links are dynamically fetched from the database API. To create or manage events, use the <strong>Events Manager</strong> in the admin sidebar.
+                </p>
+              </div>
+
+            </div>
+          )}
+
+          {/* ════════════════════ PAGE: CLASSES ════════════════════ */}
+          {selectedPage === 'classes' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+              {/* Section 1: Top Hero Banner (Explore Our Classes) */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 1
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Explore Our Classes Hero Banner
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Prefix</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.topTitle || 'Explore'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: e.target.value,
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Italic Part</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.topTitleItalic || 'Our Classes'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                          topTitleItalic: e.target.value,
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Suffix</label>
+                    <input
+                      type="text"
+                      placeholder="(Optional)"
+                      value={config.classesPageConfig?.topSuffix || ''}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                          topSuffix: e.target.value,
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Subtitle Description</label>
+                  <textarea
+                    rows={2}
+                    value={config.classesPageConfig?.topSubtitle || 'From calming flows to energizing practices, Pragya Yog School offers a variety of yoga classes designed to fit every lifestyle and level.'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      classesPageConfig: {
+                        ...config.classesPageConfig,
+                        topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                        topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                        topSuffix: config.classesPageConfig?.topSuffix || '',
+                        topSubtitle: e.target.value,
+                        idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                        idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                        idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                        idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                        giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                        giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                        giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                        giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                        giftCards: config.classesPageConfig?.giftCards || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+              </div>
+
+              {/* Section 2: Discover Your Ideal Yog Practice */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 2
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Discover Your Ideal Yog Practice Header
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Prefix</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.idealTitle || 'Discover Your'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: e.target.value,
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Italic Keyword</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.idealTitleItalic || 'Ideal'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: e.target.value,
+                          idealSuffix: config.classesPageConfig?.idealSuffix || 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Suffix</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.idealSuffix !== undefined ? config.classesPageConfig.idealSuffix : 'Yog Practice'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: e.target.value,
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Subtitle</label>
+                  <input
+                    type="text"
+                    value={config.classesPageConfig?.idealSubtitle || 'Join a class that matches your pace, your goals, and your lifestyle'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      classesPageConfig: {
+                        ...config.classesPageConfig,
+                        topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                        topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                        topSuffix: config.classesPageConfig?.topSuffix || '',
+                        topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                        idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                        idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                        idealSuffix: config.classesPageConfig?.idealSuffix !== undefined ? config.classesPageConfig.idealSuffix : 'Yog Practice',
+                        idealSubtitle: e.target.value,
+                        giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                        giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                        giftSuffix: config.classesPageConfig?.giftSuffix || 'of Yoga',
+                        giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                        giftCards: config.classesPageConfig?.giftCards || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+              </div>
+
+              {/* Section 3: API Notice for Timetable */}
+              <div style={{ border: '1.5px dashed #D6D3D1', borderRadius: '14px', padding: '24px', backgroundColor: '#FAFAF9', textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '20px', backgroundColor: '#E0F2FE', color: '#0369A1', fontSize: '12px', fontWeight: 700, marginBottom: '10px' }}>
+                  ⚡ API-Driven Content
+                </div>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 6px 0' }}>
+                  Interactive Weekly Class Schedule & Timetable
+                </h4>
+                <p style={{ fontSize: '13.5px', color: '#78716C', margin: '0 auto', maxWidth: '540px' }}>
+                  Daily class slots, timings, teacher assignments, and booking limits are served directly from the Schedule Database API.
+                </p>
+              </div>
+
+              {/* Section 4: The Gift of Yoga */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 4
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  The Gift of Yoga Section
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Prefix</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.giftTitle || 'The'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix !== undefined ? config.classesPageConfig.idealSuffix : 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: e.target.value,
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: config.classesPageConfig?.giftSuffix !== undefined ? config.classesPageConfig.giftSuffix : 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Italic Word</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.giftTitleItalic || 'Gift'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix !== undefined ? config.classesPageConfig.idealSuffix : 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: e.target.value,
+                          giftSuffix: config.classesPageConfig?.giftSuffix !== undefined ? config.classesPageConfig.giftSuffix : 'of Yoga',
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Title Suffix</label>
+                    <input
+                      type="text"
+                      value={config.classesPageConfig?.giftSuffix !== undefined ? config.classesPageConfig.giftSuffix : 'of Yoga'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        classesPageConfig: {
+                          ...config.classesPageConfig,
+                          topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                          topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                          topSuffix: config.classesPageConfig?.topSuffix || '',
+                          topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                          idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                          idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                          idealSuffix: config.classesPageConfig?.idealSuffix !== undefined ? config.classesPageConfig.idealSuffix : 'Yog Practice',
+                          idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                          giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                          giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                          giftSuffix: e.target.value,
+                          giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                          giftCards: config.classesPageConfig?.giftCards || []
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Section Subtitle</label>
+                  <input
+                    type="text"
+                    value={config.classesPageConfig?.giftSubtitle || "Yoga is more than a physical practice, it's a path toward wellness, balance, and inner peace"}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      classesPageConfig: {
+                        ...config.classesPageConfig,
+                        topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                        topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                        topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                        idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                        idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                        idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                        giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                        giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                        giftSubtitle: e.target.value,
+                        giftCards: config.classesPageConfig?.giftCards || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                  />
+                </div>
+
+                <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#1C1917', margin: '0 0 12px 0' }}>Gift of Yoga Benefit Cards ({config.classesPageConfig?.giftCards?.length || 4} Cards)</h4>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                  {(config.classesPageConfig?.giftCards || []).map((card, idx) => (
+                    <div key={idx} style={{ border: '1px solid #F5F5F4', borderRadius: '10px', padding: '16px', backgroundColor: '#FAFAF9' }}>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#B45309', marginBottom: '8px' }}>Card #{idx + 1}</div>
+
+                      <div style={{ marginBottom: '10px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#57534E', marginBottom: '4px' }}>Card Title</label>
+                        <input
+                          type="text"
+                          value={card.title}
+                          onChange={(e) => {
+                            const nextCards = [...(config.classesPageConfig?.giftCards || [])];
+                            nextCards[idx] = { ...nextCards[idx], title: e.target.value };
+                            setConfig({
+                              ...config,
+                              classesPageConfig: {
+                                ...config.classesPageConfig,
+                                topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                                topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                                topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                                idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                                idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                                idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                                giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                                giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                                giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                                giftCards: nextCards
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E7E5E4', fontSize: '13px', fontWeight: 600 }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#57534E', marginBottom: '4px' }}>Card Description</label>
+                        <textarea
+                          rows={3}
+                          value={card.description}
+                          onChange={(e) => {
+                            const nextCards = [...(config.classesPageConfig?.giftCards || [])];
+                            nextCards[idx] = { ...nextCards[idx], description: e.target.value };
+                            setConfig({
+                              ...config,
+                              classesPageConfig: {
+                                ...config.classesPageConfig,
+                                topTitle: config.classesPageConfig?.topTitle || 'Explore',
+                                topTitleItalic: config.classesPageConfig?.topTitleItalic || 'Our Classes',
+                                topSubtitle: config.classesPageConfig?.topSubtitle || '',
+                                idealTitle: config.classesPageConfig?.idealTitle || 'Discover Your',
+                                idealTitleItalic: config.classesPageConfig?.idealTitleItalic || 'Ideal',
+                                idealSubtitle: config.classesPageConfig?.idealSubtitle || '',
+                                giftTitle: config.classesPageConfig?.giftTitle || 'The',
+                                giftTitleItalic: config.classesPageConfig?.giftTitleItalic || 'Gift',
+                                giftSubtitle: config.classesPageConfig?.giftSubtitle || '',
+                                giftCards: nextCards
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E7E5E4', fontSize: '13px' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ════════════════════ PAGE: TEACHERS ════════════════════ */}
+          {selectedPage === 'teachers' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 1
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Teachers Page Header Banner
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Page Title</label>
+                    <input
+                      type="text"
+                      defaultValue="OUR MASTER TEACHERS & FACULTY"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '4px', fontSize: '12px' }}>Phone</label>
-                    <input
-                      type="text"
-                      value={loc.phone}
-                      onChange={(e) => handleUpdateLocation(idx, { phone: e.target.value })}
-                      style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '8px 12px', fontSize: '12px' }}
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Subtitle</label>
+                    <textarea
+                      rows={2}
+                      defaultValue="Guiding your journey with authentic Himalayan lineage, deep anatomical precision, and compassionate wisdom."
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
                     />
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '4px', fontSize: '12px' }}>Image URL</label>
+              {/* API Notice for Teachers Grid */}
+              <div style={{ border: '1.5px dashed #D6D3D1', borderRadius: '14px', padding: '24px', backgroundColor: '#FAFAF9', textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '20px', backgroundColor: '#E0F2FE', color: '#0369A1', fontSize: '12px', fontWeight: 700, marginBottom: '10px' }}>
+                  ⚡ API-Driven Content
+                </div>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 6px 0' }}>
+                  Certified Instructors & Faculty Grid
+                </h4>
+                <p style={{ fontSize: '13.5px', color: '#78716C', margin: '0 auto', maxWidth: '540px' }}>
+                  Teacher bio profiles, photos, experience details, and specializations are fetched dynamically from the Staff API database.
+                </p>
+              </div>
+
+            </div>
+          )}
+
+          {/* ════════════════════ PAGE: MEMBERSHIP & PACKAGES ════════════════════ */}
+          {selectedPage === 'membership' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 1
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Membership & Packages Header Banner
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Page Title</label>
+                    <input
+                      type="text"
+                      defaultValue="MEMBERSHIP TIERS & SACRED PACKAGES"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* API Notice for Packages */}
+              <div style={{ border: '1.5px dashed #D6D3D1', borderRadius: '14px', padding: '24px', backgroundColor: '#FAFAF9', textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '20px', backgroundColor: '#E0F2FE', color: '#0369A1', fontSize: '12px', fontWeight: 700, marginBottom: '10px' }}>
+                  ⚡ API-Driven Content
+                </div>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 6px 0' }}>
+                  Dynamic Packages Grid
+                </h4>
+                <p style={{ fontSize: '13.5px', color: '#78716C', margin: '0 auto', maxWidth: '540px' }}>
+                  Membership tiers, TTC courses, retreat pricing, and package features are managed dynamically via the <strong>Package Manager</strong> in the admin sidebar.
+                </p>
+              </div>
+
+              {/* Section 2: Why Explore Our Packages */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Section 2
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Why Explore Our Packages? Section
+                </h3>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Section Main Title</label>
                   <input
                     type="text"
-                    value={loc.image}
-                    onChange={(e) => handleUpdateLocation(idx, { image: e.target.value })}
-                    style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '8px 12px', fontSize: '11px', fontFamily: 'monospace' }}
+                    value={config.whyExplorePackages?.title || 'Why Explore Our Packages?'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      whyExplorePackages: {
+                        title: e.target.value,
+                        points: config.whyExplorePackages?.points || []
+                      }
+                    })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
                   />
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '4px', fontSize: '12px' }}>Amenities (Comma-separated)</label>
-                  <input
-                    type="text"
-                    value={loc.amenities.join(', ')}
-                    onChange={(e) => handleUpdateLocation(idx, { amenities: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })}
-                    style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '8px 12px', fontSize: '12px' }}
-                  />
+                <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#1C1917', margin: '0 0 12px 0' }}>Package Benefit Points ({config.whyExplorePackages?.points?.length || 4} Points)</h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {(config.whyExplorePackages?.points || []).map((pt, idx) => (
+                    <div key={idx} style={{ border: '1px solid #F5F5F4', borderRadius: '10px', padding: '16px', backgroundColor: '#FAFAF9' }}>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#B45309', marginBottom: '8px' }}>Point #{idx + 1}</div>
+                      
+                      <div style={{ marginBottom: '10px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#57534E', marginBottom: '4px' }}>Bold Heading / Prefix</label>
+                        <input
+                          type="text"
+                          value={pt.boldTitle}
+                          onChange={(e) => {
+                            const nextPoints = [...(config.whyExplorePackages?.points || [])];
+                            nextPoints[idx] = { ...nextPoints[idx], boldTitle: e.target.value };
+                            setConfig({
+                              ...config,
+                              whyExplorePackages: {
+                                title: config.whyExplorePackages?.title || 'Why Explore Our Packages?',
+                                points: nextPoints
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E7E5E4', fontSize: '13px', fontWeight: 600 }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#57534E', marginBottom: '4px' }}>Point Description</label>
+                        <textarea
+                          rows={3}
+                          value={pt.description}
+                          onChange={(e) => {
+                            const nextPoints = [...(config.whyExplorePackages?.points || [])];
+                            nextPoints[idx] = { ...nextPoints[idx], description: e.target.value };
+                            setConfig({
+                              ...config,
+                              whyExplorePackages: {
+                                title: config.whyExplorePackages?.title || 'Why Explore Our Packages?',
+                                points: nextPoints
+                              }
+                            });
+                          }}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E7E5E4', fontSize: '13px' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
               </div>
-            ))}
-          </div>
+
+            </div>
+          )}
 
         </div>
-      )}
-
-      {/* SUB-TAB 3: ABOUT US & BRAND */}
-      {subTab === 'about' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans)', color: '#1C1917', margin: 0 }}>Brand Story & Philosophy</h3>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Story Title</label>
-              <input
-                type="text"
-                value={config.about.storyTitle}
-                onChange={(e) => setConfig({ ...config, about: { ...config.about, storyTitle: e.target.value } })}
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '14px', fontWeight: 500 }}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Story Paragraph 1</label>
-                <textarea
-                  rows={4}
-                  value={config.about.storyText1}
-                  onChange={(e) => setConfig({ ...config, about: { ...config.about, storyText1: e.target.value } })}
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', lineHeight: '1.6' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Story Paragraph 2</label>
-                <textarea
-                  rows={4}
-                  value={config.about.storyText2}
-                  onChange={(e) => setConfig({ ...config, about: { ...config.about, storyText2: e.target.value } })}
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', lineHeight: '1.6' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Mission Statement</label>
-                <textarea
-                  rows={3}
-                  value={config.about.mission}
-                  onChange={(e) => setConfig({ ...config, about: { ...config.about, mission: e.target.value } })}
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', lineHeight: '1.5' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Vision Statement</label>
-                <textarea
-                  rows={3}
-                  value={config.about.vision}
-                  onChange={(e) => setConfig({ ...config, about: { ...config.about, vision: e.target.value } })}
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', lineHeight: '1.5' }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Founder Bio */}
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans)', color: '#1C1917', margin: 0 }}>Founder & Spiritual Director Profile</h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '4px', fontSize: '12px' }}>Founder Name</label>
-                <input
-                  type="text"
-                  value={config.about.founderName}
-                  onChange={(e) => setConfig({ ...config, about: { ...config.about, founderName: e.target.value } })}
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', fontWeight: 500 }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '4px', fontSize: '12px' }}>Title / Designation</label>
-                <input
-                  type="text"
-                  value={config.about.founderTitle}
-                  onChange={(e) => setConfig({ ...config, about: { ...config.about, founderTitle: e.target.value } })}
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '10px 14px', fontSize: '13px' }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '4px', fontSize: '12px' }}>Bio Paragraph</label>
-              <textarea
-                rows={3}
-                value={config.about.founderBio}
-                onChange={(e) => setConfig({ ...config, about: { ...config.about, founderBio: e.target.value } })}
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '10px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* SUB-TAB 4: COURSE TEMPLATES & SYLLABUS */}
-      {subTab === 'courses' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans)', color: '#1C1917', margin: 0 }}>Teacher Training Course (TTC) Dynamic Syllabus & Inclusions</h3>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Course Title</label>
-                <input
-                  type="text"
-                  value={config.courseTemplates.ttcTitle}
-                  onChange={(e) => setConfig({ ...config, courseTemplates: { ...config.courseTemplates, ttcTitle: e.target.value } })}
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', fontWeight: 500 }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Certification Body</label>
-                <input
-                  type="text"
-                  value={config.courseTemplates.ttcCertification}
-                  onChange={(e) => setConfig({ ...config, courseTemplates: { ...config.courseTemplates, ttcCertification: e.target.value } })}
-                  style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Course Inclusions (One per line)</label>
-              <textarea
-                rows={4}
-                value={config.courseTemplates.ttcInclusions.join('\n')}
-                onChange={(e) => setConfig({ ...config, courseTemplates: { ...config.courseTemplates, ttcInclusions: e.target.value.split('\n').filter(Boolean) } })}
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', lineHeight: '1.6' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Course Prerequisites (One per line)</label>
-              <textarea
-                rows={3}
-                value={config.courseTemplates.ttcPrerequisites.join('\n')}
-                onChange={(e) => setConfig({ ...config, courseTemplates: { ...config.courseTemplates, ttcPrerequisites: e.target.value.split('\n').filter(Boolean) } })}
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', lineHeight: '1.6' }}
-              />
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-      {/* SUB-TAB 5: FOOTER & SOCIAL LINKS */}
-      {subTab === 'footer' && (
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E5E4', padding: '24px 28px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 400, fontFamily: 'var(--font-sans)', color: '#1C1917', margin: 0 }}>Footer & Social Media Links Configuration</h3>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Support Email</label>
-              <input
-                type="email"
-                value={config.footer.email}
-                onChange={(e) => setConfig({ ...config, footer: { ...config.footer, email: e.target.value } })}
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Support Phone</label>
-              <input
-                type="text"
-                value={config.footer.phone}
-                onChange={(e) => setConfig({ ...config, footer: { ...config.footer, phone: e.target.value } })}
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>WhatsApp Number</label>
-              <input
-                type="text"
-                value={config.footer.whatsappNumber}
-                onChange={(e) => setConfig({ ...config, footer: { ...config.footer, whatsappNumber: e.target.value } })}
-                placeholder="e.g. +85298765432"
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Studio HQ Address</label>
-            <input
-              type="text"
-              value={config.footer.address}
-              onChange={(e) => setConfig({ ...config, footer: { ...config.footer, address: e.target.value } })}
-              style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-            />
-          </div>
-
-          <div style={{ borderTop: '1px solid #F5F5F4', paddingTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Instagram URL</label>
-              <input
-                type="text"
-                value={config.footer.instagramUrl}
-                onChange={(e) => setConfig({ ...config, footer: { ...config.footer, instagramUrl: e.target.value } })}
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>Facebook URL</label>
-              <input
-                type="text"
-                value={config.footer.facebookUrl}
-                onChange={(e) => setConfig({ ...config, footer: { ...config.footer, facebookUrl: e.target.value } })}
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#44403C', fontWeight: 500, marginBottom: '6px', fontSize: '13px' }}>YouTube URL</label>
-              <input
-                type="text"
-                value={config.footer.youtubeUrl}
-                onChange={(e) => setConfig({ ...config, footer: { ...config.footer, youtubeUrl: e.target.value } })}
-                style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '10px 14px', fontSize: '13px' }}
-              />
-            </div>
-          </div>
-
-        </div>
-      )}
-
+      </div>
     </div>
   );
 };

@@ -48,7 +48,101 @@ export interface MembershipPerksConfig {
   standardBadge: string;
 }
 
+export interface NavbarVisibilityConfig {
+  home: boolean;
+  about: boolean;
+  shop: boolean;
+  events: boolean;
+  classes: boolean;
+  teachers: boolean;
+  membership: boolean;
+}
+
+export interface WhyExplorePoint {
+  boldTitle: string;
+  description: string;
+}
+
+export interface WhyExplorePackagesConfig {
+  title: string;
+  points: WhyExplorePoint[];
+}
+
+export interface GiftOfYogaCard {
+  title: string;
+  description: string;
+}
+
+export interface ClassesPageConfig {
+  topTitle: string;
+  topTitleItalic: string;
+  topSuffix?: string;
+  topSubtitle: string;
+  idealTitle: string;
+  idealTitleItalic: string;
+  idealSuffix?: string;
+  idealSubtitle: string;
+  giftTitle: string;
+  giftTitleItalic: string;
+  giftSuffix?: string;
+  giftSubtitle: string;
+  giftCards: GiftOfYogaCard[];
+}
+
+export interface EventsPageConfig {
+  topTitle: string;
+  topTitleItalic: string;
+  topSuffix?: string;
+  topSubtitle: string;
+}
+
+export interface ShopPageConfig {
+  badge: string;
+  topTitle: string;
+  topTitleItalic: string;
+  topSuffix?: string;
+  topSubtitle: string;
+}
+
+export interface CoreValueCard {
+  title: string;
+  description: string;
+}
+
+export interface PillarCard {
+  tag: string;
+  title: string;
+  description: string;
+}
+
+export interface AboutPageConfig {
+  topTitle: string;
+  topTitleItalic: string;
+  topSuffix?: string;
+  topSubtitle: string;
+  heroImage?: string;
+
+  aboutTitle: string;
+  aboutDesc: string;
+  benefitTitle: string;
+  benefits: string[];
+
+  coreValuesBadge: string;
+  coreValuesTitle: string;
+  coreValueCards: CoreValueCard[];
+
+  pillarsBadge: string;
+  pillarsTitle: string;
+  pillarCards: PillarCard[];
+}
+
 export interface SiteConfig {
+  navbarVisibility?: NavbarVisibilityConfig;
+  whyExplorePackages?: WhyExplorePackagesConfig;
+  classesPageConfig?: ClassesPageConfig;
+  eventsPageConfig?: EventsPageConfig;
+  shopPageConfig?: ShopPageConfig;
+  aboutPageConfig?: AboutPageConfig;
   announcement: {
     enabled: boolean;
     badge: string;
@@ -110,6 +204,155 @@ export interface SiteConfig {
 }
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
+  navbarVisibility: {
+    home: true,
+    about: true,
+    shop: true,
+    events: true,
+    classes: true,
+    teachers: true,
+    membership: true,
+  },
+  whyExplorePackages: {
+    title: 'Why Explore Our Packages?',
+    points: [
+      {
+        boldTitle: 'Importance of Daily Practice & Mindful Breaks.',
+        description: "In today's fast-paced world, taking dedicated time on the mat to breathe, decompress, and reconnect with your inner self is essential for long-term physical health, mental clarity, and emotional harmony."
+      },
+      {
+        boldTitle: 'Benefits of Authentic Yogic Science.',
+        description: 'Regular practice of authentic asanas, pranayama, and meditation stimulates circulation, enhances flexibility and core strength, balances nervous system function, and lowers stress — leaving you renewed and centered.'
+      },
+      {
+        boldTitle: 'Tailored Personal Guidance & Practice.',
+        description: 'Every membership tier and package is crafted to meet you at your unique stage of practice. Whether you seek dynamic vinyasa flows, therapeutic alignment, or restorative sound bath resets, our master faculty customize your sanctuary journey.'
+      },
+      {
+        boldTitle: 'Transparent Luxury Sanctuary Value.',
+        description: 'Our curated package tiers deliver world-class instruction, hydrotherapy amenities, and personalized care at accessible, transparent rates — empowering a sustainable, lifelong yoga practice.'
+      }
+    ]
+  },
+  classesPageConfig: {
+    topTitle: 'Explore',
+    topTitleItalic: 'Our Classes',
+    topSuffix: '',
+    topSubtitle: 'From calming flows to energizing practices, Pragya Yog School offers a variety of yoga classes designed to fit every lifestyle and level.',
+    idealTitle: 'Discover Your',
+    idealTitleItalic: 'Ideal',
+    idealSuffix: 'Yog Practice',
+    idealSubtitle: 'Join a class that matches your pace, your goals, and your lifestyle',
+    giftTitle: 'The',
+    giftTitleItalic: 'Gift',
+    giftSuffix: 'of Yoga',
+    giftSubtitle: "Yoga is more than a physical practice, it's a path toward wellness, balance, and inner peace",
+    giftCards: [
+      {
+        title: 'Physical Strength & Flexibility',
+        description: 'Build endurance, improve posture, and move with more ease and confidence.'
+      },
+      {
+        title: 'Mental Clarity',
+        description: 'Reduce stress, sharpen focus, and calm the mind through mindful movement and breathwork.'
+      },
+      {
+        title: 'Emotional Balance',
+        description: 'Release tension, manage emotions, and create harmony between body and spirit.'
+      },
+      {
+        title: 'Community Connection',
+        description: 'Join a welcoming space where like-minded individuals grow and thrive together.'
+      }
+    ]
+  },
+  eventsPageConfig: {
+    topTitle: 'Events &',
+    topTitleItalic: 'Workshops',
+    topSuffix: '',
+    topSubtitle: 'Explore our sanctuary events, oceanfront resets, sound bath immersions, and international retreats. Filter by month to find your next journey.'
+  },
+  shopPageConfig: {
+    badge: '— PRAGYA SANCTUARY STORE —',
+    topTitle: 'Merchandise &',
+    topTitleItalic: 'Yogic Wear',
+    topSuffix: '',
+    topSubtitle: 'Explore our sanctuary products, organic cotton apparel, non-slip jute mats, and authentic handcrafted essentials for your daily practice.'
+  },
+  aboutPageConfig: {
+    topTitle: 'Pragya',
+    topTitleItalic: 'Yog School',
+    topSuffix: '',
+    topSubtitle: 'A meditative practice of stillness and deep stretches designed to release tension, restore balance, and calm the mind.',
+    heroImage: '/about.png',
+
+    aboutTitle: 'About Pragya Yog School',
+    aboutDesc: 'Pragya Yog School is a holistic sanctuary dedicated to traditional Hatha, Ashtanga, Yin Yoga, and therapeutic sound healing. Guided by ancient lineage and modern physiological science, our sanctuary empowers students to cultivate awareness, deepen their practice, and experience true mind-body harmony.',
+    benefitTitle: 'Benefit',
+    benefits: [
+      'Enhances flexibility, strength, and joint mobility',
+      'Improves circulation and subtle energy flow',
+      'Promotes deep cellular relaxation and stress relief',
+      'Increases mindfulness and bodily self-awareness',
+      'Balances the nervous system for better sleep and calmness'
+    ],
+
+    coreValuesBadge: '— CORE VALUES —',
+    coreValuesTitle: 'Guided by Wisdom & Purpose',
+    coreValueCards: [
+      {
+        title: 'Holistic Well-being',
+        description: 'Embracing the ancient wisdom and practices of yog to nurture holistic well-being.'
+      },
+      {
+        title: 'Harmony',
+        description: 'Bridging mind, body, and spirit for a harmonious and balanced life.'
+      },
+      {
+        title: 'Self-Discovery',
+        description: 'Encouraging self-exploration and mindfulness to awaken your true potential.'
+      },
+      {
+        title: 'Continuous Growth',
+        description: 'Fostering continuous learning and personal development through yogic practices.'
+      }
+    ],
+
+    pillarsBadge: '— OUR FOUNDATION —',
+    pillarsTitle: 'Pillars of Pragya Sanctuary',
+    pillarCards: [
+      {
+        tag: 'BODY & MIND ACCURACY',
+        title: 'Biomechanical Precision',
+        description: 'Every posture is taught with deep anatomical awareness and alignment to ensure maximum safety, physical longevity, and joint protection.'
+      },
+      {
+        tag: 'ANCIENT LINEAGE',
+        title: 'Traditional Roots',
+        description: 'We preserve the sacred integrity of traditional Hatha & Ashtanga Vinyasa yoga while adapting practices to modern lifestyle needs.'
+      },
+      {
+        tag: 'AUTONOMIC HEALING',
+        title: 'Nervous System Regulation',
+        description: 'Integrating targeted pranayama breathwork and restorative sound baths to lower cortisol, calm autonomic arousal, and restore deep sleep.'
+      },
+      {
+        tag: 'COMMUNITY & GUIDANCE',
+        title: 'Personalized Mentorship',
+        description: 'Small class sizes ensure every practitioner receives individualized feedback, hands-on adjustments, and continuous guidance.'
+      },
+      {
+        tag: 'PURPOSE & PASSION',
+        title: 'Our Mission',
+        description: 'To guide you to embrace conscious living through the transformative power of yog by igniting your passion and curiosity for yog and let you experience the wisdom of yog and harness the transformative energy of yog for vitality.'
+      },
+      {
+        tag: 'SCIENCE MEETS SPIRITUALITY',
+        title: 'Our Goal',
+        description: 'We aim at being the most comprehensive and authentic yog institute where science meets spirituality.'
+      }
+    ]
+  },
   announcement: {
     enabled: true,
     badge: 'LIMITED OFFER',
@@ -320,6 +563,12 @@ export function getSiteConfig(): SiteConfig {
     return {
       ...DEFAULT_SITE_CONFIG,
       ...parsed,
+      navbarVisibility: { ...DEFAULT_SITE_CONFIG.navbarVisibility, ...(parsed.navbarVisibility || {}) } as NavbarVisibilityConfig,
+      whyExplorePackages: { ...DEFAULT_SITE_CONFIG.whyExplorePackages, ...(parsed.whyExplorePackages || {}) } as WhyExplorePackagesConfig,
+      classesPageConfig: { ...DEFAULT_SITE_CONFIG.classesPageConfig, ...(parsed.classesPageConfig || {}) } as ClassesPageConfig,
+      eventsPageConfig: { ...DEFAULT_SITE_CONFIG.eventsPageConfig, ...(parsed.eventsPageConfig || {}) } as EventsPageConfig,
+      shopPageConfig: { ...DEFAULT_SITE_CONFIG.shopPageConfig, ...(parsed.shopPageConfig || {}) } as ShopPageConfig,
+      aboutPageConfig: { ...DEFAULT_SITE_CONFIG.aboutPageConfig, ...(parsed.aboutPageConfig || {}) } as AboutPageConfig,
       announcement: { ...DEFAULT_SITE_CONFIG.announcement, ...(parsed.announcement || {}) },
       hero: { ...DEFAULT_SITE_CONFIG.hero, ...(parsed.hero || {}) },
       upcomingEventsConfig: { ...DEFAULT_SITE_CONFIG.upcomingEventsConfig, ...(parsed.upcomingEventsConfig || {}) },
@@ -346,6 +595,12 @@ export async function fetchSiteConfigFromFirebase(): Promise<SiteConfig> {
       const merged = {
         ...DEFAULT_SITE_CONFIG,
         ...data,
+        navbarVisibility: { ...DEFAULT_SITE_CONFIG.navbarVisibility, ...(data.navbarVisibility || {}) } as NavbarVisibilityConfig,
+        whyExplorePackages: { ...DEFAULT_SITE_CONFIG.whyExplorePackages, ...(data.whyExplorePackages || {}) } as WhyExplorePackagesConfig,
+        classesPageConfig: { ...DEFAULT_SITE_CONFIG.classesPageConfig, ...(data.classesPageConfig || {}) } as ClassesPageConfig,
+        eventsPageConfig: { ...DEFAULT_SITE_CONFIG.eventsPageConfig, ...(data.eventsPageConfig || {}) } as EventsPageConfig,
+        shopPageConfig: { ...DEFAULT_SITE_CONFIG.shopPageConfig, ...(data.shopPageConfig || {}) } as ShopPageConfig,
+        aboutPageConfig: { ...DEFAULT_SITE_CONFIG.aboutPageConfig, ...(data.aboutPageConfig || {}) } as AboutPageConfig,
         announcement: { ...DEFAULT_SITE_CONFIG.announcement, ...(data.announcement || {}) },
         hero: { ...DEFAULT_SITE_CONFIG.hero, ...(data.hero || {}) },
         upcomingEventsConfig: { ...DEFAULT_SITE_CONFIG.upcomingEventsConfig, ...(data.upcomingEventsConfig || {}) },
@@ -426,6 +681,12 @@ export function subscribeSiteConfig(callback: (config: SiteConfig) => void): () 
           const merged = {
             ...DEFAULT_SITE_CONFIG,
             ...data,
+            navbarVisibility: { ...DEFAULT_SITE_CONFIG.navbarVisibility, ...(data.navbarVisibility || {}) } as NavbarVisibilityConfig,
+            whyExplorePackages: { ...DEFAULT_SITE_CONFIG.whyExplorePackages, ...(data.whyExplorePackages || {}) } as WhyExplorePackagesConfig,
+            classesPageConfig: { ...DEFAULT_SITE_CONFIG.classesPageConfig, ...(data.classesPageConfig || {}) } as ClassesPageConfig,
+            eventsPageConfig: { ...DEFAULT_SITE_CONFIG.eventsPageConfig, ...(data.eventsPageConfig || {}) } as EventsPageConfig,
+            shopPageConfig: { ...DEFAULT_SITE_CONFIG.shopPageConfig, ...(data.shopPageConfig || {}) } as ShopPageConfig,
+            aboutPageConfig: { ...DEFAULT_SITE_CONFIG.aboutPageConfig, ...(data.aboutPageConfig || {}) } as AboutPageConfig,
             announcement: { ...DEFAULT_SITE_CONFIG.announcement, ...(data.announcement || {}) },
             hero: { ...DEFAULT_SITE_CONFIG.hero, ...(data.hero || {}) },
             upcomingEventsConfig: { ...DEFAULT_SITE_CONFIG.upcomingEventsConfig, ...(data.upcomingEventsConfig || {}) },

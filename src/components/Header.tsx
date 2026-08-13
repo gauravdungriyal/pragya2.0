@@ -5,6 +5,8 @@ import { useCart } from '../context/CartContext';
 import { AuthModal } from './AuthModal';
 import { UserProfileDrawer } from './UserProfileDrawer';
 
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
+
 interface HeaderProps {
   onOpenBooking: (type?: string, title?: string) => void;
   onOpenSearch: () => void;
@@ -22,12 +24,17 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, profile } = useAuth();
   const { cartCount, openCart } = useCart();
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [activeTab, setActiveTab] = useState(
     currentView === 'about' ? 'About' : currentView === 'classes' ? 'Classes' : currentView === 'teachers' ? 'Teachers' : currentView === 'membership' ? 'Membership & Packages' : currentView === 'events' ? 'Events' : currentView === 'merchandise' ? 'Shop' : 'Home'
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
 
   // Listen for the global "open auth" event (triggered by PackageReserveModal's sign-in link)
   useEffect(() => {
@@ -73,15 +80,25 @@ export const Header: React.FC<HeaderProps> = ({
     }
   }, [currentView]);
 
+  const navVisibility = siteConfig.navbarVisibility || {
+    home: true,
+    about: true,
+    shop: true,
+    events: true,
+    classes: true,
+    teachers: true,
+    membership: true,
+  };
+
   const navItems = [
-    { label: 'Home', id: 'hero', type: 'section' },
-    { label: 'About', id: 'about', type: 'page' },
-    { label: 'Shop', id: 'merchandise', type: 'page' },
-    { label: 'Events', id: 'events', type: 'page' },
-    { label: 'Classes', id: 'classes', type: 'page' },
-    { label: 'Teachers', id: 'teachers', type: 'page' },
-    { label: 'Membership & Packages', id: 'membership', type: 'page' }
-  ];
+    { label: 'Home', id: 'hero', type: 'section', key: 'home' },
+    { label: 'About', id: 'about', type: 'page', key: 'about' },
+    { label: 'Shop', id: 'merchandise', type: 'page', key: 'shop' },
+    { label: 'Events', id: 'events', type: 'page', key: 'events' },
+    { label: 'Classes', id: 'classes', type: 'page', key: 'classes' },
+    { label: 'Teachers', id: 'teachers', type: 'page', key: 'teachers' },
+    { label: 'Membership & Packages', id: 'membership', type: 'page', key: 'membership' }
+  ].filter(item => navVisibility[item.key as keyof typeof navVisibility] !== false);
 
   const handleScheduleRedirect = () => {
     if (onViewChange) {

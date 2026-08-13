@@ -319,18 +319,22 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
         <div className="about-top-container">
           {/* Title: Brand Name with Bold Sans + Italic Serif Brand Fonts */}
           <h1 className="about-hero-title">
-            Pragya <span className="title-serif-italic">Yog School</span>
+            {siteConfig.aboutPageConfig?.topTitle || 'Pragya'}{' '}
+            <span className="title-serif-italic">
+              {siteConfig.aboutPageConfig?.topTitleItalic || 'Yog School'}
+            </span>
+            {siteConfig.aboutPageConfig?.topSuffix ? ` ${siteConfig.aboutPageConfig.topSuffix}` : ''}
           </h1>
 
           {/* Subtitle */}
           <p className="about-hero-subtitle">
-            A meditative practice of stillness and deep stretches designed to release tension, restore balance, and calm the mind.
+            {siteConfig.aboutPageConfig?.topSubtitle || 'A meditative practice of stillness and deep stretches designed to release tension, restore balance, and calm the mind.'}
           </p>
 
           {/* Full-Width Featured Image */}
           <div className="about-hero-img-box">
             <img
-              src="/about.png"
+              src={siteConfig.aboutPageConfig?.heroImage || '/about.png'}
               alt="Yin Yoga practitioner in serene pose at Pragya Yog School"
               className="about-hero-img"
             />
@@ -346,18 +350,18 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
           <div className="about-left-col">
             {/* About Pragya Yog School */}
             <div className="about-block">
-              <h2 className="block-title">About Pragya Yog School</h2>
+              <h2 className="block-title">{siteConfig.aboutPageConfig?.aboutTitle || 'About Pragya Yog School'}</h2>
               <p className="block-desc">
-                Pragya Yog School is a holistic sanctuary dedicated to traditional Hatha, Ashtanga, Yin Yoga, and therapeutic sound healing. Guided by ancient lineage and modern physiological science, our sanctuary empowers students to cultivate awareness, deepen their practice, and experience true mind-body harmony.
+                {siteConfig.aboutPageConfig?.aboutDesc || 'Pragya Yog School is a holistic sanctuary dedicated to traditional Hatha, Ashtanga, Yin Yoga, and therapeutic sound healing. Guided by ancient lineage and modern physiological science, our sanctuary empowers students to cultivate awareness, deepen their practice, and experience true mind-body harmony.'}
               </p>
             </div>
 
             {/* Benefit List */}
             <div className="benefit-block">
-              <h2 className="block-title">Benefit</h2>
+              <h2 className="block-title">{siteConfig.aboutPageConfig?.benefitTitle || 'Benefit'}</h2>
 
               <ul className="benefit-list">
-                {benefits.map((item, idx) => (
+                {(siteConfig.aboutPageConfig?.benefits || benefits).map((item, idx) => (
                   <li key={idx} className="benefit-item">
                     <div className="check-badge">
                       <Check size={13} color="#21201E" strokeWidth={2.5} />
@@ -428,7 +432,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
               marginBottom: '10px'
             }}
           >
-            — CORE VALUES —
+            {siteConfig.aboutPageConfig?.coreValuesBadge || '— CORE VALUES —'}
           </span>
           <h2
             style={{
@@ -440,13 +444,14 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
               lineHeight: 1.15
             }}
           >
-            Guided by Wisdom & Purpose
+            {siteConfig.aboutPageConfig?.coreValuesTitle || 'Guided by Wisdom & Purpose'}
           </h2>
         </div>
 
         <div className="elements-grid">
-          {elements.map((item, idx) => {
-            const IconComponent = item.icon;
+          {(siteConfig.aboutPageConfig?.coreValueCards || elements).map((item, idx) => {
+            const fallbackIcon = elements[idx % elements.length]?.icon || Sparkles;
+            const IconComponent = (item as any).icon || fallbackIcon;
             return (
               <div key={idx} className="element-card">
                 <div
@@ -459,7 +464,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginBottom: '20px',
-                    color: item.color
+                    color: (item as any).color || '#944426'
                   }}
                 >
                   <IconComponent size={22} />
@@ -490,7 +495,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
               marginBottom: '10px'
             }}
           >
-            — OUR FOUNDATION —
+            {siteConfig.aboutPageConfig?.pillarsBadge || '— OUR FOUNDATION —'}
           </span>
           <h2
             style={{
@@ -502,13 +507,15 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
               lineHeight: 1.15
             }}
           >
-            Pillars of Pragya Sanctuary
+            {siteConfig.aboutPageConfig?.pillarsTitle || 'Pillars of Pragya Sanctuary'}
           </h2>
         </div>
 
         <div className="pillars-grid">
-          {pillars.map((item, idx) => {
-            const IconComponent = item.icon;
+          {(siteConfig.aboutPageConfig?.pillarCards || pillars).map((item, idx) => {
+            const fallbackPillar = pillars[idx % pillars.length];
+            const IconComponent = (item as any).icon || fallbackPillar?.icon || Target;
+            const badgeColor = (item as any).badgeColor || fallbackPillar?.badgeColor || '#00381F';
             return (
               <div key={idx} className="pillar-card">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -517,7 +524,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
                       fontSize: '10.5px',
                       fontWeight: 500,
                       letterSpacing: '0.12em',
-                      color: item.badgeColor,
+                      color: badgeColor,
                       textTransform: 'uppercase'
                     }}
                   >
@@ -532,7 +539,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenBooking, onNavigateS
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: item.badgeColor
+                      color: badgeColor
                     }}
                   >
                     <IconComponent size={18} />

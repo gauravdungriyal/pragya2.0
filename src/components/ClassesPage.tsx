@@ -3,6 +3,7 @@ import { Signal, Clock, Calendar, Zap, Sparkles, Heart, Users, MapPin, User, Che
 import { getScheduleByDate, getFilters } from '../services/api';
 import { ClassScheduleItem, FilterOptions } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 interface ClassesPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
@@ -26,8 +27,13 @@ const checkIsCompleted = (item: any, dateObj?: Date): boolean => {
 
 export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
   const { user } = useAuth();
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [schedules, setSchedules] = useState<ClassScheduleItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [scheduleViewMode, setScheduleViewMode] = useState<'day' | 'week'>(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
@@ -120,7 +126,33 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
   const [levelFilter, setLevelFilter] = useState<string>('ALL');
   const [instructorFilter, setInstructorFilter] = useState<string>('');
   const [pillarFilter, setPillarFilter] = useState<string>('');
-  const [locationFilter, setLocationFilter] = useState<string>('');
+  
+  const DEFAULT_LOCATIONS = ['Online', 'Outdoor', 'Pragya Yog School', 'Verano'];
+  const [selectedLocations, setSelectedLocations] = useState<string[]>(DEFAULT_LOCATIONS);
+
+  const availableLocations = React.useMemo(() => {
+    const list: string[] = [];
+    (filterData.locations || []).forEach((loc) => {
+      const name = loc.name || loc.id;
+      if (name && name.trim() !== '' && name.toLowerCase() !== 'all locations' && !list.includes(name)) {
+        list.push(name);
+      }
+    });
+    if (list.length === 0) return DEFAULT_LOCATIONS;
+    return list;
+  }, [filterData.locations]);
+
+  React.useEffect(() => {
+    if (availableLocations.length > 0) {
+      setSelectedLocations(availableLocations);
+    }
+  }, [availableLocations]);
+
+  const toggleLocationFilter = (locName: string) => {
+    setSelectedLocations((prev) =>
+      prev.includes(locName) ? prev.filter((l) => l !== locName) : [...prev, locName]
+    );
+  };
 
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const filterWrapperRef = useRef<HTMLDivElement>(null);
@@ -231,14 +263,14 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
     (levelFilter && levelFilter !== '' && levelFilter !== 'ALL' && levelFilter.toLowerCase() !== 'all levels') ||
     (instructorFilter && instructorFilter !== '' && instructorFilter.toLowerCase() !== 'all instructors') ||
     (pillarFilter && pillarFilter !== '' && pillarFilter.toLowerCase() !== 'all pillars') ||
-    (locationFilter && locationFilter !== '' && locationFilter.toLowerCase() !== 'all locations')
+    (selectedLocations.length < availableLocations.length)
   );
 
   const resetAllFilters = () => {
     setLevelFilter('ALL');
     setInstructorFilter('');
     setPillarFilter('');
-    setLocationFilter('');
+    setSelectedLocations(availableLocations);
   };
 
   const filteredClasses = displayClasses.filter((item) => {
@@ -257,10 +289,14 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
       const targetPillar = pillarFilter.toLowerCase();
       if (!itemPillar.includes(targetPillar) && !targetPillar.includes(itemPillar)) return false;
     }
-    if (locationFilter && locationFilter !== '' && locationFilter.toLowerCase() !== 'all locations') {
+    if (selectedLocations.length < availableLocations.length) {
+      if (selectedLocations.length === 0) return false;
       const itemLoc = ((item as any).room || (item as any).location || (item as any).studio || '').toLowerCase();
-      const targetLoc = locationFilter.toLowerCase();
-      if (!itemLoc.includes(targetLoc) && !targetLoc.includes(itemLoc)) return false;
+      const match = selectedLocations.some((locName) => {
+        const lLower = locName.toLowerCase();
+        return itemLoc.includes(lLower) || lLower.includes(itemLoc);
+      });
+      if (!match) return false;
     }
     return true;
   });
@@ -301,7 +337,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                 margin: 0
               }}
             >
-              Explore{' '}
+              {siteConfig.classesPageConfig?.topTitle || 'Explore'}{' '}
               <span
                 className="classes-title-span"
                 style={{
@@ -311,8 +347,9 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                   color: '#21201E'
                 }}
               >
-                Our Classes
+                {siteConfig.classesPageConfig?.topTitleItalic || 'Our Classes'}
               </span>
+              {siteConfig.classesPageConfig?.topSuffix ? ` ${siteConfig.classesPageConfig.topSuffix}` : ''}
             </h1>
           </div>
 
@@ -329,7 +366,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                 maxWidth: '480px'
               }}
             >
-              From calming flows to energizing practices, Pragya Yog School offers a variety of yoga classes designed to fit every lifestyle and level.
+              {siteConfig.classesPageConfig?.topSubtitle || 'From calming flows to energizing practices, Pragya Yog School offers a variety of yoga classes designed to fit every lifestyle and level.'}
             </p>
           </div>
         </div>
@@ -356,10 +393,16 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               lineHeight: 1.1
             }}
           >
-            Discover Your <span style={{ fontFamily: "var(--font-accent)", fontStyle: 'italic', fontWeight: 400 }}>Ideal</span> Yog Practice
+            {siteConfig.classesPageConfig?.idealTitle || 'Discover Your'}{' '}
+            <span style={{ fontFamily: "var(--font-accent)", fontStyle: 'italic', fontWeight: 400 }}>
+              {siteConfig.classesPageConfig?.idealTitleItalic || 'Ideal'}
+            </span>
+            {siteConfig.classesPageConfig?.idealSuffix !== undefined
+              ? (siteConfig.classesPageConfig.idealSuffix ? ` ${siteConfig.classesPageConfig.idealSuffix}` : '')
+              : ' Yog Practice'}
           </h2>
           <p style={{ fontFamily: "var(--font-sans)", fontSize: '16px', color: '#6B655F', margin: 0 }}>
-            Join a class that matches your pace, your goals, and your lifestyle
+            {siteConfig.classesPageConfig?.idealSubtitle || 'Join a class that matches your pace, your goals, and your lifestyle'}
           </p>
         </div>
 
@@ -619,355 +662,275 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
           </div>
 
           {/* DATE NAVIGATOR BAR */}
+          {/* Schedule Controls Top Bar: Location (Left) | Date Slider & Today Pill (Center) | Level, Instructor, Pillar (Right) */}
           <div
+            className="schedule-controls-bar"
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'space-between',
               gap: '16px',
               flexWrap: 'wrap',
-              marginBottom: '36px',
-              position: 'relative'
+              marginBottom: '36px'
             }}
           >
-            {/* Center Date Selector Pill */}
-            <div
-              style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: '999px',
-                padding: '10px 22px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '14px',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-                border: '1px solid rgba(148, 68, 38, 0.15)',
-                position: 'relative',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {/* Left Arrow Button */}
-              <button
-                onClick={() => {
-                  const prev = new Date(selectedDate);
-                  const shiftDays = scheduleViewMode === 'week' ? 7 : 1;
-                  prev.setDate(prev.getDate() - shiftDays);
-                  setSelectedDate(prev);
-                }}
-                style={{
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: '#21201E'
-                }}
-                title={scheduleViewMode === 'week' ? "Previous Week" : "Previous Day"}
-              >
-                <ChevronLeft size={18} />
-              </button>
+            {/* 📍 LEFT SIDE: Location Filter Pills (All active by default) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {availableLocations.map((locName) => {
+                const isSelected = selectedLocations.includes(locName);
+                return (
+                  <button
+                    key={locName}
+                    type="button"
+                    onClick={() => toggleLocationFilter(locName)}
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      padding: '8px 16px',
+                      borderRadius: '999px',
+                      border: isSelected ? '1.5px solid #354336' : '1.5px solid rgba(148, 68, 38, 0.25)',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      backgroundColor: isSelected ? '#354336' : '#FFFFFF',
+                      color: isSelected ? '#FFFFFF' : '#6E6A63',
+                      cursor: 'pointer',
+                      boxShadow: isSelected ? '0 4px 12px rgba(53, 67, 54, 0.2)' : '0 2px 6px rgba(0,0,0,0.02)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s ease',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <span>{locName}</span>
+                  </button>
+                );
+              })}
+            </div>
 
-              {/* Date Text & Calendar Icon */}
+            {/* 🗓️ CENTER: Date Selector Pill */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div
                 style={{
-                  display: 'flex',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '999px',
+                  padding: '10px 22px',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '10px',
-                  fontFamily: "var(--font-sans)",
-                  fontSize: '15px',
-                  fontWeight: 700,
-                  color: '#21201E',
-                  cursor: 'pointer',
+                  gap: '14px',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+                  border: '1px solid rgba(148, 68, 38, 0.15)',
                   position: 'relative',
                   whiteSpace: 'nowrap'
                 }}
               >
-                <Calendar size={18} color="#944426" />
-                <span style={{ whiteSpace: 'nowrap' }}>
-                  {scheduleViewMode === 'week' ? (
-                    (() => {
-                      const first = weekDays[0];
-                      const last = weekDays[6];
-                      if (!first || !last) return '';
-                      const m1 = first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                      const m2 = last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                      return `${m1} – ${m2}`;
-                    })()
-                  ) : (
-                    selectedDate.toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })
-                  )}
-                </span>
-
-                {/* Hidden Date Input Overlay */}
-                <input
-                  type="date"
-                  value={selectedDate.toISOString().split('T')[0]}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setSelectedDate(new Date(e.target.value));
-                    }
+                {/* Left Arrow Button */}
+                <button
+                  onClick={() => {
+                    const prev = new Date(selectedDate);
+                    const shiftDays = scheduleViewMode === 'week' ? 7 : 1;
+                    prev.setDate(prev.getDate() - shiftDays);
+                    setSelectedDate(prev);
                   }}
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    opacity: 0,
+                    border: 'none',
+                    background: 'none',
                     cursor: 'pointer',
-                    width: '100%',
-                    height: '100%'
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#21201E'
                   }}
-                  title="Click to choose a date"
-                />
-              </div>
+                  title={scheduleViewMode === 'week' ? "Previous Week" : "Previous Day"}
+                >
+                  <ChevronLeft size={18} />
+                </button>
 
-              {/* Right Arrow Button */}
-              <button
-                onClick={() => {
-                  const next = new Date(selectedDate);
-                  const shiftDays = scheduleViewMode === 'week' ? 7 : 1;
-                  next.setDate(next.getDate() + shiftDays);
-                  setSelectedDate(next);
-                }}
-                style={{
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: '#21201E'
-                }}
-                title={scheduleViewMode === 'week' ? "Next Week" : "Next Day"}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-
-            {/* TODAY / THIS WEEK Pill Button */}
-            <button
-              className="classes-today-btn"
-              onClick={() => setSelectedDate(new Date())}
-              style={{
-                fontFamily: "var(--font-sans)",
-                backgroundColor: 'transparent',
-                color: '#354336',
-                border: '1.5px solid #354336',
-                borderRadius: '999px',
-                padding: '10px 24px',
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.08em',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#354336';
-                e.currentTarget.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#354336';
-              }}
-            >
-              {scheduleViewMode === 'week' ? 'THIS WEEK' : 'TODAY'}
-            </button>
-
-            {/* FILTERS Pill Button */}
-            <div className="classes-filter-wrapper" style={{ position: 'relative' }} ref={filterWrapperRef}>
-              <button
-                onClick={() => setShowFilterModal(!showFilterModal)}
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  backgroundColor: showFilterModal || hasActiveFilter ? '#354336' : 'transparent',
-                  color: showFilterModal || hasActiveFilter ? '#FFFFFF' : '#4A4540',
-                  border: '1.5px solid rgba(148, 68, 38, 0.3)',
-                  borderRadius: '999px',
-                  padding: '10px 24px',
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  letterSpacing: '0.08em',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <SlidersHorizontal size={14} />
-                <span>FILTERS</span>
-                {hasActiveFilter && (
-                  <span
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: '#D9A726'
-                    }}
-                  />
-                )}
-              </button>
-
-              {/* Multi-Category Filter Dropdown Popup */}
-              {showFilterModal && (
+                {/* Date Text & Calendar Icon */}
                 <div
                   style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    right: 0,
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '18px',
-                    padding: '18px',
-                    width: '280px',
-                    boxShadow: '0 16px 40px rgba(0,0,0,0.15)',
-                    zIndex: 100,
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    fontFamily: "var(--font-sans)",
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '14px',
-                    maxHeight: '440px',
-                    overflowY: 'auto'
+                    alignItems: 'center',
+                    gap: '10px',
+                    fontFamily: "var(--font-sans)",
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    color: '#21201E',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  {/* Header & Reset */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F0EAE1', paddingBottom: '8px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#944426', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                      Filter Classes
-                    </span>
-                    {hasActiveFilter && (
-                      <button
-                        onClick={resetAllFilters}
-                        style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Reset All
-                      </button>
+                  <Calendar size={18} color="#944426" />
+                  <span style={{ whiteSpace: 'nowrap' }}>
+                    {scheduleViewMode === 'week' ? (
+                      (() => {
+                        const first = weekDays[0];
+                        const last = weekDays[6];
+                        if (!first || !last) return '';
+                        const m1 = first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        const m2 = last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        return `${m1} – ${m2}`;
+                      })()
+                    ) : (
+                      selectedDate.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })
                     )}
-                  </div>
+                  </span>
 
-                  {/* 1. LEVEL */}
-                  {filterData.levels && filterData.levels.length > 0 && (
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#7A756F', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
-                        Level
-                      </label>
-                      <select
-                        value={levelFilter}
-                        onChange={(e) => setLevelFilter(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '9px 12px',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(39,39,39,0.15)',
-                          fontSize: '13px',
-                          backgroundColor: '#FDFAF6',
-                          color: '#272727',
-                          fontWeight: 600,
-                          outline: 'none'
-                        }}
-                      >
-                        {filterData.levels.map((lvl) => (
-                          <option key={lvl.id || lvl.name} value={lvl.name || lvl.id}>
-                            {lvl.name || 'All Levels'}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* 2. INSTRUCTOR */}
-                  {availableInstructors && availableInstructors.length > 0 && (
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#7A756F', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
-                        Instructor
-                      </label>
-                      <select
-                        value={instructorFilter}
-                        onChange={(e) => setInstructorFilter(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '9px 12px',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(39,39,39,0.15)',
-                          fontSize: '13px',
-                          backgroundColor: '#FDFAF6',
-                          color: '#272727',
-                          fontWeight: 600,
-                          outline: 'none'
-                        }}
-                      >
-                        {availableInstructors.map((inst) => (
-                          <option key={inst.id || inst.name} value={inst.name || inst.id}>
-                            {inst.name || 'All Instructors'}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* 3. PILLAR */}
-                  {filterData.pillars && filterData.pillars.length > 0 && (
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#7A756F', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
-                        Pillar / Focus
-                      </label>
-                      <select
-                        value={pillarFilter}
-                        onChange={(e) => setPillarFilter(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '9px 12px',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(39,39,39,0.15)',
-                          fontSize: '13px',
-                          backgroundColor: '#FDFAF6',
-                          color: '#272727',
-                          fontWeight: 600,
-                          outline: 'none'
-                        }}
-                      >
-                        {filterData.pillars.map((p) => (
-                          <option key={p.id || p.name} value={p.name || p.id}>
-                            {p.name || 'All Pillars'}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* 4. LOCATION */}
-                  {filterData.locations && filterData.locations.length > 0 && (
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#7A756F', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
-                        Location / Studio
-                      </label>
-                      <select
-                        value={locationFilter}
-                        onChange={(e) => setLocationFilter(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '9px 12px',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(39,39,39,0.15)',
-                          fontSize: '13px',
-                          backgroundColor: '#FDFAF6',
-                          color: '#272727',
-                          fontWeight: 600,
-                          outline: 'none'
-                        }}
-                      >
-                        {filterData.locations.map((loc) => (
-                          <option key={loc.id || loc.name} value={loc.name || loc.id}>
-                            {loc.name || 'All Locations'}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                  {/* Hidden Date Input Overlay */}
+                  <input
+                    type="date"
+                    value={selectedDate.toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setSelectedDate(new Date(e.target.value));
+                      }
+                    }}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      opacity: 0,
+                      cursor: 'pointer',
+                      width: '100%',
+                      height: '100%'
+                    }}
+                    title="Click to choose a date"
+                  />
                 </div>
+
+                {/* Right Arrow Button */}
+                <button
+                  onClick={() => {
+                    const next = new Date(selectedDate);
+                    const shiftDays = scheduleViewMode === 'week' ? 7 : 1;
+                    next.setDate(next.getDate() + shiftDays);
+                    setSelectedDate(next);
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#21201E'
+                  }}
+                  title={scheduleViewMode === 'week' ? "Next Week" : "Next Day"}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* 🎛️ RIGHT SIDE: Level, Instructor, Pillar Filters */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              {/* 1. LEVEL */}
+              {filterData.levels && filterData.levels.length > 0 && (
+                <select
+                  value={levelFilter}
+                  onChange={(e) => setLevelFilter(e.target.value)}
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    padding: '10px 38px 10px 16px',
+                    borderRadius: '999px',
+                    border: levelFilter !== 'ALL' && levelFilter !== '' ? '1.5px solid #354336' : '1.5px solid rgba(148, 68, 38, 0.25)',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    backgroundColor: levelFilter !== 'ALL' && levelFilter !== '' ? '#354336' : '#FFFFFF',
+                    color: levelFilter !== 'ALL' && levelFilter !== '' ? '#FFFFFF' : '#21201E',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+                    transition: 'all 0.2s ease',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    backgroundImage: levelFilter !== 'ALL' && levelFilter !== ''
+                      ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`
+                      : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2321201E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 18px center'
+                  }}
+                >
+                  {filterData.levels.map((lvl) => (
+                    <option key={lvl.id || lvl.name} value={lvl.name || lvl.id} style={{ color: '#21201E', backgroundColor: '#FFFFFF' }}>
+                      {lvl.name || 'All Levels'}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {/* 2. INSTRUCTOR */}
+              {availableInstructors && availableInstructors.length > 0 && (
+                <select
+                  value={instructorFilter}
+                  onChange={(e) => setInstructorFilter(e.target.value)}
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    padding: '10px 38px 10px 16px',
+                    borderRadius: '999px',
+                    border: instructorFilter ? '1.5px solid #354336' : '1.5px solid rgba(148, 68, 38, 0.25)',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    backgroundColor: instructorFilter ? '#354336' : '#FFFFFF',
+                    color: instructorFilter ? '#FFFFFF' : '#21201E',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+                    transition: 'all 0.2s ease',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    backgroundImage: instructorFilter
+                      ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`
+                      : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2321201E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 18px center'
+                  }}
+                >
+                  {availableInstructors.map((inst) => (
+                    <option key={inst.id || inst.name} value={inst.name || inst.id} style={{ color: '#21201E', backgroundColor: '#FFFFFF' }}>
+                      {inst.name || 'All Instructors'}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {/* 3. PILLAR */}
+              {filterData.pillars && filterData.pillars.length > 0 && (
+                <select
+                  value={pillarFilter}
+                  onChange={(e) => setPillarFilter(e.target.value)}
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    padding: '10px 38px 10px 16px',
+                    borderRadius: '999px',
+                    border: pillarFilter ? '1.5px solid #354336' : '1.5px solid rgba(148, 68, 38, 0.25)',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    backgroundColor: pillarFilter ? '#354336' : '#FFFFFF',
+                    color: pillarFilter ? '#FFFFFF' : '#21201E',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+                    transition: 'all 0.2s ease',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    backgroundImage: pillarFilter
+                      ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`
+                      : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2321201E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 18px center'
+                  }}
+                >
+                  {filterData.pillars.map((p) => (
+                    <option key={p.id || p.name} value={p.name || p.id} style={{ color: '#21201E', backgroundColor: '#FFFFFF' }}>
+                      {p.name || 'All Pillars'}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
           </div>
@@ -1008,11 +971,20 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                     const filteredDayItems = displayDayItems.filter((item) => {
                       const itemLevel = ((item as any).levels || (item as any).level || '').toLowerCase();
                       const itemInstructor = ((item as any).instructor || '').toLowerCase();
-                      const itemRoom = ((item as any).room || '').toLowerCase();
+                      const itemRoom = ((item as any).room || (item as any).location || (item as any).studio || '').toLowerCase();
 
                       if (levelFilter !== 'ALL' && levelFilter !== '' && !itemLevel.includes(levelFilter.toLowerCase())) return false;
                       if (instructorFilter !== '' && !itemInstructor.includes(instructorFilter.toLowerCase())) return false;
-                      if (locationFilter !== '' && !itemRoom.includes(locationFilter.toLowerCase())) return false;
+                      if (pillarFilter !== '' && !((item as any).pillar || '').toLowerCase().includes(pillarFilter.toLowerCase())) return false;
+
+                      if (selectedLocations.length < availableLocations.length) {
+                        if (selectedLocations.length === 0) return false;
+                        const match = selectedLocations.some((locName) => {
+                          const lLower = locName.toLowerCase();
+                          return itemRoom.includes(lLower) || lLower.includes(itemRoom);
+                        });
+                        if (!match) return false;
+                      }
                       return true;
                     });
 
@@ -1335,7 +1307,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               lineHeight: 1.12
             }}
           >
-            The{' '}
+            {siteConfig.classesPageConfig?.giftTitle || 'The'}{' '}
             <span
               style={{
                 fontFamily: "var(--font-accent)",
@@ -1343,9 +1315,11 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
                 fontWeight: 400
               }}
             >
-              Gift
-            </span>{' '}
-            of Yoga
+              {siteConfig.classesPageConfig?.giftTitleItalic || 'Gift'}
+            </span>
+            {siteConfig.classesPageConfig?.giftSuffix !== undefined
+              ? (siteConfig.classesPageConfig.giftSuffix ? ` ${siteConfig.classesPageConfig.giftSuffix}` : '')
+              : ' of Yoga'}
           </h2>
           <p
             style={{
@@ -1356,7 +1330,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
               margin: 0
             }}
           >
-            Yoga is more than a physical practice, it's a path toward wellness, balance, and inner peace
+            {siteConfig.classesPageConfig?.giftSubtitle || "Yoga is more than a physical practice, it's a path toward wellness, balance, and inner peace"}
           </p>
         </div>
 
@@ -1368,101 +1342,33 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
             gap: '32px'
           }}
         >
-          {/* Card 1 */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                backgroundColor: '#EAE1D3',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '20px'
-              }}
-            >
-              <Zap size={26} color="#4A4540" />
-            </div>
-            <h3 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: '#21201E', marginBottom: '10px' }}>
-              Physical Strength & Flexibility
-            </h3>
-            <p style={{ fontFamily: "var(--font-sans)", fontSize: '14px', color: '#6B655F', lineHeight: 1.6, margin: 0 }}>
-              Build endurance, improve posture, and move with more ease and confidence.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                backgroundColor: '#EAE1D3',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '20px'
-              }}
-            >
-              <Sparkles size={26} color="#4A4540" />
-            </div>
-            <h3 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: '#21201E', marginBottom: '10px' }}>
-              Mental Clarity
-            </h3>
-            <p style={{ fontFamily: "var(--font-sans)", fontSize: '14px', color: '#6B655F', lineHeight: 1.6, margin: 0 }}>
-              Reduce stress, sharpen focus, and calm the mind through mindful movement and breathwork.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                backgroundColor: '#EAE1D3',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '20px'
-              }}
-            >
-              <Heart size={26} color="#4A4540" />
-            </div>
-            <h3 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: '#21201E', marginBottom: '10px' }}>
-              Emotional Balance
-            </h3>
-            <p style={{ fontFamily: "var(--font-sans)", fontSize: '14px', color: '#6B655F', lineHeight: 1.6, margin: 0 }}>
-              Release tension, manage emotions, and create harmony between body and spirit.
-            </p>
-          </div>
-
-          {/* Card 4 */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                backgroundColor: '#EAE1D3',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '20px'
-              }}
-            >
-              <Users size={26} color="#4A4540" />
-            </div>
-            <h3 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: '#21201E', marginBottom: '10px' }}>
-              Community Connection
-            </h3>
-            <p style={{ fontFamily: "var(--font-sans)", fontSize: '14px', color: '#6B655F', lineHeight: 1.6, margin: 0 }}>
-              Join a welcoming space where like-minded individuals grow and thrive together.
-            </p>
-          </div>
+          {(siteConfig.classesPageConfig?.giftCards || []).map((card, idx) => {
+            const icons = [<Zap size={26} color="#4A4540" />, <Sparkles size={26} color="#4A4540" />, <Heart size={26} color="#4A4540" />, <Users size={26} color="#4A4540" />];
+            return (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <div
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    backgroundColor: '#EAE1D3',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '20px'
+                  }}
+                >
+                  {icons[idx % icons.length]}
+                </div>
+                <h3 style={{ fontFamily: "var(--font-sans)", fontSize: '18px', fontWeight: 700, color: '#21201E', marginBottom: '10px' }}>
+                  {card.title}
+                </h3>
+                <p style={{ fontFamily: "var(--font-sans)", fontSize: '14px', color: '#6B655F', lineHeight: 1.6, margin: 0 }}>
+                  {card.description}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </section>
 
