@@ -313,7 +313,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
         }}
       >
         <div
-          className="classes-header-grid"
+          className="classes-header-grid ultrawide-container"
           style={{
             maxWidth: '1280px',
             margin: '0 auto',
@@ -374,6 +374,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
 
       {/* Main Section 1: 3-Column Vertical Grid Cards (Matching Reference UI) */}
       <section
+        className="ultrawide-container"
         style={{
           maxWidth: '1280px',
           margin: '0 auto',
@@ -575,7 +576,7 @@ export const ClassesPage: React.FC<ClassesPageProps> = ({ onOpenBooking }) => {
           borderBottom: '1px solid rgba(39, 39, 39, 0.08)'
         }}
       >
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto' }} className="ultrawide-container">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 36px auto' }}>
             <span
               style={{

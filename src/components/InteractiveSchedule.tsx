@@ -287,6 +287,7 @@ export const InteractiveSchedule: React.FC<InteractiveScheduleProps> = ({ onOpen
       }}
     >
       <div
+        className="ultrawide-container"
         style={{
           maxWidth: '1280px',
           margin: '0 auto',
