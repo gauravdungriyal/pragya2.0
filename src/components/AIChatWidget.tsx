@@ -79,6 +79,17 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({ onOpenFullPage, onOp
     return () => clearTimeout(timer);
   }, []);
 
+  // Listen for global open chat widget event (e.g. when AI Assistant is clicked)
+  useEffect(() => {
+    const handleOpenChatWidget = () => {
+      setIsOpen(true);
+    };
+    window.addEventListener('pragya-open-chat-widget', handleOpenChatWidget);
+    return () => {
+      window.removeEventListener('pragya-open-chat-widget', handleOpenChatWidget);
+    };
+  }, []);
+
   const handleSend = async (textToSend?: string) => {
     const query = (textToSend || input).trim();
     if (!query || loading) return;

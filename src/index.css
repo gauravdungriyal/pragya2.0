@@ -946,6 +946,206 @@ header .reveal-on-scroll {
   }
 }
 
+/* ==========================================================================
+   SCHEDULER & CLASSES PAGE MOBILE RESPONSIVE ENHANCEMENTS
+   ========================================================================== */
+
+/* 1. Daily View Card Responsive Layout */
+.sch-daily-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 32px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+/* Center align filter controls bar & dropdown pills on Desktop */
+.sch-control-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+  margin-bottom: 36px;
+}
+
+.sch-filter-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  /* Class Finder Banner Mobile Padding */
+  .class-finder-banner-btn {
+    padding: 10px 14px !important;
+    gap: 8px !important;
+    border-radius: 18px !important;
+  }
+
+  .class-finder-action-pill {
+    padding: 8px 16px !important;
+    font-size: 11.5px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Hide Weekly view toggle pill on mobile */
+  .sch-view-toggle-pill {
+    display: none !important;
+  }
+
+  /* Ultra-Compact Container List Gap */
+  .classes-live-sch-list {
+    gap: 8px !important;
+  }
+
+  /* Ultra-Compact Horizontal Single-Row Daily Card Layout on Mobile */
+  .sch-daily-card {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+    border-radius: 12px !important;
+    border-left-width: 4px !important;
+  }
+
+  /* Compact Time Column (Left) */
+  .sch-daily-time-col {
+    min-width: 58px !important;
+    max-width: 72px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .sch-daily-time-col > div:first-child {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    color: #21201e !important;
+  }
+
+  .sch-daily-time-col > div:last-child {
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    color: #7a756f !important;
+    margin-top: 1px !important;
+  }
+
+  /* Compact Details Column (Middle) */
+  .sch-daily-details-col {
+    flex-grow: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .sch-daily-meta-row {
+    gap: 4px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .sch-level-badge {
+    font-size: 9px !important;
+    padding: 1px 6px !important;
+    border-radius: 4px !important;
+  }
+
+  .sch-room-tag {
+    font-size: 10px !important;
+  }
+
+  .sch-class-title {
+    font-size: 13.5px !important;
+    margin-bottom: 1px !important;
+    line-height: 1.25 !important;
+    font-weight: 700 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .sch-guided-by {
+    display: none !important; /* Hides "Guided by" text on mobile to save horizontal width! */
+  }
+
+  .sch-instructor-text {
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Compact Circular Icon Book Button Column (Right) */
+  .sch-daily-action-col {
+    min-width: 32px !important;
+    width: auto !important;
+    text-align: right !important;
+    flex-shrink: 0 !important;
+  }
+
+  .sch-daily-book-btn {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #21201E !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  /* Filters Row 2x2 Grid on Mobile */
+  .sch-filter-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .sch-filter-select {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 12px !important;
+    padding: 8px 30px 8px 12px !important;
+  }
+
+  /* Control bar flex direction */
+  .sch-control-bar {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 14px !important;
+  }
+
+  /* Date pill responsive padding */
+  .sch-date-pill {
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    gap: 6px !important;
+    max-width: 100% !important;
+  }
+}
+
+
 
 
 

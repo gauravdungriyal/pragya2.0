@@ -138,7 +138,8 @@ export const Header: React.FC<HeaderProps> = ({
       if (onViewChange) onViewChange('events');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item.label === 'AI Assistant' || item.id === 'ai-assistant') {
-      if (onViewChange) onViewChange('ai-assistant');
+      if (onViewChange) onViewChange('home');
+      window.dispatchEvent(new CustomEvent('pragya-open-chat-widget'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item.label === 'Home') {
       if (onViewChange) onViewChange('home');

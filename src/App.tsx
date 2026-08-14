@@ -265,6 +265,11 @@ export const App: React.FC = () => {
     }, 220);
   };
 
+  const handleOpenAIChat = useCallback(() => {
+    handleViewChange('home');
+    window.dispatchEvent(new CustomEvent('pragya-open-chat-widget'));
+  }, []);
+
   const handleNavigateSection = (sectionId: string) => {
     if (sectionId === 'membership-regular' || sectionId === 'regular') {
       setMembershipCategory('Regular');
@@ -415,6 +420,7 @@ export const App: React.FC = () => {
           <ClassesPage
             onOpenBooking={handleOpenBooking}
             onNavigateSection={handleNavigateSection}
+            onOpenChat={handleOpenAIChat}
           />
         ) : currentView === 'teachers' ? (
           <TeachersPage

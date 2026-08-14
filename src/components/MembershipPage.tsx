@@ -5,6 +5,7 @@ import { PackageItem, BundleItem, DailyQuote } from '../types';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
+import { MembershipFinderWidget } from './MembershipFinderWidget';
 
 interface MembershipPageProps {
   onOpenBooking: (type?: string, title?: string, details?: any) => void;
@@ -37,118 +38,6 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
     }
   }, [initialCategory]);
 
-  // Fallback high quality packages
-  const fallbackPackages: Record<string, PackageItem[]> = {
-    "Unlimited Memberships": [
-      {
-        id: 101,
-        packageID: "MEM-UNLIM-1M",
-        title: "Sanctuary Unlimited Monthly",
-        payment_type: 1,
-        amount: 280,
-        frequency: 1,
-        period: "month",
-        duration_type: 2,
-        duration_length: 1,
-        category: "Membership",
-        description: "Unlimited access to all studio yoga, pilates, and meditation classes with exclusive luxury sanctuary amenities.",
-        features: [
-          "Unlimited Mat & Reformer Classes",
-          "Complimentary Hydrotherapy Access",
-          "1 Monthly Private 1-on-1 Session",
-          "15% Off Workshops & Retreats",
-          "2 Complimentary Guest Passes / Month"
-        ]
-      },
-      {
-        id: 102,
-        packageID: "MEM-ANNUAL",
-        title: "Pragya Master Annual Pass",
-        payment_type: 1,
-        amount: 2600,
-        discount_type: "fixed",
-        discount: "400",
-        discount_remarks: "Annual Savings",
-        frequency: 12,
-        period: "year",
-        duration_type: 2,
-        duration_length: 12,
-        category: "Membership",
-        description: "Complete 1-year unlimited access with VIP perks, free private alignment sessions, and priority workshop seats.",
-        features: [
-          "Full 365 Days Unlimited Class Access",
-          "4 Complimentary Private Alignment Sessions",
-          "Free Mat Storage & Laundry Service",
-          "Unlimited Hydrotherapy & Sauna Privileges",
-          "VIP Invitation to All Studio Retreats"
-        ]
-      }
-    ],
-    "Private Sessions": [
-      {
-        id: 12795,
-        packageID: "PRIV-HEALTH-1",
-        title: "1-on-1 Health Consult with Master Faculty",
-        payment_type: 2,
-        amount: 150,
-        frequency: 1,
-        period: "session",
-        duration_type: 1,
-        duration_length: 1,
-        category: "Private",
-        description: "Personalized 90-minute bio-individual health, postural, and yogic science consultation.",
-        features: [
-          "Comprehensive Postural & Bio-Analysis",
-          "Customized Daily Asana & Pranayama Plan",
-          "Ayurvedic Lifestyle Assessment",
-          "Direct Q&A with Master Teacher"
-        ]
-      },
-      {
-        id: 12796,
-        packageID: "PRIV-5PACK",
-        title: "Private Movement & Sound Immersion (5 Sessions)",
-        payment_type: 2,
-        amount: 650,
-        discount_type: "bundle",
-        discount: "100",
-        frequency: 5,
-        period: "package",
-        duration_type: 1,
-        duration_length: 5,
-        category: "Private",
-        description: "Five dedicated 75-minute sessions tailored to your physical goals, injury recovery, or advanced practice.",
-        features: [
-          "1-on-1 Asana Alignment & Modification",
-          "Personalized Sound & Breathwork Reset",
-          "Flexible Schedule Priority Booking",
-          "Private Sanctuary Suite Access"
-        ]
-      }
-    ],
-    "Class Packs": [
-      {
-        id: 201,
-        packageID: "PACK-10",
-        title: "10-Class Sanctuary Pass",
-        payment_type: 1,
-        amount: 220,
-        frequency: 10,
-        period: "3 months",
-        duration_type: 1,
-        duration_length: 10,
-        category: "Group",
-        description: "Flexible class pack valid for all morning, afternoon, and evening group sessions.",
-        features: [
-          "Valid for 3 Full Months",
-          "Shareable with 1 Friend or Family Member",
-          "Priority Waitlist Elevation",
-          "Full Mat & Prop Amenities Included"
-        ]
-      }
-    ]
-  };
-
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -162,10 +51,8 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
       getBundleList(user?.access_token).catch(() => []),
     ]).then(([pkgData, bundles]) => {
       if (!isMounted) return;
-      if (pkgData && typeof pkgData === 'object' && Object.keys(pkgData).length > 0) {
+      if (pkgData && typeof pkgData === 'object') {
         setPackagesData(pkgData as Record<string, PackageItem[]>);
-      } else {
-        setPackagesData(fallbackPackages);
       }
 
       if (Array.isArray(bundles) && bundles.length > 0) {
@@ -343,6 +230,26 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
         </div>
       </section>
 
+      {/* Interactive Membership Finder Widget */}
+      <section style={{ width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <MembershipFinderWidget
+          onSelectUnlimited={() => {
+            setActiveCategory('Unlimited Memberships');
+            const el = document.getElementById('packages-grid');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          onExploreFlexible={() => {
+            setActiveCategory('ALL');
+            const el = document.getElementById('packages-grid');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        />
+      </section>
+
       {/* Why Explore Our Packages Section (Matches Reference Design & Editable via Admin) */}
       <section
         style={{
@@ -388,6 +295,7 @@ export const MembershipPage: React.FC<MembershipPageProps> = ({
 
       {/* Main Packages & Filter Section */}
       <section
+        id="packages-grid"
         className="membership-main-section"
         style={{
           maxWidth: '1280px',
