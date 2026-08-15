@@ -1145,6 +1145,30 @@ header .reveal-on-scroll {
   }
 }
 
+/* ==========================================================================
+   PRODUCT DETAIL PAGE — FLIPKART/MYNTRA MOBILE RESPONSIVE STYLES
+   ========================================================================== */
+@media (max-width: 768px) {
+  .pdp-desktop-gallery {
+    display: none !important;
+  }
+  .pdp-mobile-carousel {
+    display: block !important;
+  }
+  .pdp-main-container {
+    padding: 16px 16px 40px 16px !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .pdp-desktop-gallery {
+    display: block !important;
+  }
+  .pdp-mobile-carousel {
+    display: none !important;
+  }
+}
+
 
 
 

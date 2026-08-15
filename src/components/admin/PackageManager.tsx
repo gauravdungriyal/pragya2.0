@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Calendar, Star, Layers, ShoppingBag, ShieldCheck, Tag } from 'lucide-react';
-import { DynamicPackage, UpcomingEvent, BundleItem, MerchandiseItem } from '../../types';
-import { getMerchandiseItems } from '../../services/api';
+import { Package, Calendar, Star, Layers, ShoppingBag, ShieldCheck, Tag, Plus, Trash2, X, Check } from 'lucide-react';
+import { DynamicPackage, UpcomingEvent, BundleItem, MerchandiseItem, MerchandiseCategory } from '../../types';
+import { getMerchandiseItems, saveMerchandiseItem, deleteMerchandiseItem } from '../../services/api';
 
 interface PackageManagerProps {
   packages: DynamicPackage[];
@@ -18,6 +18,16 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [merchandiseItems, setMerchandiseItems] = useState<MerchandiseItem[]>([]);
   const [isLoadingMerch, setIsLoadingMerch] = useState(false);
+
+  // New Product Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newProdTitle, setNewProdTitle] = useState('');
+  const [newProdCategory, setNewProdCategory] = useState<MerchandiseCategory>('apparel');
+  const [newProdPrice, setNewProdPrice] = useState('');
+  const [newProdImage, setNewProdImage] = useState('');
+  const [newProdBadge, setNewProdBadge] = useState('');
+  const [newProdDesc, setNewProdDesc] = useState('');
+  const [isSubmittingProd, setIsSubmittingProd] = useState(false);
 
   useEffect(() => {
     const fetchMerch = async () => {
@@ -256,10 +266,41 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 2: STORE MERCHANDISE CATALOG VIEWER */}
+      {/* TAB 2: STORE MERCHANDISE CATALOG VIEWER & MANAGER */}
       {/* ───────────────────────────────────────────────────────────── */}
       {subTab === 'merchandise' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Header Action Bar for Merchandise Manager */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1C1917', margin: 0 }}>
+                Store Merchandise Catalog ({merchandiseItems.length})
+              </h3>
+              <p style={{ fontSize: '12.5px', color: '#78716C', margin: '4px 0 0 0' }}>
+                Add and manage live products displayed on your website shop catalog.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              style={{
+                padding: '10px 20px',
+                borderRadius: '12px',
+                backgroundColor: '#944426',
+                color: '#FFFFFF',
+                fontSize: '13px',
+                fontWeight: 800,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(148,68,38,0.25)'
+              }}
+            >
+              <Plus className="w-4 h-4" /> Add New Product
+            </button>
+          </div>
+
           {isLoadingMerch ? (
             <div style={{ padding: '40px', textAlign: 'center', color: '#78716C', fontWeight: 700 }}>Fetching Store Merchandise from API...</div>
           ) : (
@@ -285,9 +326,23 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
                       <span style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 12px', borderRadius: '999px', backgroundColor: '#FEF3C7', color: '#78350F', border: '1px solid #FDE68A' }}>
                         {item.category.toUpperCase()}
                       </span>
-                      <span style={{ fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '999px', backgroundColor: item.isActive ? '#ECFDF5' : '#FEF2F2', color: item.isActive ? '#065F46' : '#991B1B', border: item.isActive ? '1px solid #A7F3D0' : '1px solid #FECDD3' }}>
-                        {item.isActive ? 'In Stock' : 'Out of Stock'}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '999px', backgroundColor: item.isActive ? '#ECFDF5' : '#FEF2F2', color: item.isActive ? '#065F46' : '#991B1B', border: item.isActive ? '1px solid #A7F3D0' : '1px solid #FECDD3' }}>
+                          {item.isActive ? 'In Stock' : 'Out of Stock'}
+                        </span>
+                        <button
+                          onClick={async () => {
+                            if (window.confirm(`Delete product "${item.title}"?`)) {
+                              const updated = await deleteMerchandiseItem(item.id);
+                              setMerchandiseItems(updated);
+                            }
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px' }}
+                          title="Delete Product"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div style={{ height: '140px', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#FAF7F2' }}>
@@ -319,6 +374,144 @@ export const PackageManager: React.FC<PackageManagerProps> = ({
 
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Add Product Modal Overlay */}
+          {isAddModalOpen && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', maxWidth: '520px', width: '100%', padding: '28px', boxShadow: '0 20px 50px rgba(0,0,0,0.2)', border: '1px solid #E7E5E4' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1C1917', margin: 0 }}>Add New Merchandise Product</h3>
+                  <button onClick={() => setIsAddModalOpen(false)} style={{ background: 'none', border: 'none', color: '#78716C', cursor: 'pointer' }}>
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!newProdTitle || !newProdPrice) return;
+                    setIsSubmittingProd(true);
+                    const newProd: MerchandiseItem = {
+                      id: 'MERCH-' + Date.now(),
+                      title: newProdTitle,
+                      category: newProdCategory,
+                      price: parseFloat(newProdPrice),
+                      currency: 'HK$',
+                      image: newProdImage || 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1000&q=80',
+                      badge: newProdBadge || undefined,
+                      badgeColor: 'amber',
+                      description: newProdDesc || 'Premium yogic lifestyle merchandise product.',
+                      isActive: true,
+                      stockStatus: 'In Stock'
+                    };
+
+                    const updated = await saveMerchandiseItem(newProd);
+                    setMerchandiseItems(updated);
+                    setIsSubmittingProd(false);
+                    setIsAddModalOpen(false);
+                    setNewProdTitle('');
+                    setNewProdPrice('');
+                    setNewProdImage('');
+                    setNewProdBadge('');
+                    setNewProdDesc('');
+                  }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+                >
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#44403C', display: 'block', marginBottom: '6px' }}>Product Title *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newProdTitle}
+                      onChange={(e) => setNewProdTitle(e.target.value)}
+                      placeholder="e.g. Eco-Cork Yoga Block Set"
+                      style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#44403C', display: 'block', marginBottom: '6px' }}>Category *</label>
+                      <select
+                        value={newProdCategory}
+                        onChange={(e) => setNewProdCategory(e.target.value as MerchandiseCategory)}
+                        style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13px', outline: 'none', backgroundColor: '#FFFFFF' }}
+                      >
+                        <option value="apparel">Apparel & Wear</option>
+                        <option value="mats">Mats & Bags</option>
+                        <option value="wellness">Wellness & Oils</option>
+                        <option value="meditation">Meditation</option>
+                        <option value="props">Blocks & Props</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#44403C', display: 'block', marginBottom: '6px' }}>Price (HK$) *</label>
+                      <input
+                        type="number"
+                        required
+                        step="0.01"
+                        value={newProdPrice}
+                        onChange={(e) => setNewProdPrice(e.target.value)}
+                        placeholder="420"
+                        style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#44403C', display: 'block', marginBottom: '6px' }}>Image URL</label>
+                    <input
+                      type="url"
+                      value={newProdImage}
+                      onChange={(e) => setNewProdImage(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#44403C', display: 'block', marginBottom: '6px' }}>Badge (Optional)</label>
+                    <input
+                      type="text"
+                      value={newProdBadge}
+                      onChange={(e) => setNewProdBadge(e.target.value)}
+                      placeholder="e.g. 100% Organic Cork"
+                      style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#44403C', display: 'block', marginBottom: '6px' }}>Description</label>
+                    <textarea
+                      rows={3}
+                      value={newProdDesc}
+                      onChange={(e) => setNewProdDesc(e.target.value)}
+                      placeholder="Product details & material specifications..."
+                      style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13px', outline: 'none', resize: 'vertical' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddModalOpen(false)}
+                      style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #D6D3D1', backgroundColor: '#FFFFFF', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingProd}
+                      style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: '#944426', color: '#FFFFFF', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    >
+                      <Check className="w-4 h-4" /> Save Product
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
         </div>

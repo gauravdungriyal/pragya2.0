@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { fetchFormData } from '../services/api';
+import { fetchFormData, initPaymentAsiaSession } from '../services/api';
 import { API_BASE_URL } from '../config/apiConfig';
 
 interface CartDrawerProps {
@@ -14,14 +14,14 @@ interface CartDrawerProps {
 }
 
 type CheckoutStep = 'cart' | 'checkout' | 'guest-otp' | 'bank-upload' | 'success';
-type PaymentMethod = 'online' | 'bank' | 'reserve_desk';
+type PaymentMethod = 'payment_asia' | 'online' | 'bank' | 'reserve_desk';
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenCartPage }) => {
   const { items, cartCount, subtotal, isCartOpen, closeCart, removeFromCart, updateQuantity, clearCart } = useCart();
   const { user, authFetch, setSessionTokens } = useAuth();
 
   const [step, setStep] = useState<CheckoutStep>('cart');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('online');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('payment_asia');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -70,6 +70,32 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenCartPage }) => {
     setError('');
     setLoading(true);
     try {
+      if (paymentMethod === 'payment_asia') {
+        const paRes = await initPaymentAsiaSession({
+          customer_name: user ? user.name : (guestName || 'Guest'),
+          customer_email: user ? user.email : guestEmail,
+          customer_phone: guestPhone || '',
+          items: items.map(i => ({ id: String(i.id), name: i.title, price: i.price, quantity: i.quantity })),
+        });
+
+        if (paRes.success && paRes.payment_asia) {
+          setSuccessMsg(`Order ${paRes.order_number} initialized! Redirecting to Payment Asia...`);
+          setStep('success');
+          clearCart();
+          setTimeout(() => {
+            if (paRes.payment_asia?.checkout_url) {
+              window.location.href = paRes.payment_asia.checkout_url;
+            }
+          }, 1200);
+          setLoading(false);
+          return;
+        } else {
+          setError(paRes.message || 'Payment Asia checkout initialization failed.');
+          setLoading(false);
+          return;
+        }
+      }
+
       let res: any;
       if (user) {
         res = await authFetch('reserve_bundle', {
@@ -103,19 +129,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenCartPage }) => {
             refresh_token: res.refresh_token || '',
           });
         }
-        if (paymentMethod === 'bank') {
-          setSuccessMsg('Cart reservation submitted! Please upload your payment receipt below.');
-          setStep('bank-upload');
-        } else {
-          setSuccessMsg(res.message || 'Your cart reservation has been confirmed! Our sanctuary team will reach out.');
-          setStep('success');
-          clearCart();
-        }
+        setSuccessMsg(res.message || 'Your cart reservation has been confirmed!');
+        setStep('success');
+        clearCart();
       } else {
         let msg = res?.errors?.isEmpty || res?.message || 'Checkout failed. Please try again.';
-        if (msg === 'Please Try Again') {
-          msg = 'One of the items in your cart is unavailable for reservation. Please review your cart.';
-        }
         setError(msg);
       }
     } catch {
@@ -318,22 +336,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenCartPage }) => {
                 <div className="space-y-2.5">
                   {([
                     {
-                      key: 'online' as PaymentMethod,
+                      key: 'payment_asia' as PaymentMethod,
                       icon: <CreditCard className="w-4 h-4" />,
-                      title: 'Credit Card / Online Checkout',
-                      desc: 'Pay via Stripe · PayMe · Gateway',
-                    },
-                    {
-                      key: 'bank' as PaymentMethod,
-                      icon: <Upload className="w-4 h-4" />,
-                      title: 'Bank Transfer / FPS Upload',
-                      desc: 'Upload receipt for billing verification',
-                    },
-                    {
-                      key: 'reserve_desk' as PaymentMethod,
-                      icon: <ShieldCheck className="w-4 h-4" />,
-                      title: 'Reserve Cart & Pay at Studio',
-                      desc: 'Hold space, complete payment at desk',
+                      title: 'Payment Asia Secure Gateway',
+                      desc: 'Visa · Mastercard · FPS · WeChat Pay · Alipay · UnionPay',
                     },
                   ] as const).map((opt) => {
                     const sel = paymentMethod === opt.key;

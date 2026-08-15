@@ -610,31 +610,33 @@ export const CartPage: React.FC<CartPageProps> = ({ onViewChange }) => {
 
           {/* Top banners */}
           <div style={{ marginBottom: 28 }}>
-            {/* Returning customer */}
-            <div style={{ border: '1px solid #e2dbd3', borderRadius: 2, padding: '12px 18px', marginBottom: 8, background: '#fff', fontSize: 13, color: '#555' }}>
-              <button
-                type="button"
-                onClick={() => setShowLoginAccordion(!showLoginAccordion)}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 13, color: '#555' }}
-              >
-                <span>
-                  Returning customer?{' '}
-                  <span style={{ color: '#944426', fontWeight: 600 }}>Click here to login</span>
-                </span>
-                {showLoginAccordion ? <ChevronUp style={{ width: 14, height: 14, color: '#999' }} /> : <ChevronDown style={{ width: 14, height: 14, color: '#999' }} />}
-              </button>
-              {showLoginAccordion && (
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e8e2db' }}>
-                  <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new CustomEvent('pragya-open-auth'))}
-                    style={{ padding: '8px 18px', background: '#272727', color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', borderRadius: 2, cursor: 'pointer' }}
-                  >
-                    Open Login
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Returning customer (Only show when NOT logged in) */}
+            {!user && (
+              <div style={{ border: '1px solid #e2dbd3', borderRadius: 2, padding: '12px 18px', marginBottom: 8, background: '#fff', fontSize: 13, color: '#555' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowLoginAccordion(!showLoginAccordion)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 13, color: '#555' }}
+                >
+                  <span>
+                    Returning customer?{' '}
+                    <span style={{ color: '#944426', fontWeight: 600 }}>Click here to login</span>
+                  </span>
+                  {showLoginAccordion ? <ChevronUp style={{ width: 14, height: 14, color: '#999' }} /> : <ChevronDown style={{ width: 14, height: 14, color: '#999' }} />}
+                </button>
+                {showLoginAccordion && (
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e8e2db' }}>
+                    <button
+                      type="button"
+                      onClick={() => window.dispatchEvent(new CustomEvent('pragya-open-auth'))}
+                      style={{ padding: '8px 18px', background: '#272727', color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                    >
+                      Open Login
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Coupon */}
             <div style={{ border: '1px solid #e2dbd3', borderRadius: 2, padding: '12px 18px', background: '#fff', fontSize: 13, color: '#555' }}>

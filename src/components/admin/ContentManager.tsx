@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Save, Sparkles, Image as ImageIcon, MapPin, Check, Plus, Trash2, Loader2, Calendar,
   Ticket, Shield, Globe, Info, RefreshCw, Layers, Award, BookOpen, User, Eye, ArrowRight,
-  Dumbbell, Heart, Command
+  Dumbbell, Heart, Command, X, Edit3, Edit
 } from 'lucide-react';
 import {
   getSiteConfig,
@@ -13,16 +13,31 @@ import {
   StudioLocation,
   NavbarVisibilityConfig
 } from '../../services/siteConfig';
-import { getUpcomingEvents } from '../../services/api';
-import { UpcomingEvent } from '../../types';
+import { getUpcomingEvents, getMerchandiseItems, saveMerchandiseItem, deleteMerchandiseItem } from '../../services/api';
+import { UpcomingEvent, MerchandiseItem, MerchandiseCategory } from '../../types';
+import { AddProductPage } from './AddProductPage';
 
 export const ContentManager: React.FC = () => {
   const [selectedPage, setSelectedPage] = useState<'home' | 'about' | 'shop' | 'events' | 'classes' | 'teachers' | 'membership'>('home');
+  const [shopSubView, setShopSubView] = useState<'list' | 'add-product'>('list');
+  const [editingProduct, setEditingProduct] = useState<MerchandiseItem | null>(null);
   const [config, setConfig] = useState<SiteConfig>(getSiteConfig());
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [allEvents, setAllEvents] = useState<UpcomingEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+
+  // Merchandise Store State for Shop tab
+  const [merchandiseItems, setMerchandiseItems] = useState<MerchandiseItem[]>([]);
+  const [isLoadingMerch, setIsLoadingMerch] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newProdTitle, setNewProdTitle] = useState('');
+  const [newProdCategory, setNewProdCategory] = useState<MerchandiseCategory>('apparel');
+  const [newProdPrice, setNewProdPrice] = useState('');
+  const [newProdImage, setNewProdImage] = useState('');
+  const [newProdBadge, setNewProdBadge] = useState('');
+  const [newProdDesc, setNewProdDesc] = useState('');
+  const [isSubmittingProd, setIsSubmittingProd] = useState(false);
 
   useEffect(() => {
     fetchSiteConfigFromFirebase().then((liveConfig) => {
@@ -37,6 +52,14 @@ export const ContentManager: React.FC = () => {
         setAllEvents(eventsData);
       }
       setIsLoadingEvents(false);
+    });
+
+    setIsLoadingMerch(true);
+    getMerchandiseItems().then((itemsData) => {
+      if (itemsData && itemsData.length > 0) {
+        setMerchandiseItems(itemsData);
+      }
+      setIsLoadingMerch(false);
     });
   }, []);
 
@@ -1517,7 +1540,21 @@ export const ContentManager: React.FC = () => {
 
           {/* ════════════════════ PAGE: SHOP ════════════════════ */}
           {selectedPage === 'shop' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+            shopSubView === 'add-product' ? (
+              <AddProductPage
+                initialData={editingProduct}
+                onBack={() => {
+                  setEditingProduct(null);
+                  setShopSubView('list');
+                }}
+                onProductSaved={(updatedItems) => {
+                  setMerchandiseItems(updatedItems);
+                  setEditingProduct(null);
+                  setShopSubView('list');
+                }}
+              />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
               <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
                 <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
@@ -1631,21 +1668,116 @@ export const ContentManager: React.FC = () => {
                 </div>
               </div>
 
-              {/* API Notice for Products */}
-              <div style={{ border: '1.5px dashed #D6D3D1', borderRadius: '14px', padding: '24px', backgroundColor: '#FAFAF9', textAlign: 'center' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '20px', backgroundColor: '#E0F2FE', color: '#0369A1', fontSize: '12px', fontWeight: 700, marginBottom: '10px' }}>
-                  ⚡ API-Driven Content
-                </div>
-                <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 6px 0' }}>
-                  Merchandise Catalog Items Grid
-                </h4>
-                <p style={{ fontSize: '13.5px', color: '#78716C', margin: '0 auto', maxWidth: '540px' }}>
-                  All product items, pricing, inventory, and brand categories are fetched live from the backend API database. To add, edit, or remove products, use the <strong>Merchandise Manager</strong> in the admin sidebar.
-                </p>
-              </div>
+              {/* Section 2: Store Merchandise Products Catalog & Manager */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+                  <div>
+                    <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                      Section 2
+                    </span>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 2px 0' }}>
+                      Live Store Products & Merchandise Catalog ({merchandiseItems.length})
+                    </h3>
+                    <p style={{ fontSize: '12.5px', color: '#78716C', margin: 0 }}>
+                      Add new products, edit pricing, or remove items displayed on your store page catalog.
+                    </p>
+                  </div>
 
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingProduct(null);
+                      setShopSubView('add-product');
+                    }}
+                    style={{
+                      padding: '10px 20px',
+                      borderRadius: '12px',
+                      backgroundColor: '#944426',
+                      color: '#FFFFFF',
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 2px 8px rgba(148,68,38,0.25)'
+                    }}
+                  >
+                    <Plus className="w-4 h-4" /> Add New Product
+                  </button>
+                </div>
+
+                {isLoadingMerch ? (
+                  <div style={{ padding: '30px', textAlign: 'center', color: '#78716C', fontWeight: 700 }}>Loading Store Merchandise Catalog...</div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+                    {merchandiseItems.map((item) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          backgroundColor: '#FAF7F2',
+                          border: '1px solid #E7E5E4',
+                          borderRadius: '16px',
+                          padding: '18px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: '14px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: '10.5px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '3px 9px', borderRadius: '6px', backgroundColor: '#FEF3C7', color: '#78350F' }}>
+                              {item.category.toUpperCase()}
+                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingProduct(item);
+                                  setShopSubView('add-product');
+                                }}
+                                style={{ background: 'none', border: 'none', color: '#944426', cursor: 'pointer', padding: '2px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700 }}
+                                title="Edit Product"
+                              >
+                                <Edit3 className="w-4 h-4" /> Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (window.confirm(`Delete product "${item.title}"?`)) {
+                                    const updated = await deleteMerchandiseItem(item.id);
+                                    setMerchandiseItems(updated);
+                                  }
+                                }}
+                                style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '2px' }}
+                                title="Delete Product"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div style={{ height: '110px', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#FFFFFF' }}>
+                            <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+
+                          <div>
+                            <h4 style={{ fontWeight: 800, color: '#1C1917', fontSize: '14.5px', margin: '0 0 2px 0', lineHeight: 1.3 }}>{item.title}</h4>
+                            <span style={{ fontSize: '14px', fontWeight: 900, color: '#944426' }}>
+                              {item.currency || 'HK$'} {item.price}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          )
+        )}
 
           {/* ════════════════════ PAGE: EVENTS ════════════════════ */}
           {selectedPage === 'events' && (

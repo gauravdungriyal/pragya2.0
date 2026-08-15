@@ -2,20 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ShoppingBag, Star, CheckCircle, Eye, X, Search, Filter,
-  RotateCcw, SlidersHorizontal, Check, ArrowRight, Sparkles, TrendingUp
+  RotateCcw, SlidersHorizontal, Check, ArrowRight, Sparkles, TrendingUp, Package
 } from 'lucide-react';
 import { MerchandiseItem } from '../types';
 import { getMerchandiseItems } from '../services/api';
 import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
+import { useCart } from '../context/CartContext';
 
 interface MerchandiseStorePageProps {
   onBackToHome?: () => void;
+  onSelectProduct?: (product: MerchandiseItem) => void;
 }
 
-export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBackToHome }) => {
+export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBackToHome, onSelectProduct }) => {
+  const { addToCart } = useCart();
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [items, setItems] = useState<MerchandiseItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const handleAddToCart = (item: MerchandiseItem) => {
+    addToCart({
+      id: item.id,
+      title: item.name || item.title || 'Yogic Merchandise',
+      price: item.price,
+      originalPrice: item.discountPrice || undefined,
+      category: item.category,
+      type: 'merchandise',
+      coverImage: item.image,
+    });
+  };
 
   useEffect(() => {
     return subscribeSiteConfig(setSiteConfig);
@@ -605,7 +620,26 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
 
         {/* PRODUCT CARDS CATALOG GRID */}
         <main>
-          {filteredItems.length === 0 ? (
+          {items.length === 0 ? (
+            <div
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '20px',
+                border: '1px dashed #D6D3D1',
+                padding: '60px 20px',
+                textAlign: 'center',
+                color: '#78716C'
+              }}
+            >
+              <Package size={36} color="#944426" style={{ margin: '0 auto 12px auto' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 8px 0', color: '#1C1917' }}>
+                Store Catalog is Currently Empty
+              </h3>
+              <p style={{ fontSize: '13.5px', margin: '0 0 8px 0', color: '#57534E' }}>
+                All previous items have been cleared. You can start adding fresh products anytime from the Admin Panel.
+              </p>
+            </div>
+          ) : filteredItems.length === 0 ? (
             <div
               style={{
                 backgroundColor: '#FFFFFF',
@@ -673,12 +707,14 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                     <div>
                       {/* Product Image Wrapper with Badges & Rating Overlay */}
                       <div
+                        onClick={() => onSelectProduct ? onSelectProduct(item) : setSelectedProduct(item)}
                         style={{
                           position: 'relative',
                           width: '100%',
                           aspectRatio: '1 / 1',
                           backgroundColor: '#FAF7F2',
-                          overflow: 'hidden'
+                          overflow: 'hidden',
+                          cursor: 'pointer'
                         }}
                       >
                         <img
@@ -808,7 +844,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                       }}
                     >
                       <button
-                        onClick={() => setSelectedProduct(item)}
+                        onClick={() => onSelectProduct ? onSelectProduct(item) : setSelectedProduct(item)}
                         style={{
                           padding: '8px 10px',
                           borderRadius: '8px',
@@ -829,24 +865,26 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                       </button>
 
                       <button
-                        onClick={() => handleWhatsAppOrder(item)}
+                        onClick={() => handleAddToCart(item)}
+                        disabled={item.stockStatus === 'Out of Stock'}
                         style={{
                           padding: '8px 10px',
                           borderRadius: '8px',
                           border: 'none',
-                          backgroundColor: '#1C1917',
+                          backgroundColor: item.stockStatus === 'Out of Stock' ? '#9CA3AF' : '#944426',
                           color: '#FFFFFF',
                           fontSize: '11.5px',
                           fontWeight: 800,
-                          cursor: 'pointer',
+                          cursor: item.stockStatus === 'Out of Stock' ? 'not-allowed' : 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '4px',
-                          transition: 'all 0.2s ease'
+                          transition: 'all 0.2s ease',
+                          boxShadow: item.stockStatus === 'Out of Stock' ? 'none' : '0 2px 6px rgba(148, 68, 38, 0.25)'
                         }}
                       >
-                        <ShoppingBag size={13} /> Order
+                        <ShoppingBag size={13} /> {item.stockStatus === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
                       </button>
                     </div>
                   </div>
@@ -1002,13 +1040,13 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
 
                 <button
                   onClick={() => {
-                    handleWhatsAppOrder(selectedProduct);
+                    handleAddToCart(selectedProduct);
                     setSelectedProduct(null);
                   }}
                   style={{
                     width: '100%',
                     padding: '14px',
-                    backgroundColor: '#1C1917',
+                    backgroundColor: '#944426',
                     color: '#FFFFFF',
                     borderRadius: '12px',
                     border: 'none',
@@ -1019,10 +1057,10 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '8px',
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
+                    boxShadow: '0 4px 14px rgba(148, 68, 38, 0.25)'
                   }}
                 >
-                  <ShoppingBag size={16} /> Order via WhatsApp / Inquiry
+                  <ShoppingBag size={16} /> Add to Cart & Checkout
                 </button>
               </div>
             </div>

@@ -31,13 +31,14 @@ import { GuestBookingModal } from './components/GuestBookingModal';
 import { CartPage } from './components/CartPage';
 import { PolicyPage } from './components/PolicyPage';
 import { MerchandiseStorePage } from './components/MerchandiseStorePage';
+import { ProductDetailPage } from './components/ProductDetailPage';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLogin } from './components/admin/AdminLogin';
-import { Instructor, UpcomingEvent, DynamicPackage } from './types';
+import { Instructor, UpcomingEvent, DynamicPackage, MerchandiseItem } from './types';
 import { fetchSiteConfigFromFirebase } from './services/siteConfig';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'merchandise' | 'ai-assistant' | 'cart' | 'policy' | 'admin'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'merchandise' | 'product-detail' | 'ai-assistant' | 'cart' | 'policy' | 'admin'>('home');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('pragya_admin_auth') === 'true';
   });
@@ -85,11 +86,18 @@ export const App: React.FC = () => {
   const [selectedTeacherForPage, setSelectedTeacherForPage] = useState<Instructor | null>(null);
   const [selectedEventForPage, setSelectedEventForPage] = useState<UpcomingEvent | null>(null);
   const [selectedPackageForPage, setSelectedPackageForPage] = useState<DynamicPackage | null>(null);
+  const [selectedProductForPage, setSelectedProductForPage] = useState<MerchandiseItem | null>(null);
   const [pageVisible, setPageVisible] = useState(true);
 
   const handleOpenPackageDetail = useCallback((pkg: DynamicPackage) => {
     setSelectedPackageForPage(pkg);
     setCurrentView('package-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handleOpenProductDetail = useCallback((product: MerchandiseItem) => {
+    setSelectedProductForPage(product);
+    setCurrentView('product-detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -481,8 +489,19 @@ export const App: React.FC = () => {
             onViewChange={(view) => handleViewChange(view as any)}
             onOpenBooking={handleOpenBooking}
           />
+        ) : currentView === 'product-detail' && selectedProductForPage ? (
+          <ProductDetailPage
+            product={selectedProductForPage}
+            onBackToStore={() => {
+              setCurrentView('merchandise');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
         ) : currentView === 'merchandise' ? (
-          <MerchandiseStorePage onBackToHome={() => handleViewChange('home')} />
+          <MerchandiseStorePage
+            onBackToHome={() => handleViewChange('home')}
+            onSelectProduct={handleOpenProductDetail}
+          />
         ) : currentView === 'policy' ? (
           <PolicyPage
             policyId={selectedPolicyId}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
-import { MerchandiseItem, MerchandiseCategory } from '../../types';
+import { MerchandiseItem, MerchandiseCategory, StockStatus } from '../../types';
 
 interface MerchandiseModalProps {
   isOpen: boolean;
@@ -22,7 +22,7 @@ export const MerchandiseModal: React.FC<MerchandiseModalProps> = ({
   const [discountPrice, setDiscountPrice] = useState<number | undefined>(undefined);
   const [image, setImage] = useState('');
   const [badge, setBadge] = useState('');
-  const [stockStatus, setStockStatus] = useState<'In Stock' | 'Limited Stock' | 'Pre-Order'>('In Stock');
+  const [stockStatus, setStockStatus] = useState<StockStatus>('In Stock');
   const [materialInfo, setMaterialInfo] = useState('');
   const [description, setDescription] = useState('');
   const [specsText, setSpecsText] = useState('');

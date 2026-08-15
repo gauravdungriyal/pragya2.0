@@ -238,10 +238,27 @@ export interface PolicyItem {
 }
 
 export type MerchandiseCategory = 'mats' | 'apparel' | 'props' | 'wellness' | 'meditation';
+export type ProductType = 'simple' | 'variable';
+export type StockStatus = 'In Stock' | 'Out of Stock' | 'On Backorder' | 'Limited Stock' | 'Pre-Order';
+
+export interface ProductVariant {
+  id: string;
+  sku: string;
+  variantTitle: string; // e.g. "Size: L / Color: Deep Blue"
+  price: number;
+  discountPrice?: number;
+  stockQuantity: number;
+  stockStatus: StockStatus;
+  image?: string;
+}
 
 export interface MerchandiseItem {
   id: string;
+  sku?: string;
+  productType?: ProductType;
+  variationAttribute?: string; // e.g. "Thickness", "Size", "Color", "Volume"
   title: string;
+  name?: string;
   subtitle?: string;
   brand?: string;
   audience?: 'Unisex' | 'Women' | 'Men' | 'Kids';
@@ -251,14 +268,17 @@ export interface MerchandiseItem {
   price: number;
   discountPrice?: number;
   currency?: string;
-  image: string;
+  image: string;           // Main Cover Image
+  gallery?: string[];      // Product Gallery Images Array
   badge?: string;
   badgeColor?: string;
   description: string;
   specs?: string[];
   isActive: boolean;
   isFeatured?: boolean;
-  stockStatus?: 'In Stock' | 'Limited Stock' | 'Pre-Order';
+  stockStatus?: StockStatus;
+  stockQuantity?: number;
+  variants?: ProductVariant[];
   materialInfo?: string;
 }
 

@@ -208,34 +208,55 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ isOpen, on
   const saveProfile = async () => {
     setLoading(true);
     try {
+      const cleanFname = editForm.fname.trim();
+      const cleanLname = editForm.lname.trim();
+      const cleanChineseName = editForm.chinese_name.trim() || cleanFname || 'Pragya';
+      const cleanEmail = editForm.email.trim();
+      const cleanPhone = editForm.phone.trim();
+      const cleanHkid = editForm.hongkong_id.trim();
+      const cleanDobMonth = editForm.dob_month.trim();
+      const cleanDobDate = editForm.dob_date.trim();
+
+      if (!cleanFname || !cleanLname) {
+        showToast('Please fill in both First Name and Last Name.', 'error');
+        setLoading(false);
+        return;
+      }
+
       const formData = new FormData();
-      Object.entries(editForm).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) {
-          if (k === 'notify_push') {
-            formData.append(k, '0');
-          } else {
-            formData.append(k, String(v));
-          }
-        }
-      });
+      formData.append('fname', cleanFname);
+      formData.append('lname', cleanLname);
+      formData.append('chinese_name', cleanChineseName);
+      if (cleanEmail) formData.append('email', cleanEmail);
+      if (cleanPhone) formData.append('phone', cleanPhone);
+      if (cleanHkid) formData.append('hongkong_id', cleanHkid);
+      if (cleanDobMonth) formData.append('dob_month', cleanDobMonth);
+      if (cleanDobDate) formData.append('dob_date', cleanDobDate);
+      formData.append('notify_whatsapp', editForm.notify_whatsapp || '1');
+      formData.append('notify_email', editForm.notify_email || '1');
+      formData.append('notify_push', '0');
+
       const res = await fetchFormData('edit_user_details', formData, user?.access_token);
-      if (res?.status) {
-        if (user && (editForm.email !== user.email || editForm.fname !== user.name.split(' ')[0])) {
-          const updatedName = `${editForm.fname} ${editForm.lname}`.trim();
+      console.log('edit_user_details API response:', res);
+
+      if (res?.status === true || res?.success === true) {
+        if (user && (cleanEmail !== user.email || cleanFname !== user.name.split(' ')[0])) {
+          const updatedName = `${cleanFname} ${cleanLname}`.trim();
           setSessionTokens({
             ...user,
-            email: editForm.email || user.email,
+            email: cleanEmail || user.email,
             name: updatedName || user.name,
           });
         }
-        showToast('Profile updated!');
+        showToast('Profile updated successfully!');
         await refreshProfile();
         setSection('overview');
       } else {
-        showToast(res?.message || 'Update failed.', 'error');
+        const errMsg = res?.message || res?.error || (res === null ? 'Network error or session expired. Please log in again.' : 'Update failed.');
+        showToast(errMsg, 'error');
       }
-    } catch {
-      showToast('Network error.', 'error');
+    } catch (err: any) {
+      showToast(err?.message || 'Network error.', 'error');
     }
     setLoading(false);
   };
