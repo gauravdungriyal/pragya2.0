@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShoppingBag, Star, CheckCircle2, Truck, ShieldCheck, RefreshCw,
-  ChevronRight, ArrowLeft, Check, AlertCircle, Clock
+  ChevronRight, ArrowLeft, Check, AlertCircle, Clock, Award, Sparkles, PackageCheck
 } from 'lucide-react';
 import { MerchandiseItem, ProductVariant } from '../types';
 import { useCart } from '../context/CartContext';
+import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 
 interface ProductDetailPageProps {
   product: MerchandiseItem;
@@ -13,7 +14,12 @@ interface ProductDetailPageProps {
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, onBackToStore }) => {
   const { addToCart } = useCart();
-  
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
+
+  useEffect(() => {
+    return subscribeSiteConfig(setSiteConfig);
+  }, []);
+
   // Available Variants or Base Product
   const hasVariants = product.variants && product.variants.length > 0;
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
@@ -23,6 +29,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
   const [addedToBagAlert, setAddedToBagAlert] = useState<boolean>(false);
   const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
+
+  // Dynamic Site & Product Configurations
+  const activeCurrency = product.currency || siteConfig.shopPageConfig?.currency || 'HK$';
+  const activeTaxNotice = product.taxNotice !== undefined ? product.taxNotice : (siteConfig.shopPageConfig?.taxNotice || 'inclusive of all taxes');
+  const activeGuaranteeTitle = product.guaranteeTitle || siteConfig.shopPageConfig?.guaranteeTitle || 'AUTHENTIC GUARANTEE';
+  const activeGuaranteeText = product.guaranteeText || siteConfig.shopPageConfig?.guaranteeSubtitle || '100% Authentic product with quality assurance.';
+  const activeTrustBadges = (siteConfig.shopPageConfig?.trustBadges && siteConfig.shopPageConfig.trustBadges.length > 0)
+    ? siteConfig.shopPageConfig.trustBadges
+    : [
+        { icon: 'shield', text: '100% Original Authentic Products' },
+        { icon: 'truck', text: 'Pay on delivery available' },
+        { icon: 'refresh', text: 'Easy 7 days returns and exchanges' }
+      ];
 
   // Dynamic price & stock based on selected variant or base product
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;
@@ -45,6 +64,31 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
   const galleryImages = product.gallery && product.gallery.length > 0
     ? Array.from(new Set(product.gallery.filter(Boolean)))
     : [product.image];
+
+  const renderTrustBadgeIcon = (iconName?: string) => {
+    switch (iconName?.toLowerCase()) {
+      case 'truck':
+      case 'delivery':
+      case 'shipping':
+        return <Truck size={16} color="#059669" />;
+      case 'refresh':
+      case 'return':
+      case 'exchange':
+        return <RefreshCw size={16} color="#059669" />;
+      case 'award':
+      case 'quality':
+        return <Award size={16} color="#059669" />;
+      case 'sparkles':
+        return <Sparkles size={16} color="#059669" />;
+      case 'package':
+        return <PackageCheck size={16} color="#059669" />;
+      case 'shield':
+      case 'security':
+      case 'authentic':
+      default:
+        return <ShieldCheck size={16} color="#059669" />;
+    }
+  };
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -234,7 +278,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
             </div>
 
             {/* Feature Highlights Grid beneath images */}
-            <div style={{ display: 'grid', gridTemplateColumns: product.materialInfo ? '1fr 1fr' : '1fr', gap: '12px', marginTop: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: (product.materialInfo && (activeGuaranteeTitle || activeGuaranteeText)) ? '1fr 1fr' : '1fr', gap: '12px', marginTop: '16px' }}>
               {product.materialInfo && (
                 <div style={{ border: '1px solid #E5DEC9', borderRadius: '12px', padding: '14px', backgroundColor: '#EFE7DA' }}>
                   <span style={{ fontSize: '11px', fontWeight: 800, color: '#944426', textTransform: 'uppercase' }}>CRAFTSMANSHIP & MATERIAL</span>
@@ -243,12 +287,20 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
                   </p>
                 </div>
               )}
-              <div style={{ border: '1px solid #E5DEC9', borderRadius: '12px', padding: '14px', backgroundColor: '#EFE7DA' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>AUTHENTIC GUARANTEE</span>
-                <p style={{ fontSize: '12px', color: '#535766', margin: '4px 0 0 0', lineHeight: 1.4 }}>
-                  100% Authentic product with quality assurance.
-                </p>
-              </div>
+              {(activeGuaranteeTitle || activeGuaranteeText) && (
+                <div style={{ border: '1px solid #E5DEC9', borderRadius: '12px', padding: '14px', backgroundColor: '#EFE7DA' }}>
+                  {activeGuaranteeTitle && (
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>
+                      {activeGuaranteeTitle}
+                    </span>
+                  )}
+                  {activeGuaranteeText && (
+                    <p style={{ fontSize: '12px', color: '#535766', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+                      {activeGuaranteeText}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -307,12 +359,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
             <div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#282C3F' }}>
-                  {product.currency || 'HK$'} {currentPrice.toLocaleString()}
+                  {activeCurrency} {currentPrice.toLocaleString()}
                 </span>
                 {currentOriginalPrice && currentOriginalPrice > currentPrice && (
                   <>
                     <span style={{ fontSize: '16px', color: '#94969F', textDecoration: 'line-through' }}>
-                      MRP {product.currency || 'HK$'} {currentOriginalPrice.toLocaleString()}
+                      MRP {activeCurrency} {currentOriginalPrice.toLocaleString()}
                     </span>
                     <span style={{ fontSize: '16px', fontWeight: 800, color: '#FF905A' }}>
                       ({discountPercent}% OFF)
@@ -320,9 +372,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
                   </>
                 )}
               </div>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#03A685', display: 'block', marginTop: '4px' }}>
-                inclusive of all taxes
-              </span>
+              {activeTaxNotice && (
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#03A685', display: 'block', marginTop: '4px' }}>
+                  {activeTaxNotice}
+                </span>
+              )}
             </div>
 
             {/* Variable Options (Rendered ONLY if Product has Variants) */}
@@ -371,7 +425,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
                             {cleanValue}
                           </span>
                           <span style={{ fontSize: '12px', fontWeight: 600, marginTop: '2px', color: selectedVariant?.id === v.id ? '#944426' : '#535766' }}>
-                            {product.currency || 'HK$'} {v.price}
+                            {activeCurrency} {v.price}
                           </span>
                         </button>
                       );
@@ -421,23 +475,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
               </button>
             </div>
 
-            {/* Store-Wide Benefits */}
-            <div style={{ border: '1px solid #E5DEC9', borderRadius: '12px', padding: '16px 18px', backgroundColor: '#EFE7DA', marginTop: '8px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12.5px', color: '#282C3F' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <ShieldCheck size={16} color="#059669" />
-                  <span>100% Original Authentic Products</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Truck size={16} color="#059669" />
-                  <span>Pay on delivery available</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <RefreshCw size={16} color="#059669" />
-                  <span>Easy 7 days returns and exchanges</span>
+            {/* Store-Wide Benefits / Trust Badges */}
+            {activeTrustBadges && activeTrustBadges.length > 0 && (
+              <div style={{ border: '1px solid #E5DEC9', borderRadius: '12px', padding: '16px 18px', backgroundColor: '#EFE7DA', marginTop: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12.5px', color: '#282C3F' }}>
+                  {activeTrustBadges.map((badge, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {renderTrustBadgeIcon(badge.icon)}
+                      <span>{badge.text}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Product Details & Specifications */}
             {(product.description || (product.specs && product.specs.length > 0) || product.sku || product.materialInfo || product.stockQuantity !== undefined) && (

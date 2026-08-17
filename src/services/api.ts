@@ -2110,6 +2110,68 @@ export async function getMerchandiseItems(): Promise<MerchandiseItem[]> {
   return INITIAL_MERCHANDISE_ITEMS;
 }
 
+export interface ShopFilterCategory {
+  id: string;
+  name: string;
+  slug?: string;
+  label?: string;
+}
+
+export interface ShopFilterAudience {
+  id: string;
+  label: string;
+}
+
+export interface ShopFiltersData {
+  categories: ShopFilterCategory[];
+  brands: string[];
+  audiences: ShopFilterAudience[];
+}
+
+export async function getShopFilters(): Promise<ShopFiltersData> {
+  const fallback: ShopFiltersData = {
+    categories: [
+      { id: 'apparel', label: 'Apparel & Yogic Wear', name: 'Apparel & Yogic Wear' },
+      { id: 'mats', label: 'Mats & Accessories', name: 'Mats & Accessories' },
+      { id: 'wellness', label: 'Wellness & Oils', name: 'Wellness & Oils' },
+      { id: 'meditation', label: 'Meditation Essentials', name: 'Meditation Essentials' },
+      { id: 'props', label: 'Blocks & Props', name: 'Blocks & Props' },
+    ],
+    brands: [
+      'Pragya Sanctuary',
+      'Himalayan Craft',
+      'Rishikesh Handloom',
+      'Sattva Essentials',
+    ],
+    audiences: [
+      { id: 'ALL', label: 'All Items' },
+      { id: 'Unisex', label: 'Unisex Practice Essentials' },
+      { id: 'Women', label: 'Women' },
+      { id: 'Men', label: 'Men' },
+    ],
+  };
+
+  try {
+    const apiRes = await fetchFromApi<any>('get_shop_filters');
+    if (apiRes && apiRes.status === true && apiRes.data) {
+      return {
+        categories: Array.isArray(apiRes.data.categories) && apiRes.data.categories.length > 0
+          ? apiRes.data.categories
+          : fallback.categories,
+        brands: Array.isArray(apiRes.data.brands) && apiRes.data.brands.length > 0
+          ? apiRes.data.brands
+          : fallback.brands,
+        audiences: Array.isArray(apiRes.data.audiences) && apiRes.data.audiences.length > 0
+          ? apiRes.data.audiences
+          : fallback.audiences,
+      };
+    }
+  } catch (e) {
+    console.warn('Failed to fetch shop filters from API:', e);
+  }
+  return fallback;
+}
+
 export async function saveMerchandiseItem(item: MerchandiseItem): Promise<MerchandiseItem[]> {
   try {
     await fetchFromApi('admin_save_product', item);

@@ -1668,12 +1668,174 @@ export const ContentManager: React.FC = () => {
                 </div>
               </div>
 
-              {/* Section 2: Store Merchandise Products Catalog & Manager */}
+              {/* Section 2: Product Detail Page & Store Policy Badges Settings */}
+              <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
+                  Storewide PDP Settings
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 16px 0' }}>
+                  Product Detail Page Policies & Trust Badges
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Default Store Currency</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. HK$, USD, INR"
+                      value={config.shopPageConfig?.currency || 'HK$'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        shopPageConfig: {
+                          ...config.shopPageConfig,
+                          badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                          topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                          topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                          currency: e.target.value
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Tax Notice Text (Under Price)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. inclusive of all taxes"
+                      value={config.shopPageConfig?.taxNotice !== undefined ? config.shopPageConfig.taxNotice : 'inclusive of all taxes'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        shopPageConfig: {
+                          ...config.shopPageConfig,
+                          badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                          topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                          topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                          taxNotice: e.target.value
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Guarantee Box Title</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. AUTHENTIC GUARANTEE"
+                      value={config.shopPageConfig?.guaranteeTitle !== undefined ? config.shopPageConfig.guaranteeTitle : 'AUTHENTIC GUARANTEE'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        shopPageConfig: {
+                          ...config.shopPageConfig,
+                          badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                          topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                          topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                          guaranteeTitle: e.target.value
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>Guarantee Box Subtitle</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 100% Authentic product with quality assurance."
+                      value={config.shopPageConfig?.guaranteeSubtitle !== undefined ? config.shopPageConfig.guaranteeSubtitle : '100% Authentic product with quality assurance.'}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        shopPageConfig: {
+                          ...config.shopPageConfig,
+                          badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                          topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                          topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                          guaranteeSubtitle: e.target.value
+                        }
+                      })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '14px' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403C', marginBottom: '6px' }}>
+                    Trust & Delivery Policy Badges (Shown Under Add To Bag)
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {(config.shopPageConfig?.trustBadges || [
+                      { icon: 'shield', text: '100% Original Authentic Products' },
+                      { icon: 'truck', text: 'Pay on delivery available' },
+                      { icon: 'refresh', text: 'Easy 7 days returns and exchanges' }
+                    ]).map((tb, idx) => (
+                      <div key={idx} style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '10px' }}>
+                        <select
+                          value={tb.icon || 'shield'}
+                          onChange={(e) => {
+                            const updated = [...(config.shopPageConfig?.trustBadges || [
+                              { icon: 'shield', text: '100% Original Authentic Products' },
+                              { icon: 'truck', text: 'Pay on delivery available' },
+                              { icon: 'refresh', text: 'Easy 7 days returns and exchanges' }
+                            ])];
+                            updated[idx] = { ...updated[idx], icon: e.target.value };
+                            setConfig({
+                              ...config,
+                              shopPageConfig: {
+                                ...config.shopPageConfig,
+                                badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                                topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                                topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                                trustBadges: updated
+                              }
+                            });
+                          }}
+                          style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '13px', backgroundColor: '#FAF7F2' }}
+                        >
+                          <option value="shield">🛡️ Shield / Security</option>
+                          <option value="truck">🚚 Truck / Delivery</option>
+                          <option value="refresh">🔄 Refresh / Return</option>
+                          <option value="award">🎖️ Award / Quality</option>
+                          <option value="package">📦 Package / Dispatch</option>
+                          <option value="sparkles">✨ Sparkles / Premium</option>
+                        </select>
+                        <input
+                          type="text"
+                          value={tb.text}
+                          onChange={(e) => {
+                            const updated = [...(config.shopPageConfig?.trustBadges || [
+                              { icon: 'shield', text: '100% Original Authentic Products' },
+                              { icon: 'truck', text: 'Pay on delivery available' },
+                              { icon: 'refresh', text: 'Easy 7 days returns and exchanges' }
+                            ])];
+                            updated[idx] = { ...updated[idx], text: e.target.value };
+                            setConfig({
+                              ...config,
+                              shopPageConfig: {
+                                ...config.shopPageConfig,
+                                badge: config.shopPageConfig?.badge || '— PRAGYA SANCTUARY STORE —',
+                                topTitle: config.shopPageConfig?.topTitle || 'Merchandise &',
+                                topTitleItalic: config.shopPageConfig?.topTitleItalic || 'Yogic Wear',
+                                trustBadges: updated
+                              }
+                            });
+                          }}
+                          style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #D6D3D1', fontSize: '13px' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Store Merchandise Products Catalog & Manager */}
               <div style={{ border: '1px solid #E7E5E4', borderRadius: '14px', padding: '22px', backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
                   <div>
                     <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>
-                      Section 2
+                      Section 3
                     </span>
                     <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '8px 0 2px 0' }}>
                       Live Store Products & Merchandise Catalog ({merchandiseItems.length})

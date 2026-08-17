@@ -5,7 +5,7 @@ import {
   RotateCcw, SlidersHorizontal, Check, ArrowRight, Sparkles, TrendingUp, Package
 } from 'lucide-react';
 import { MerchandiseItem } from '../types';
-import { getMerchandiseItems } from '../services/api';
+import { getMerchandiseItems, getShopFilters, ShopFilterCategory, ShopFilterAudience } from '../services/api';
 import { getSiteConfig, subscribeSiteConfig, SiteConfig } from '../services/siteConfig';
 import { useCart } from '../context/CartContext';
 
@@ -19,6 +19,26 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(getSiteConfig());
   const [items, setItems] = useState<MerchandiseItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const [categories, setCategories] = useState<ShopFilterCategory[]>([
+    { id: 'apparel', label: 'Apparel & Yogic Wear', name: 'Apparel & Yogic Wear' },
+    { id: 'mats', label: 'Mats & Accessories', name: 'Mats & Accessories' },
+    { id: 'wellness', label: 'Wellness & Oils', name: 'Wellness & Oils' },
+    { id: 'meditation', label: 'Meditation Essentials', name: 'Meditation Essentials' },
+    { id: 'props', label: 'Blocks & Props', name: 'Blocks & Props' },
+  ]);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([
+    'Pragya Sanctuary',
+    'Himalayan Craft',
+    'Rishikesh Handloom',
+    'Sattva Essentials',
+  ]);
+  const [audienceOptions, setAudienceOptions] = useState<ShopFilterAudience[]>([
+    { id: 'ALL', label: 'All Items' },
+    { id: 'Unisex', label: 'Unisex Practice Essentials' },
+    { id: 'Women', label: 'Women' },
+    { id: 'Men', label: 'Men' },
+  ]);
 
   const handleAddToCart = (item: MerchandiseItem) => {
     addToCart({
@@ -40,19 +60,36 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
   const [selectedAudience, setSelectedAudience] = useState<string>('ALL'); // ALL | Women | Men | Unisex
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState<string>('ALL'); // ALL | under-350 | 350-600 | above-600
+  const [maxPriceFilter, setMaxPriceFilter] = useState<number>(1000);
   const [sortBy, setSortBy] = useState<string>('recommended'); // recommended | price-low | price-high | rating | discount
+
+  const maxPossiblePrice = Math.max(1000, ...items.map((i) => i.price || 0));
 
   // Quick View Modal & Mobile Filter Drawer
   const [selectedProduct, setSelectedProduct] = useState<MerchandiseItem | null>(null);
   const [mobileFilterOpen, setMobileFilterOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    const loadItems = async () => {
-      const data = await getMerchandiseItems();
-      setItems(data.filter((i) => i.isActive));
+    const loadStoreData = async () => {
+      const [data, filterData] = await Promise.all([
+        getMerchandiseItems(),
+        getShopFilters()
+      ]);
+      const activeItems = data.filter((i) => i.isActive);
+      setItems(activeItems);
+
+      if (activeItems.length > 0) {
+        const highest = Math.max(...activeItems.map((i) => i.price || 0));
+        if (highest > 0) {
+          setMaxPriceFilter(Math.ceil(highest / 50) * 50);
+        }
+      }
+
+      if (filterData.categories && filterData.categories.length > 0) setCategories(filterData.categories);
+      if (filterData.brands && filterData.brands.length > 0) setAvailableBrands(filterData.brands);
+      if (filterData.audiences && filterData.audiences.length > 0) setAudienceOptions(filterData.audiences);
     };
-    loadItems();
+    loadStoreData();
   }, []);
 
   useEffect(() => {
@@ -65,21 +102,6 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
       document.body.style.overflow = '';
     };
   }, [selectedProduct, mobileFilterOpen]);
-
-  const categories = [
-    { id: 'apparel', label: 'Apparel & Yogic Wear' },
-    { id: 'mats', label: 'Mats & Accessories' },
-    { id: 'wellness', label: 'Wellness & Oils' },
-    { id: 'meditation', label: 'Meditation Essentials' },
-    { id: 'props', label: 'Blocks & Props' },
-  ];
-
-  const availableBrands = [
-    'Pragya Sanctuary',
-    'Himalayan Craft',
-    'Rishikesh Handloom',
-    'Sattva Essentials',
-  ];
 
   const handleCategoryToggle = (catId: string) => {
     setSelectedCategories((prev) =>
@@ -97,7 +119,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
     setSelectedAudience('ALL');
     setSelectedCategories([]);
     setSelectedBrands([]);
-    setPriceRange('ALL');
+    setMaxPriceFilter(maxPossiblePrice);
     setSearchQuery('');
     setSortBy('recommended');
   };
@@ -106,7 +128,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
     (selectedAudience !== 'ALL' ? 1 : 0) +
     selectedCategories.length +
     selectedBrands.length +
-    (priceRange !== 'ALL' ? 1 : 0) +
+    (maxPriceFilter < maxPossiblePrice ? 1 : 0) +
     (searchQuery ? 1 : 0);
 
   const filteredItems = items.filter((item) => {
@@ -129,10 +151,8 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
       if (!selectedBrands.includes(brand)) return false;
     }
 
-    // Price range filter
-    if (priceRange === 'under-350' && item.price >= 350) return false;
-    if (priceRange === '350-600' && (item.price < 350 || item.price > 600)) return false;
-    if (priceRange === 'above-600' && item.price <= 600) return false;
+    // Price range slider filter
+    if (item.price > maxPriceFilter) return false;
 
     // Search query
     if (searchQuery.trim()) {
@@ -174,178 +194,172 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
     return items.filter((i) => (i.brand || 'Pragya Sanctuary') === brandName).length;
   };
 
-  // Shared Sidebar Filters Content component
-  const SidebarFiltersContent = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-      {/* 1. AUDIENCE / GENDER */}
-      <div>
-        <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1C1917', marginBottom: '14px' }}>
-          Audience
-        </h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {[
-            { id: 'ALL', label: 'All Items' },
-            { id: 'Unisex', label: 'Unisex Practice Essentials' },
-            { id: 'Women', label: 'Women' },
-            { id: 'Men', label: 'Men' },
-          ].map((aud) => (
-            <label
-              key={aud.id}
-              onClick={() => setSelectedAudience(aud.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                fontSize: '13px',
-                color: selectedAudience === aud.id ? '#944426' : '#44403C',
-                fontWeight: selectedAudience === aud.id ? 700 : 500,
-                cursor: 'pointer',
-                userSelect: 'none'
-              }}
-            >
-              <input
-                type="radio"
-                name="audienceFilter"
-                checked={selectedAudience === aud.id}
-                onChange={() => {}}
-                style={{ accentColor: '#944426', cursor: 'pointer', width: '15px', height: '15px' }}
-              />
-              <span>{aud.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+  // Shared Sidebar Filters Content helper
+  const renderSidebarFilters = () => {
+    const fillPercent = Math.min(100, Math.max(0, (maxPriceFilter / maxPossiblePrice) * 100));
 
-      <hr style={{ border: 'none', borderTop: '1px solid #E7E5E4', margin: 0 }} />
-
-      {/* 2. CATEGORIES */}
-      <div>
-        <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1C1917', marginBottom: '14px' }}>
-          Categories
-        </h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {categories.map((cat) => {
-            const isSelected = selectedCategories.includes(cat.id);
-            const count = getCategoryCount(cat.id);
-            return (
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+        {/* 1. AUDIENCE / GENDER */}
+        <div>
+          <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1C1917', marginBottom: '14px' }}>
+            Audience
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {audienceOptions.map((aud) => (
               <label
-                key={cat.id}
-                onClick={() => handleCategoryToggle(cat.id)}
+                key={aud.id}
+                onClick={() => setSelectedAudience(aud.id)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
+                  gap: '10px',
                   fontSize: '13px',
-                  color: isSelected ? '#1C1917' : '#57534E',
-                  fontWeight: isSelected ? 700 : 400,
+                  color: selectedAudience === aud.id ? '#944426' : '#44403C',
+                  fontWeight: selectedAudience === aud.id ? 700 : 500,
                   cursor: 'pointer',
                   userSelect: 'none'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => {}}
-                    style={{ accentColor: '#944426', cursor: 'pointer', width: '15px', height: '15px' }}
-                  />
-                  <span>{cat.label}</span>
-                </div>
-                <span style={{ fontSize: '11px', color: '#A8A29E', fontWeight: 600 }}>
-                  ({count})
-                </span>
+                <input
+                  type="radio"
+                  name="audienceFilter"
+                  checked={selectedAudience === aud.id}
+                  onChange={() => {}}
+                  style={{ accentColor: '#944426', cursor: 'pointer', width: '15px', height: '15px' }}
+                />
+                <span>{aud.label}</span>
               </label>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      </div>
 
-      <hr style={{ border: 'none', borderTop: '1px solid #E7E5E4', margin: 0 }} />
+        <hr style={{ border: 'none', borderTop: '1px solid #E7E5E4', margin: 0 }} />
 
-      {/* 3. BRAND / COLLECTION */}
-      <div>
-        <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1C1917', marginBottom: '14px' }}>
-          Collection & Artisan Brand
-        </h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {availableBrands.map((bName) => {
-            const isSelected = selectedBrands.includes(bName);
-            const count = getBrandCount(bName);
-            return (
-              <label
-                key={bName}
-                onClick={() => handleBrandToggle(bName)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '13px',
-                  color: isSelected ? '#1C1917' : '#57534E',
-                  fontWeight: isSelected ? 700 : 400,
-                  cursor: 'pointer',
-                  userSelect: 'none'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => {}}
-                    style={{ accentColor: '#944426', cursor: 'pointer', width: '15px', height: '15px' }}
-                  />
-                  <span>{bName}</span>
-                </div>
-                <span style={{ fontSize: '11px', color: '#A8A29E', fontWeight: 600 }}>
-                  ({count})
-                </span>
-              </label>
-            );
-          })}
+        {/* 2. CATEGORIES */}
+        <div>
+          <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1C1917', marginBottom: '14px' }}>
+            Categories
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {categories.map((cat) => {
+              const isSelected = selectedCategories.includes(cat.id);
+              const count = getCategoryCount(cat.id);
+              return (
+                <label
+                  key={cat.id}
+                  onClick={() => handleCategoryToggle(cat.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '13px',
+                    color: isSelected ? '#1C1917' : '#57534E',
+                    fontWeight: isSelected ? 700 : 400,
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}}
+                      style={{ accentColor: '#944426', cursor: 'pointer', width: '15px', height: '15px' }}
+                    />
+                    <span>{cat.label || cat.name}</span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#A8A29E', fontWeight: 600 }}>
+                    ({count})
+                  </span>
+                </label>
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      <hr style={{ border: 'none', borderTop: '1px solid #E7E5E4', margin: 0 }} />
+        <hr style={{ border: 'none', borderTop: '1px solid #E7E5E4', margin: 0 }} />
 
-      {/* 4. PRICE RANGE */}
-      <div>
-        <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1C1917', marginBottom: '14px' }}>
-          Price Range
-        </h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {[
-            { id: 'ALL', label: 'All Prices' },
-            { id: 'under-350', label: 'Under HK$ 350' },
-            { id: '350-600', label: 'HK$ 350 - HK$ 600' },
-            { id: 'above-600', label: 'HK$ 600+' },
-          ].map((p) => (
-            <label
-              key={p.id}
-              onClick={() => setPriceRange(p.id)}
+        {/* 3. BRAND / COLLECTION */}
+        <div>
+          <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1C1917', marginBottom: '14px' }}>
+            Collection & Artisan Brand
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {availableBrands.map((bName) => {
+              const isSelected = selectedBrands.includes(bName);
+              const count = getBrandCount(bName);
+              return (
+                <label
+                  key={bName}
+                  onClick={() => handleBrandToggle(bName)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '13px',
+                    color: isSelected ? '#1C1917' : '#57534E',
+                    fontWeight: isSelected ? 700 : 400,
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}}
+                      style={{ accentColor: '#944426', cursor: 'pointer', width: '15px', height: '15px' }}
+                    />
+                    <span>{bName}</span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#A8A29E', fontWeight: 600 }}>
+                    ({count})
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        <hr style={{ border: 'none', borderTop: '1px solid #E7E5E4', margin: 0 }} />
+
+        {/* 4. SMOOTH PRICE RANGE SLIDER */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1C1917', margin: 0 }}>
+              Price Range
+            </h4>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#944426', backgroundColor: '#F5EBE6', padding: '2px 10px', borderRadius: '12px' }}>
+              Up to {siteConfig.shopPageConfig?.currency || 'HK$'} {maxPriceFilter}
+            </span>
+          </div>
+
+          {/* Range Slider */}
+          <div style={{ padding: '4px 0 8px 0' }}>
+            <input
+              type="range"
+              min={0}
+              max={maxPossiblePrice}
+              step={1}
+              value={maxPriceFilter}
+              onInput={(e) => setMaxPriceFilter(Number((e.target as HTMLInputElement).value))}
+              onChange={(e) => setMaxPriceFilter(Number(e.target.value))}
+              className="smooth-price-slider"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                fontSize: '13px',
-                color: priceRange === p.id ? '#944426' : '#44403C',
-                fontWeight: priceRange === p.id ? 700 : 400,
-                cursor: 'pointer',
-                userSelect: 'none'
+                width: '100%',
+                background: `linear-gradient(to right, #944426 0%, #944426 ${fillPercent}%, #E7E5E4 ${fillPercent}%, #E7E5E4 100%)`
               }}
-            >
-              <input
-                type="radio"
-                name="priceRangeFilter"
-                checked={priceRange === p.id}
-                onChange={() => {}}
-                style={{ accentColor: '#944426', cursor: 'pointer', width: '15px', height: '15px' }}
-              />
-              <span>{p.label}</span>
-            </label>
-          ))}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#78716C', marginTop: '8px', fontWeight: 600 }}>
+              <span>{siteConfig.shopPageConfig?.currency || 'HK$'} 0</span>
+              <span>{siteConfig.shopPageConfig?.currency || 'HK$'} {maxPossiblePrice}</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div style={{ backgroundColor: '#FAF7F2', minHeight: '100vh', color: '#1C1917', fontFamily: 'var(--font-sans), sans-serif', paddingBottom: '100px' }}>
@@ -615,7 +629,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
             )}
           </div>
 
-          <SidebarFiltersContent />
+          {renderSidebarFilters()}
         </aside>
 
         {/* PRODUCT CARDS CATALOG GRID */}
@@ -815,13 +829,13 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                         {/* Price Block: Current Price + Strikethrough + Discount Tag */}
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '15px', fontWeight: 800, color: '#1C1917' }}>
-                            {item.currency || 'HK$'} {item.price.toLocaleString()}
+                            {item.currency || siteConfig.shopPageConfig?.currency || 'HK$'} {item.price.toLocaleString()}
                           </span>
 
                           {originalPrice > item.price && (
                             <>
                               <span style={{ fontSize: '11.5px', color: '#A8A29E', textDecoration: 'line-through' }}>
-                                {item.currency || 'HK$'} {originalPrice.toLocaleString()}
+                                {item.currency || siteConfig.shopPageConfig?.currency || 'HK$'} {originalPrice.toLocaleString()}
                               </span>
                               <span style={{ fontSize: '11px', fontWeight: 800, color: '#D97706' }}>
                                 ({discountPercent}% OFF)
@@ -929,7 +943,7 @@ export const MerchandiseStorePage: React.FC<MerchandiseStorePageProps> = ({ onBa
                 </button>
               </div>
 
-              <SidebarFiltersContent />
+              {renderSidebarFilters()}
             </div>
 
             <div style={{ paddingTop: '24px', marginTop: '24px', borderTop: '1px solid #E7E5E4', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

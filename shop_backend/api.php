@@ -39,6 +39,8 @@ function handleShopAction($action, $input, $pdo) {
             return applyShopCoupon($input, $pdo);
         case 'init_payment_asia':
             return initPaymentAsia($input, $pdo);
+        case 'get_shop_filters':
+            return getShopFilters($input, $pdo);
         case 'admin_save_product':
             return adminSaveProduct($input, $pdo);
         case 'admin_delete_product':
@@ -352,6 +354,68 @@ function adminDeleteProduct($input, $pdo) {
         $stmt->execute([$id]);
 
         return ['status' => true, 'message' => 'Product deleted successfully'];
+    } catch (Exception $e) {
+        return ['status' => false, 'message' => $e->getMessage()];
+    }
+}
+
+/**
+ * 7. Dynamic shop categories, brands, and audience filter options
+ */
+function getShopFilters($input, $pdo) {
+    try {
+        $categories = [];
+        try {
+            $catStmt = $pdo->query("SELECT id, name, slug FROM shop_categories ORDER BY id ASC");
+            if ($catStmt) {
+                $dbCats = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($dbCats as $c) {
+                    $categories[] = [
+                        'id' => $c['slug'] ?: strval($c['id']),
+                        'slug' => $c['slug'] ?: strval($c['id']),
+                        'name' => $c['name'],
+                        'label' => $c['name']
+                    ];
+                }
+            }
+        } catch (Exception $ex) {}
+
+        if (empty($categories)) {
+            $categories = [
+                ['id' => 'apparel', 'slug' => 'apparel', 'name' => 'Apparel & Yogic Wear', 'label' => 'Apparel & Yogic Wear'],
+                ['id' => 'mats', 'slug' => 'mats', 'name' => 'Mats & Accessories', 'label' => 'Mats & Accessories'],
+                ['id' => 'wellness', 'slug' => 'wellness', 'name' => 'Wellness & Oils', 'label' => 'Wellness & Oils'],
+                ['id' => 'meditation', 'slug' => 'meditation', 'name' => 'Meditation Essentials', 'label' => 'Meditation Essentials'],
+                ['id' => 'props', 'slug' => 'props', 'name' => 'Blocks & Props', 'label' => 'Blocks & Props']
+            ];
+        }
+
+        $defaultBrands = ['Pragya Sanctuary', 'Himalayan Craft', 'Rishikesh Handloom', 'Sattva Essentials'];
+        $dbBrands = [];
+        try {
+            $brandStmt = $pdo->query("SELECT DISTINCT brand FROM shop_products WHERE is_active = 1 AND brand IS NOT NULL AND brand != ''");
+            if ($brandStmt) {
+                $dbBrands = $brandStmt->fetchAll(PDO::FETCH_COLUMN);
+            }
+        } catch (Exception $ex) {}
+
+        $brands = array_values(array_unique(array_merge($defaultBrands, array_filter($dbBrands))));
+
+        $audiences = [
+            ['id' => 'ALL', 'label' => 'All Items'],
+            ['id' => 'Unisex', 'label' => 'Unisex Practice Essentials'],
+            ['id' => 'Women', 'label' => 'Women'],
+            ['id' => 'Men', 'label' => 'Men']
+        ];
+
+        return [
+            'status' => true,
+            'data' => [
+                'categories' => $categories,
+                'brands' => $brands,
+                'audiences' => $audiences
+            ]
+        ];
     } catch (Exception $e) {
         return ['status' => false, 'message' => $e->getMessage()];
     }

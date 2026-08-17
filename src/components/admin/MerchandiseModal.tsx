@@ -156,8 +156,7 @@ export const MerchandiseModal: React.FC<MerchandiseModalProps> = ({
                 style={{ width: '100%', backgroundColor: '#FAF7F2', border: '1px solid #D6D3D1', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', color: '#1C1917', outline: 'none' }}
               >
                 <option value="In Stock">In Stock</option>
-                <option value="Limited Stock">Limited Stock</option>
-                <option value="Pre-Order">Pre-Order</option>
+                <option value="Out of Stock">Out of Stock</option>
               </select>
             </div>
           </div>

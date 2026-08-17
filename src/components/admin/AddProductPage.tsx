@@ -27,6 +27,10 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
   // Pricing & Simple Product Stock
   const [price, setPrice] = useState<string>(initialData?.price ? String(initialData.price) : '');
   const [discountPrice, setDiscountPrice] = useState<string>(initialData?.discountPrice ? String(initialData.discountPrice) : '');
+  const [currency, setCurrency] = useState<string>(initialData?.currency || 'HK$');
+  const [taxNotice, setTaxNotice] = useState<string>(initialData?.taxNotice || '');
+  const [guaranteeTitle, setGuaranteeTitle] = useState<string>(initialData?.guaranteeTitle || '');
+  const [guaranteeText, setGuaranteeText] = useState<string>(initialData?.guaranteeText || '');
   const [stockStatus, setStockStatus] = useState<StockStatus>(initialData?.stockStatus || 'In Stock');
   const [stockQuantity, setStockQuantity] = useState<string>(initialData?.stockQuantity ? String(initialData.stockQuantity) : '50');
 
@@ -96,26 +100,104 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
     setGalleryUrls(galleryUrls.filter((_, i) => i !== index));
   };
 
+  // Stock synchronization handlers (Simple Product)
+  const handleStockStatusChange = (newStatus: StockStatus) => {
+    setStockStatus(newStatus);
+    if (newStatus === 'Out of Stock') {
+      setStockQuantity('0');
+    } else if (newStatus === 'In Stock') {
+      const currentQty = parseInt(stockQuantity, 10);
+      if (isNaN(currentQty) || currentQty <= 0) {
+        setStockQuantity('50');
+      }
+    }
+  };
+
+  const handleStockQuantityChange = (rawVal: string) => {
+    if (rawVal === '') {
+      setStockQuantity('');
+      return;
+    }
+    const sanitized = rawVal.replace(/[^0-9]/g, '');
+    if (sanitized === '') {
+      setStockQuantity('');
+      return;
+    }
+    const num = parseInt(sanitized, 10);
+    if (num <= 0) {
+      setStockQuantity('0');
+      if (stockStatus === 'In Stock') {
+        setStockStatus('Out of Stock');
+      }
+    } else {
+      setStockQuantity(String(num));
+      if (stockStatus === 'Out of Stock') {
+        setStockStatus('In Stock');
+      }
+    }
+  };
+
+  // Stock synchronization handlers (Variable Product draft)
+  const handleVariantStockStatusChange = (newStatus: StockStatus) => {
+    setVStockStatus(newStatus);
+    if (newStatus === 'Out of Stock') {
+      setVStockQty('0');
+    } else if (newStatus === 'In Stock') {
+      const currentQty = parseInt(vStockQty, 10);
+      if (isNaN(currentQty) || currentQty <= 0) {
+        setVStockQty('10');
+      }
+    }
+  };
+
+  const handleVariantStockQtyChange = (rawVal: string) => {
+    if (rawVal === '') {
+      setVStockQty('');
+      return;
+    }
+    const sanitized = rawVal.replace(/[^0-9]/g, '');
+    if (sanitized === '') {
+      setVStockQty('');
+      return;
+    }
+    const num = parseInt(sanitized, 10);
+    if (num <= 0) {
+      setVStockQty('0');
+      if (vStockStatus === 'In Stock') {
+        setVStockStatus('Out of Stock');
+      }
+    } else {
+      setVStockQty(String(num));
+      if (vStockStatus === 'Out of Stock') {
+        setVStockStatus('In Stock');
+      }
+    }
+  };
+
   // Variant handlers
   const handleAddVariant = () => {
     if (!vTitle.trim() || !vPrice || parseFloat(vPrice) <= 0) {
       alert('Please enter variant title and valid price.');
       return;
     }
+    const qty = vStockStatus === 'Out of Stock' ? 0 : Math.max(0, parseInt(vStockQty, 10) || 0);
+    const finalStatus: StockStatus = qty === 0 ? 'Out of Stock' : 'In Stock';
+
     const newVar: ProductVariant = {
       id: `var-${Date.now()}`,
       sku: `${sku}-${vTitle.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || Date.now()}`,
       variantTitle: vTitle.trim(),
       price: parseFloat(vPrice),
       discountPrice: vDiscountPrice ? parseFloat(vDiscountPrice) : undefined,
-      stockQuantity: parseInt(vStockQty) || 0,
-      stockStatus: vStockStatus,
+      stockQuantity: qty,
+      stockStatus: finalStatus,
     };
     setVariants([...variants, newVar]);
     setVTitle('');
     setVPrice('');
     setVDiscountPrice('');
     setVStockQty('10');
+    setVStockStatus('In Stock');
   };
 
   const handleRemoveVariant = (id: string) => {
@@ -152,6 +234,14 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
     const basePrice = productType === 'simple' ? parseFloat(price) : (variants[0]?.price || 420);
     const baseDiscountPrice = productType === 'simple' ? (discountPrice ? parseFloat(discountPrice) : undefined) : (variants[0]?.discountPrice);
 
+    const parsedSimpleQty = stockStatus === 'Out of Stock' ? 0 : Math.max(0, parseInt(stockQuantity, 10) || 0);
+    const resolvedSimpleStatus: StockStatus = parsedSimpleQty === 0 ? 'Out of Stock' : 'In Stock';
+
+    const totalVariantStock = variants.reduce((acc, v) => acc + Math.max(0, v.stockQuantity), 0);
+    const resolvedVariableStatus: StockStatus = totalVariantStock === 0
+      ? 'Out of Stock'
+      : (variants.some(v => v.stockStatus === 'In Stock' && v.stockQuantity > 0) ? 'In Stock' : 'Out of Stock');
+
     const newProd: MerchandiseItem = {
       id: initialData?.id || `MERCH-${Date.now()}`,
       sku: sku.trim() || `PRAGYA-${Date.now()}`,
@@ -164,7 +254,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
       audience,
       price: basePrice,
       discountPrice: baseDiscountPrice,
-      currency: 'HK$',
+      currency: currency.trim() || 'HK$',
       image: mainCover,
       gallery: galleryUrls.length > 0 ? galleryUrls : [mainCover],
       badge: badge.trim() || undefined,
@@ -172,9 +262,12 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
       description: description.trim() || 'Handcrafted premium yogic lifestyle product.',
       specs: specsArray.length > 0 ? specsArray : ['Eco-friendly material', 'Non-slip surface grip'],
       materialInfo: materialInfo.trim() || undefined,
+      taxNotice: taxNotice.trim() || undefined,
+      guaranteeTitle: guaranteeTitle.trim() || undefined,
+      guaranteeText: guaranteeText.trim() || undefined,
       isActive: true,
-      stockStatus: productType === 'simple' ? stockStatus : (variants[0]?.stockStatus || 'In Stock'),
-      stockQuantity: productType === 'simple' ? (parseInt(stockQuantity) || 0) : variants.reduce((acc, v) => acc + v.stockQuantity, 0),
+      stockStatus: productType === 'simple' ? resolvedSimpleStatus : resolvedVariableStatus,
+      stockQuantity: productType === 'simple' ? parsedSimpleQty : totalVariantStock,
       variants: productType === 'variable' ? variants : undefined,
       rating: initialData?.rating || 4.9,
       ratingCount: initialData?.ratingCount || 18,
@@ -482,12 +575,11 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
                     </label>
                     <select
                       value={stockStatus}
-                      onChange={(e) => setStockStatus(e.target.value as StockStatus)}
+                      onChange={(e) => handleStockStatusChange(e.target.value as StockStatus)}
                       style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13.5px', outline: 'none', backgroundColor: '#FFFFFF' }}
                     >
                       <option value="In Stock">In Stock</option>
                       <option value="Out of Stock">Out of Stock</option>
-                      <option value="On Backorder">On Backorder / Pre-Order</option>
                     </select>
                   </div>
 
@@ -497,10 +589,23 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
                     </label>
                     <input
                       type="number"
-                      value={stockQuantity}
-                      onChange={(e) => setStockQuantity(e.target.value)}
+                      min="0"
+                      step="1"
+                      disabled={stockStatus === 'Out of Stock'}
+                      value={stockStatus === 'Out of Stock' ? '0' : stockQuantity}
+                      onChange={(e) => handleStockQuantityChange(e.target.value)}
                       placeholder="50"
-                      style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13.5px', outline: 'none', backgroundColor: '#FAF7F2' }}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '12px',
+                        border: '1px solid #D6D3D1',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                        backgroundColor: stockStatus === 'Out of Stock' ? '#F5F5F4' : '#FAF7F2',
+                        color: stockStatus === 'Out of Stock' ? '#A8A29E' : '#1C1917',
+                        cursor: stockStatus === 'Out of Stock' ? 'not-allowed' : 'text'
+                      }}
                     />
                   </div>
                 </div>
@@ -618,10 +723,25 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
                         </label>
                         <input
                           type="number"
+                          min="0"
+                          step="1"
                           placeholder="10"
-                          value={vStockQty}
-                          onChange={(e) => setVStockQty(e.target.value)}
-                          style={{ width: '100%', boxSizing: 'border-box', minWidth: 0, padding: '10px 12px', borderRadius: '10px', border: '1px solid #D6D3D1', fontSize: '13px', outline: 'none' }}
+                          disabled={vStockStatus === 'Out of Stock'}
+                          value={vStockStatus === 'Out of Stock' ? '0' : vStockQty}
+                          onChange={(e) => handleVariantStockQtyChange(e.target.value)}
+                          style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            minWidth: 0,
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            border: '1px solid #D6D3D1',
+                            fontSize: '13px',
+                            outline: 'none',
+                            backgroundColor: vStockStatus === 'Out of Stock' ? '#F5F5F4' : '#FAF7F2',
+                            color: vStockStatus === 'Out of Stock' ? '#A8A29E' : '#1C1917',
+                            cursor: vStockStatus === 'Out of Stock' ? 'not-allowed' : 'text'
+                          }}
                         />
                       </div>
                     </div>
@@ -633,12 +753,11 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
                         </label>
                         <select
                           value={vStockStatus}
-                          onChange={(e) => setVStockStatus(e.target.value as StockStatus)}
+                          onChange={(e) => handleVariantStockStatusChange(e.target.value as StockStatus)}
                           style={{ width: '100%', boxSizing: 'border-box', minWidth: 0, padding: '10px 12px', borderRadius: '10px', border: '1px solid #D6D3D1', fontSize: '13px', outline: 'none', backgroundColor: '#FFFFFF' }}
                         >
                           <option value="In Stock">In Stock</option>
                           <option value="Out of Stock">Out of Stock</option>
-                          <option value="On Backorder">On Backorder</option>
                         </select>
                       </div>
 
@@ -775,6 +894,47 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
                 />
               </div>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', borderTop: '1px solid #F5F5F4', paddingTop: '16px' }}>
+                <div>
+                  <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#44403C', display: 'block', marginBottom: '6px' }}>
+                    Custom Guarantee Title (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={guaranteeTitle}
+                    onChange={(e) => setGuaranteeTitle(e.target.value)}
+                    placeholder="Defaults to store setting (e.g. AUTHENTIC GUARANTEE)"
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13.5px', outline: 'none', backgroundColor: '#FAF7F2' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#44403C', display: 'block', marginBottom: '6px' }}>
+                    Custom Guarantee Text (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={guaranteeText}
+                    onChange={(e) => setGuaranteeText(e.target.value)}
+                    placeholder="Defaults to store setting (e.g. 100% Authentic product...)"
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13.5px', outline: 'none', backgroundColor: '#FAF7F2' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#44403C', display: 'block', marginBottom: '6px' }}>
+                  Custom Tax Notice Under Price (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={taxNotice}
+                  onChange={(e) => setTaxNotice(e.target.value)}
+                  placeholder="Defaults to store setting (e.g. inclusive of all taxes)"
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #D6D3D1', fontSize: '13.5px', outline: 'none', backgroundColor: '#FAF7F2' }}
+                />
+              </div>
+
             </div>
 
           </div>
@@ -824,9 +984,14 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ onBack, onProduc
 
                 <div style={{ padding: '12px 16px', borderTop: '1px solid #F5F5F4', backgroundColor: '#FAF7F2', fontSize: '12px', color: '#78716C', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>SKU: <code style={{ color: '#1C1917', fontWeight: 700 }}>#{sku}</code></span>
-                  <span style={{ color: stockStatus === 'In Stock' ? '#059669' : stockStatus === 'Out of Stock' ? '#DC2626' : '#D97706', fontWeight: 800 }}>
-                    {stockStatus}
-                  </span>
+                  {(() => {
+                    const currentStatus = productType === 'simple' ? stockStatus : (variants[0]?.stockStatus || 'In Stock');
+                    return (
+                      <span style={{ color: currentStatus === 'In Stock' ? '#059669' : currentStatus === 'Out of Stock' ? '#DC2626' : '#D97706', fontWeight: 800 }}>
+                        {currentStatus}
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
 

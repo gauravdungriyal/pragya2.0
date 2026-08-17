@@ -96,12 +96,22 @@ export interface EventsPageConfig {
   topSubtitle: string;
 }
 
+export interface ShopTrustBadge {
+  icon?: string;
+  text: string;
+}
+
 export interface ShopPageConfig {
   badge: string;
   topTitle: string;
   topTitleItalic: string;
   topSuffix?: string;
   topSubtitle: string;
+  currency?: string;
+  taxNotice?: string;
+  guaranteeTitle?: string;
+  guaranteeSubtitle?: string;
+  trustBadges?: ShopTrustBadge[];
 }
 
 export interface CoreValueCard {
@@ -277,7 +287,16 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     topTitle: 'Merchandise &',
     topTitleItalic: 'Yogic Wear',
     topSuffix: '',
-    topSubtitle: 'Explore our sanctuary products, organic cotton apparel, non-slip jute mats, and authentic handcrafted essentials for your daily practice.'
+    topSubtitle: 'Explore our sanctuary products, organic cotton apparel, non-slip jute mats, and authentic handcrafted essentials for your daily practice.',
+    currency: 'HK$',
+    taxNotice: 'inclusive of all taxes',
+    guaranteeTitle: 'AUTHENTIC GUARANTEE',
+    guaranteeSubtitle: '100% Authentic product with quality assurance.',
+    trustBadges: [
+      { icon: 'shield', text: '100% Original Authentic Products' },
+      { icon: 'truck', text: 'Pay on delivery available' },
+      { icon: 'refresh', text: 'Easy 7 days returns and exchanges' }
+    ]
   },
   aboutPageConfig: {
     topTitle: 'Pragya',

@@ -37,8 +37,66 @@ import { AdminLogin } from './components/admin/AdminLogin';
 import { Instructor, UpcomingEvent, DynamicPackage, MerchandiseItem } from './types';
 import { fetchSiteConfigFromFirebase } from './services/siteConfig';
 
+export type AppView =
+  | 'home'
+  | 'about'
+  | 'classes'
+  | 'teachers'
+  | 'teacher-detail'
+  | 'membership'
+  | 'events'
+  | 'event-detail'
+  | 'package-detail'
+  | 'merchandise'
+  | 'product-detail'
+  | 'ai-assistant'
+  | 'cart'
+  | 'policy'
+  | 'admin';
+
+const VALID_APP_VIEWS: AppView[] = [
+  'home',
+  'about',
+  'classes',
+  'teachers',
+  'teacher-detail',
+  'membership',
+  'events',
+  'event-detail',
+  'package-detail',
+  'merchandise',
+  'product-detail',
+  'ai-assistant',
+  'cart',
+  'policy',
+  'admin',
+];
+
+const getInitialAppView = (): AppView => {
+  try {
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+
+    if (path.includes('pragya-admin') || hash === 'admin' || hash.includes('pragya-admin')) {
+      return 'admin';
+    }
+
+    if (hash && (VALID_APP_VIEWS as string[]).includes(hash)) {
+      return hash as AppView;
+    }
+
+    const saved = sessionStorage.getItem('pragya_current_view');
+    if (saved && (VALID_APP_VIEWS as string[]).includes(saved)) {
+      return saved as AppView;
+    }
+  } catch (e) {
+    console.warn('Failed to parse initial route:', e);
+  }
+  return 'home';
+};
+
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'classes' | 'teachers' | 'teacher-detail' | 'membership' | 'events' | 'event-detail' | 'package-detail' | 'merchandise' | 'product-detail' | 'ai-assistant' | 'cart' | 'policy' | 'admin'>('home');
+  const [currentView, setCurrentView] = useState<AppView>(getInitialAppView);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('pragya_admin_auth') === 'true';
   });
@@ -48,22 +106,45 @@ export const App: React.FC = () => {
     fetchSiteConfigFromFirebase();
   }, []);
 
-  // Listen to route /pragya-admin or #pragya-admin
+  // Sync currentView to URL hash & sessionStorage, and listen to hashchange/popstate
   useEffect(() => {
-    const checkAdminRoute = () => {
+    if (currentView) {
+      sessionStorage.setItem('pragya_current_view', currentView);
+      const currentHash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+      if (currentHash !== currentView) {
+        if (currentView === 'home') {
+          if (currentHash) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+        } else {
+          window.history.replaceState(null, '', `#${currentView}`);
+        }
+      }
+    }
+  }, [currentView]);
+
+  useEffect(() => {
+    const checkRouteFromUrl = () => {
       const path = window.location.pathname.toLowerCase();
-      const hash = window.location.hash.toLowerCase();
-      if (path.includes('pragya-admin') || hash.includes('pragya-admin')) {
+      const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+
+      if (path.includes('pragya-admin') || hash === 'admin' || hash.includes('pragya-admin')) {
         setCurrentView('admin');
+        return;
+      }
+
+      if (hash && (VALID_APP_VIEWS as string[]).includes(hash)) {
+        setCurrentView(hash as AppView);
+      } else if (!hash && path === '/') {
+        setCurrentView('home');
       }
     };
 
-    checkAdminRoute();
-    window.addEventListener('popstate', checkAdminRoute);
-    window.addEventListener('hashchange', checkAdminRoute);
+    window.addEventListener('popstate', checkRouteFromUrl);
+    window.addEventListener('hashchange', checkRouteFromUrl);
     return () => {
-      window.removeEventListener('popstate', checkAdminRoute);
-      window.removeEventListener('hashchange', checkAdminRoute);
+      window.removeEventListener('popstate', checkRouteFromUrl);
+      window.removeEventListener('hashchange', checkRouteFromUrl);
     };
   }, []);
   const [membershipCategory, setMembershipCategory] = useState<string>('ALL');

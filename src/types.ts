@@ -280,5 +280,9 @@ export interface MerchandiseItem {
   stockQuantity?: number;
   variants?: ProductVariant[];
   materialInfo?: string;
+  taxNotice?: string;
+  guaranteeTitle?: string;
+  guaranteeText?: string;
+  trustBadges?: string[];
 }
 
